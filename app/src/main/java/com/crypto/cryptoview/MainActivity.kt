@@ -42,6 +42,6 @@ fun Greeting(name: String, modifier: Modifier = Modifier) {
 @Composable
 fun GreetingPreview() {
     CryptoViewTheme {
-        Greeting("Android")
+        Greeting("남궁현")
     }
 }
