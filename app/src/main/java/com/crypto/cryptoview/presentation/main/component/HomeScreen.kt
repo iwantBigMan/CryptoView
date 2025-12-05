@@ -1,19 +1,12 @@
-package com.crypto.cryptoview.view.main
+package com.crypto.cryptoview.presentation.main.component
 
-import android.os.Bundle
-import androidx.activity.ComponentActivity
-import androidx.activity.compose.setContent
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Home
-import androidx.compose.material.icons.filled.Settings
-import androidx.compose.material.icons.outlined.AccountBalanceWallet
 import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -21,88 +14,13 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.crypto.cryptoview.ui.theme.CryptoViewTheme
-
-class MainActivity : ComponentActivity() {
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        setContent {
-            CryptoViewTheme {
-                MainScreen()
-            }
-        }
-    }
-}
-@Composable
-@Preview
-fun MainScreenPreview() {
-    CryptoViewTheme {
-        MainScreen()
-    }
-}
+import com.crypto.cryptoview.presentation.main.MainViewModel
 
 @Composable
-fun MainScreen() {
-    var selectedTab by remember { mutableStateOf(0) }
-
-    Scaffold(
-        bottomBar = {
-            NavigationBar(
-                containerColor = Color(0xFF1A1D2E),
-                contentColor = Color.White
-            ) {
-                NavigationBarItem(
-                    icon = { Icon(Icons.Default.Home, contentDescription = "Home") },
-                    label = { Text("Home") },
-                    selected = selectedTab == 0,
-                    onClick = { selectedTab = 0 },
-                    colors = NavigationBarItemDefaults.colors(
-                        selectedIconColor = Color(0xFF5B7FFF),
-                        selectedTextColor = Color(0xFF5B7FFF),
-                        unselectedIconColor = Color.Gray,
-                        unselectedTextColor = Color.Gray,
-                        indicatorColor = Color.Transparent
-                    )
-                )
-                NavigationBarItem(
-                    icon = { Icon(Icons.Outlined.AccountBalanceWallet, contentDescription = "Holdings") },
-                    label = { Text("Holdings") },
-                    selected = selectedTab == 1,
-                    onClick = { selectedTab = 1 },
-                    colors = NavigationBarItemDefaults.colors(
-                        selectedIconColor = Color(0xFF5B7FFF),
-                        selectedTextColor = Color(0xFF5B7FFF),
-                        unselectedIconColor = Color.Gray,
-                        unselectedTextColor = Color.Gray,
-                        indicatorColor = Color.Transparent
-                    )
-                )
-                NavigationBarItem(
-                    icon = { Icon(Icons.Default.Settings, contentDescription = "Settings") },
-                    label = { Text("Settings") },
-                    selected = selectedTab == 2,
-                    onClick = { selectedTab = 2 },
-                    colors = NavigationBarItemDefaults.colors(
-                        selectedIconColor = Color(0xFF5B7FFF),
-                        selectedTextColor = Color(0xFF5B7FFF),
-                        unselectedIconColor = Color.Gray,
-                        unselectedTextColor = Color.Gray,
-                        indicatorColor = Color.Transparent
-                    )
-                )
-            }
-        }
-    ) { paddingValues ->
-        when (selectedTab) {
-            0 -> HomeScreen(Modifier.padding(paddingValues))
-            1 -> HoldingsScreen(Modifier.padding(paddingValues))
-            2 -> SettingsScreen(Modifier.padding(paddingValues))
-        }
-    }
-}
-
-@Composable
-fun HomeScreen(modifier: Modifier = Modifier) {
+fun HomeScreen(
+    modifier: Modifier = Modifier,
+    viewModel: MainViewModel
+) {
     LazyColumn(
         modifier = modifier
             .fillMaxSize()
@@ -110,20 +28,14 @@ fun HomeScreen(modifier: Modifier = Modifier) {
             .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        item {
-            TotalBalanceCard()
-        }
-        item {
-            ExchangeBreakdownCard()
-        }
-        item {
-            TopHoldingsCard()
-        }
+        item { TotalBalanceCard() }
+        item { ExchangeBreakdownCard() }
+        item { TopHoldingsCard() }
     }
 }
 
 @Composable
-fun TotalBalanceCard() {
+private fun TotalBalanceCard() {
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(16.dp),
@@ -154,7 +66,7 @@ fun TotalBalanceCard() {
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
                 Text(
-                    text = "+ ₩25,478,500",
+                    text = "+ ₩0",
                     color = Color.Green,
                     fontSize = 18.sp
                 )
@@ -164,7 +76,7 @@ fun TotalBalanceCard() {
 }
 
 @Composable
-fun ExchangeBreakdownCard() {
+private fun ExchangeBreakdownCard() {
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(16.dp),
@@ -180,7 +92,6 @@ fun ExchangeBreakdownCard() {
                 fontWeight = FontWeight.Bold
             )
             Spacer(modifier = Modifier.height(20.dp))
-            // 차트는 실제 Canvas나 라이브러리로 구현 필요
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -210,7 +121,7 @@ fun ExchangeBreakdownCard() {
 }
 
 @Composable
-fun ExchangeItem(name: String, amount: String, color: Color) {
+private fun ExchangeItem(name: String, amount: String, color: Color) {
     Column(
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
@@ -235,7 +146,7 @@ fun ExchangeItem(name: String, amount: String, color: Color) {
 }
 
 @Composable
-fun TopHoldingsCard() {
+private fun TopHoldingsCard() {
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(16.dp),
@@ -276,7 +187,7 @@ fun TopHoldingsCard() {
 }
 
 @Composable
-fun HoldingItem(
+private fun HoldingItem(
     symbol: String,
     name: String,
     price: String,
@@ -350,29 +261,5 @@ fun HoldingItem(
                 )
             }
         }
-    }
-}
-
-@Composable
-fun HoldingsScreen(modifier: Modifier = Modifier) {
-    Box(
-        modifier = modifier
-            .fillMaxSize()
-            .background(Color(0xFF0F1117)),
-        contentAlignment = Alignment.Center
-    ) {
-        Text("Holdings Screen", color = Color.White)
-    }
-}
-
-@Composable
-fun SettingsScreen(modifier: Modifier = Modifier) {
-    Box(
-        modifier = modifier
-            .fillMaxSize()
-            .background(Color(0xFF0F1117)),
-        contentAlignment = Alignment.Center
-    ) {
-        Text("Settings Screen", color = Color.White)
     }
 }
