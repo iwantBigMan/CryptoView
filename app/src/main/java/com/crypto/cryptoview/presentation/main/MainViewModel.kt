@@ -6,6 +6,7 @@ import com.crypto.cryptoview.domain.usecase.BalanceCalculator
 import com.crypto.cryptoview.domain.usecase.GetUpbitAccountBalancesUseCase
 import com.crypto.cryptoview.domain.usecase.GetUpbitMTickerUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -22,43 +23,52 @@ class MainViewModel @Inject constructor(
     private val _uiState = MutableStateFlow(MainUiState())
     val uiState: StateFlow<MainUiState> = _uiState.asStateFlow()
 
+    private var isAutoRefreshEnabled = true
+
     init {
-        loadData()
+        startAutoRefresh()
     }
 
-    private fun loadData() {
+    private fun startAutoRefresh() {
         viewModelScope.launch {
-            _uiState.value = _uiState.value.copy(isLoading = true)
-
-            try {
-                val upbitResult = loadUpbitData()
-
-                val allHoldings = upbitResult.holdings
-
-                val topHoldings = allHoldings
-                    .sortedByDescending { it.totalValue }
-                    .take(5)
-
-                val totalValue = upbitResult.totalValue
-                val totalChange = allHoldings.sumOf { it.change }
-                val totalChangeRate = if (totalValue > 0) {
-                    (totalChange / (totalValue - totalChange)) * 100
-                } else 0.0
-
-                _uiState.value = MainUiState(
-                    totalValue = totalValue,
-                    totalChange = totalChange,
-                    totalChangeRate = totalChangeRate,
-                    topHoldings = topHoldings,
-                    exchangeBreakdown = listOf(upbitResult.exchangeData),
-                    isLoading = false
-                )
-            } catch (e: Exception) {
-                _uiState.value = _uiState.value.copy(
-                    isLoading = false,
-                    error = e.message
-                )
+            while (isAutoRefreshEnabled) {
+                loadData()
+                delay(1000) // 1초마다 갱신
             }
+        }
+    }
+
+    private suspend fun loadData() {
+        _uiState.value = _uiState.value.copy(isLoading = true)
+
+        try {
+            val upbitResult = loadUpbitData()
+
+            val allHoldings = upbitResult.holdings
+
+            val topHoldings = allHoldings
+                .sortedByDescending { it.totalValue }
+                .take(5)
+
+            val totalValue = upbitResult.totalValue
+            val totalChange = allHoldings.sumOf { it.change }
+            val totalChangeRate = if (totalValue > 0) {
+                (totalChange / (totalValue - totalChange)) * 100
+            } else 0.0
+
+            _uiState.value = MainUiState(
+                totalValue = totalValue,
+                totalChange = totalChange,
+                totalChangeRate = totalChangeRate,
+                topHoldings = topHoldings,
+                exchangeBreakdown = listOf(upbitResult.exchangeData),
+                isLoading = false
+            )
+        } catch (e: Exception) {
+            _uiState.value = _uiState.value.copy(
+                isLoading = false,
+                error = e.message
+            )
         }
     }
 
@@ -78,6 +88,21 @@ class MainViewModel @Inject constructor(
     }
 
     fun refresh() {
-        loadData()
+        viewModelScope.launch {
+            loadData()
+        }
+    }
+
+    fun setAutoRefresh(enabled: Boolean) {
+        val wasEnabled = isAutoRefreshEnabled
+        isAutoRefreshEnabled = enabled
+        if (!wasEnabled && enabled) {
+            startAutoRefresh()
+        }
+    }
+
+    override fun onCleared() {
+        super.onCleared()
+        isAutoRefreshEnabled = false
     }
 }
