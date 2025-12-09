@@ -57,6 +57,33 @@ object NetworkModule {
         }
     }
 
+    // 공통 OkHttpClient 생성 함수
+    private fun createOkHttpClient(
+        loggingInterceptor: HttpLoggingInterceptor,
+        authInterceptor: okhttp3.Interceptor
+    ): OkHttpClient {
+        return OkHttpClient.Builder()
+            .addInterceptor(loggingInterceptor)
+            .addInterceptor(authInterceptor)
+            .connectTimeout(30, TimeUnit.SECONDS)
+            .readTimeout(30, TimeUnit.SECONDS)
+            .build()
+    }
+
+    // 공통 Retrofit 생성 함수
+    private inline fun <reified T> createApiService(
+        baseUrl: String,
+        okHttpClient: OkHttpClient,
+        json: Json
+    ): T {
+        return Retrofit.Builder()
+            .baseUrl(baseUrl)
+            .client(okHttpClient)
+            .addConverterFactory(json.asConverterFactory("application/json".toMediaType()))
+            .build()
+            .create(T::class.java)
+    }
+
     // === Upbit ===
     @Provides
     @Singleton
@@ -64,17 +91,13 @@ object NetworkModule {
     fun provideUpbitOkHttpClient(
         loggingInterceptor: HttpLoggingInterceptor
     ): OkHttpClient {
-        return OkHttpClient.Builder()
-            .addInterceptor(loggingInterceptor)
-            .addInterceptor(
-                UpbitAuthInterceptor(
-                    accessKey = BuildConfig.UPBIT_ACCESS_KEY,
-                    secretKey = BuildConfig.UPBIT_SECRET_KEY
-                )
+        return createOkHttpClient(
+            loggingInterceptor,
+            UpbitAuthInterceptor(
+                accessKey = BuildConfig.UPBIT_ACCESS_KEY,
+                secretKey = BuildConfig.UPBIT_SECRET_KEY
             )
-            .connectTimeout(30, TimeUnit.SECONDS)
-            .readTimeout(30, TimeUnit.SECONDS)
-            .build()
+        )
     }
 
     @Provides
@@ -83,114 +106,15 @@ object NetworkModule {
         @UpbitClient okHttpClient: OkHttpClient,
         json: Json
     ): UpbitApi {
-        return Retrofit.Builder()
-            .baseUrl("https://api.upbit.com/")
-            .client(okHttpClient)
-            .addConverterFactory(json.asConverterFactory("application/json".toMediaType()))
-            .build()
-            .create(UpbitApi::class.java)
+        return createApiService("https://api.upbit.com/", okHttpClient, json)
     }
 
-//    // === Binance ===
-//    @Provides
-//    @Singleton
-//    @BinanceClient
-//    fun provideBinanceOkHttpClient(
-//        loggingInterceptor: HttpLoggingInterceptor
-//    ): OkHttpClient {
-//        return OkHttpClient.Builder()
-//            .addInterceptor(loggingInterceptor)
-//            .addInterceptor(
-//                BinanceAuthInterceptor(
-//                    apiKey = BuildConfig.BINANCE_API_KEY,
-//                    secretKey = BuildConfig.BINANCE_SECRET_KEY
-//                )
-//            )
-//            .connectTimeout(30, TimeUnit.SECONDS)
-//            .readTimeout(30, TimeUnit.SECONDS)
-//            .build()
-//    }
-//
-//    @Provides
-//    @Singleton
-//    fun provideBinanceApi(
-//        @BinanceClient okHttpClient: OkHttpClient,
-//        json: Json
-//    ): BinanceApi {
-//        return Retrofit.Builder()
-//            .baseUrl("https://api.binance.com/")
-//            .client(okHttpClient)
-//            .addConverterFactory(json.asConverterFactory("application/json".toMediaType()))
-//            .build()
-//            .create(BinanceApi::class.java)
-//    }
-//
-//    // === Bybit ===
-//    @Provides
-//    @Singleton
-//    @BybitClient
-//    fun provideBybitOkHttpClient(
-//        loggingInterceptor: HttpLoggingInterceptor
-//    ): OkHttpClient {
-//        return OkHttpClient.Builder()
-//            .addInterceptor(loggingInterceptor)
-//            .addInterceptor(
-//                BybitAuthInterceptor(
-//                    apiKey = BuildConfig.BYBIT_API_KEY,
-//                    secretKey = BuildConfig.BYBIT_SECRET_KEY
-//                )
-//            )
-//            .connectTimeout(30, TimeUnit.SECONDS)
-//            .readTimeout(30, TimeUnit.SECONDS)
-//            .build()
-//    }
-//
-//    @Provides
-//    @Singleton
-//    fun provideBybitApi(
-//        @BybitClient okHttpClient: OkHttpClient,
-//        json: Json
-//    ): BybitApi {
-//        return Retrofit.Builder()
-//            .baseUrl("https://api.bybit.com/")
-//            .client(okHttpClient)
-//            .addConverterFactory(json.asConverterFactory("application/json".toMediaType()))
-//            .build()
-//            .create(BybitApi::class.java)
-//    }
-//
-//    // === Gate.io ===
-//    @Provides
-//    @Singleton
-//    @GateIoClient
-//    fun provideGateIoOkHttpClient(
-//        loggingInterceptor: HttpLoggingInterceptor
-//    ): OkHttpClient {
-//        return OkHttpClient.Builder()
-//            .addInterceptor(loggingInterceptor)
-//            .addInterceptor(
-//                GateIoAuthInterceptor(
-//                    apiKey = BuildConfig.GATEIO_API_KEY,
-//                    secretKey = BuildConfig.GATEIO_SECRET_KEY
-//                )
-//            )
-//            .connectTimeout(30, TimeUnit.SECONDS)
-//            .readTimeout(30, TimeUnit.SECONDS)
-//            .build()
-//    }
-//
-//    @Provides
-//    @Singleton
-//    fun provideGateIoApi(
-//        @GateIoClient okHttpClient: OkHttpClient,
-//        json: Json
-//    ): GateIoApi {
-//        return Retrofit.Builder()
-//            .baseUrl("https://api.gateio.ws/")
-//            .client(okHttpClient)
-//            .addConverterFactory(json.asConverterFactory("application/json".toMediaType()))
-//            .build()
-//            .create(GateIoApi::class.java)
-//    }
-//}
+    @Provides
+    @Singleton
+    fun provideUpbitMarketApi(
+        @UpbitClient okHttpClient: OkHttpClient,
+        json: Json
+    ): com.crypto.cryptoview.data.remote.api.UpbitMarketApi {
+        return createApiService("https://api.upbit.com/", okHttpClient, json)
+    }
 }

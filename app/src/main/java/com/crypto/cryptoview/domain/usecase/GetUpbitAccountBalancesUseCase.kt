@@ -12,3 +12,4 @@ class GetUpbitAccountBalancesUseCase @Inject constructor(
         return repository.getAccountBalances()
     }
 }
+

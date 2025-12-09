@@ -19,7 +19,6 @@ import com.crypto.cryptoview.ui.theme.CryptoViewTheme
 fun MainScreen(viewModel: MainViewModel) {
     var selectedTab by remember { mutableIntStateOf(0) }
 
-
     Scaffold(
         bottomBar = {
             NavigationBar(
@@ -71,7 +70,8 @@ fun MainScreen(viewModel: MainViewModel) {
         when (selectedTab) {
             0 -> HomeScreen(
                 modifier = Modifier.padding(paddingValues),
-                viewModel = viewModel
+                viewModel = viewModel,
+                onNavigateToHoldings = { selectedTab = 1 }
             )
             1 -> HoldingsScreen(
                 modifier = Modifier.padding(paddingValues),

@@ -7,6 +7,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -14,13 +15,18 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.crypto.cryptoview.presentation.main.ExchangeData
+import com.crypto.cryptoview.presentation.main.HoldingData
 import com.crypto.cryptoview.presentation.main.MainViewModel
 
 @Composable
 fun HomeScreen(
     modifier: Modifier = Modifier,
-    viewModel: MainViewModel
+    viewModel: MainViewModel,
+    onNavigateToHoldings: () -> Unit = {}
 ) {
+    val uiState = viewModel.uiState.collectAsState().value
+
     LazyColumn(
         modifier = modifier
             .fillMaxSize()
@@ -28,14 +34,32 @@ fun HomeScreen(
             .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        item { TotalBalanceCard() }
-        item { ExchangeBreakdownCard() }
-        item { TopHoldingsCard() }
+        item {
+            TotalBalanceCard(
+                totalValue = uiState.totalValue,
+                totalChange = uiState.totalChange,
+                totalChangeRate = uiState.totalChangeRate
+            )
+        }
+        item {
+            ExchangeBreakdownCard(exchanges = uiState.exchangeBreakdown)
+        }
+        item {
+            TopHoldingsCard(
+                holdings = uiState.topHoldings,
+                onViewAllClick = onNavigateToHoldings
+            )
+        }
     }
 }
-
 @Composable
-private fun TotalBalanceCard() {
+private fun TotalBalanceCard(
+    totalValue: Double,
+    totalChange: Double,
+    totalChangeRate: Double
+) {
+    val isPositive = totalChange >= 0
+
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(16.dp),
@@ -54,7 +78,7 @@ private fun TotalBalanceCard() {
                 verticalAlignment = Alignment.Bottom
             ) {
                 Text(
-                    text = "₩1,118,569,820",
+                    text = "₩${String.format("%,.0f", totalValue)}",
                     color = Color.White,
                     fontSize = 32.sp,
                     fontWeight = FontWeight.Bold
@@ -63,11 +87,16 @@ private fun TotalBalanceCard() {
             Spacer(modifier = Modifier.height(8.dp))
             Row(
                 modifier = Modifier.padding(start = 8.dp),
-                horizontalArrangement = Arrangement.SpaceBetween
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 Text(
-                    text = "+ ₩0",
-                    color = Color.Green,
+                    text = "${if (isPositive) "+" else ""}₩${String.format("%,.0f", totalChange)}",
+                    color = if (isPositive) Color(0xFF4CAF50) else Color(0xFFF44336),
+                    fontSize = 18.sp
+                )
+                Text(
+                    text = "(${String.format("%.2f", totalChangeRate)}%)",
+                    color = if (isPositive) Color(0xFF4CAF50) else Color(0xFFF44336),
                     fontSize = 18.sp
                 )
             }
@@ -76,7 +105,9 @@ private fun TotalBalanceCard() {
 }
 
 @Composable
-private fun ExchangeBreakdownCard() {
+private fun ExchangeBreakdownCard(
+    exchanges: List<ExchangeData> = emptyList()
+) {
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(16.dp),
@@ -101,20 +132,23 @@ private fun ExchangeBreakdownCard() {
                 Text("Chart Placeholder", color = Color.Gray)
             }
             Spacer(modifier = Modifier.height(20.dp))
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceEvenly
+            Column(
+                verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                ExchangeItem("Upbit", "₩71,410,000", Color(0xFF2196F3))
-                ExchangeItem("Binance", "₩53,064,000", Color(0xFFFFC107))
-            }
-            Spacer(modifier = Modifier.height(12.dp))
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceEvenly
-            ) {
-                ExchangeItem("Gate.io", "₩60,467,220", Color(0xFF9C27B0))
-                ExchangeItem("Bybit", "₩57,612,720", Color(0xFFE91E63))
+                exchanges.chunked(2).forEach { row ->
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceEvenly
+                    ) {
+                        row.forEach { exchange ->
+                            ExchangeItem(
+                                name = exchange.type.displayName,
+                                amount = "₩${String.format("%,.0f", exchange.totalValue)}",
+                                color = exchange.type.color
+                            )
+                        }
+                    }
+                }
             }
         }
     }
@@ -146,7 +180,10 @@ private fun ExchangeItem(name: String, amount: String, color: Color) {
 }
 
 @Composable
-private fun TopHoldingsCard() {
+private fun TopHoldingsCard(
+    holdings: List<HoldingData> = emptyList(),
+    onViewAllClick: () -> Unit = {}
+) {
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(16.dp),
@@ -166,7 +203,7 @@ private fun TopHoldingsCard() {
                     fontSize = 18.sp,
                     fontWeight = FontWeight.Bold
                 )
-                TextButton(onClick = { }) {
+                TextButton(onClick = onViewAllClick) {
                     Text(
                         text = "View All →",
                         color = Color(0xFF5B7FFF)
@@ -174,14 +211,20 @@ private fun TopHoldingsCard() {
                 }
             }
             Spacer(modifier = Modifier.height(16.dp))
-            HoldingItem(
-                symbol = "BTC",
-                name = "김프",
-                price = "₩101,406,000",
-                change = "+₩5,050,000",
-                changePercent = "(5.24%)",
-                isPositive = true
-            )
+            Column(
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                holdings.forEach { holding ->
+                    HoldingItem(
+                        symbol = holding.symbol,
+                        name = holding.name,
+                        price = "₩${String.format("%,.0f", holding.totalValue)}",
+                        change = "${if (holding.change >= 0) "+" else ""}₩${String.format("%,.0f", holding.change)}",
+                        changePercent = "${String.format("%.2f", holding.changePercent)}%",
+                        isPositive = holding.change >= 0
+                    )
+                }
+            }
         }
     }
 }
@@ -217,7 +260,7 @@ private fun HoldingItem(
                     contentAlignment = Alignment.Center
                 ) {
                     Text(
-                        text = symbol.take(2),
+                        text = symbol.take(3),
                         color = Color.White,
                         fontWeight = FontWeight.Bold
                     )
@@ -231,12 +274,7 @@ private fun HoldingItem(
                     )
                     Text(
                         text = name,
-                        color = if (isPositive) Color(0xFF4CAF50) else Color(0xFFF44336),
-                        fontSize = 12.sp
-                    )
-                    Text(
-                        text = changePercent,
-                        color = Color.White.copy(alpha = 0.5f),
+                        color = Color.White.copy(alpha = 0.7f),
                         fontSize = 12.sp
                     )
                 }
@@ -263,3 +301,4 @@ private fun HoldingItem(
         }
     }
 }
+
