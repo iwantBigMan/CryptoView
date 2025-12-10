@@ -1,0 +1,110 @@
+package com.crypto.cryptoview.presentation.component.assetsOverview
+
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import com.crypto.cryptoview.domain.usecase.BalanceCalculator
+import com.crypto.cryptoview.domain.usecase.GetUpbitAccountBalancesUseCase
+import com.crypto.cryptoview.domain.usecase.GetUpbitMTickerUseCase
+import com.crypto.cryptoview.presentation.main.ExchangeData
+import com.crypto.cryptoview.presentation.main.ExchangeType
+import com.crypto.cryptoview.presentation.main.MainUiState
+import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.isActive
+import kotlinx.coroutines.launch
+import javax.inject.Inject
+
+@HiltViewModel
+class AssetsOverviewViewModel @Inject constructor(
+    private val getUpbitAccountBalance: GetUpbitAccountBalancesUseCase,
+    private val getUpbitMarketTicker: GetUpbitMTickerUseCase,
+    private val balanceCalculator: BalanceCalculator
+) : ViewModel() {
+
+    private val _uiState = MutableStateFlow(MainUiState())
+    val uiState: StateFlow<MainUiState> = _uiState.asStateFlow()
+
+    private var autoRefreshJob: Job? = null
+    private var isAutoRefreshEnabled = true
+
+    init {
+        startAutoRefresh()
+    }
+
+    fun startAutoRefresh() {
+        if (autoRefreshJob?.isActive == true) return
+
+        isAutoRefreshEnabled = true
+
+        autoRefreshJob = viewModelScope.launch {
+            while (isActive && isAutoRefreshEnabled) {
+                loadData()
+                delay(1000)
+            }
+        }
+    }
+
+    fun stopAutoRefresh() {
+        isAutoRefreshEnabled = false
+        autoRefreshJob?.cancel()
+    }
+
+    private suspend fun loadData() {
+        _uiState.value = _uiState.value.copy(isLoading = true)
+
+        try {
+            val upbitResult = loadUpbitData()
+
+            val allHoldings = upbitResult.holdings
+
+            val topHoldings = allHoldings
+                .sortedByDescending { it.totalValue }
+                .take(5)
+
+            val totalValue = upbitResult.totalValue
+            val totalChange = allHoldings.sumOf { it.change }
+            val totalChangeRate = if (totalValue > 0) {
+                (totalChange / (totalValue - totalChange)) * 100
+            } else 0.0
+
+            _uiState.value = MainUiState(
+                totalValue = totalValue,
+                totalChange = totalChange,
+                totalChangeRate = totalChangeRate,
+                topHoldings = topHoldings,
+                exchangeBreakdown = listOf(upbitResult.exchangeData),
+                isLoading = false
+            )
+        } catch (e: Exception) {
+            _uiState.value = _uiState.value.copy(
+                isLoading = false,
+                error = e.message
+            )
+        }
+    }
+
+    private suspend fun loadUpbitData(): BalanceCalculator.UpbitResult {
+        val balancesResult = getUpbitAccountBalance()
+        val balances = balancesResult.getOrElse {
+            return BalanceCalculator.UpbitResult(
+                totalValue = 0.0,
+                holdings = emptyList(),
+                exchangeData = ExchangeData(ExchangeType.UPBIT, 0.0)
+            )
+        }
+
+        val tickers = getUpbitMarketTicker().getOrElse { emptyList() }
+
+        return balanceCalculator.calculateUpbit(balances, tickers)
+    }
+
+
+    override fun onCleared() {
+        super.onCleared()
+        isAutoRefreshEnabled = false
+    }
+}

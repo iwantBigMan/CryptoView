@@ -1,0 +1,18 @@
+package com.crypto.cryptoview.data.remote.api
+
+import com.crypto.cryptoview.data.remote.dto.UpbitAccountBalanceDto
+import com.crypto.cryptoview.data.remote.dto.UpbitMarketTickerDto
+import retrofit2.http.GET
+import retrofit2.http.Query
+
+interface UpbitApi {
+    @GET("v1/accounts")
+    suspend fun getUpbitAccountBalances(): List<UpbitAccountBalanceDto>
+}
+
+interface UpbitMarketApi {
+    @GET("v1/ticker")
+    suspend fun getTickers(
+        @Query("markets") markets: String
+    ): List<UpbitMarketTickerDto>
+}
