@@ -19,7 +19,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.tooling.preview.Preview
-import com.crypto.cryptoview.presentation.component.HoldingsScreen
+import com.crypto.cryptoview.presentation.component.holdingColins.HoldingsScreen
 import com.crypto.cryptoview.presentation.component.SettingsScreen
 import com.crypto.cryptoview.presentation.component.assetsOverview.AssetsOverviewScreen
 import com.crypto.cryptoview.presentation.component.assetsOverview.AssetsOverviewViewModel

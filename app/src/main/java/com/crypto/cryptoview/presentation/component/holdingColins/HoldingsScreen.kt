@@ -1,4 +1,4 @@
-package com.crypto.cryptoview.presentation.component
+package com.crypto.cryptoview.presentation.component.holdingColins
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box

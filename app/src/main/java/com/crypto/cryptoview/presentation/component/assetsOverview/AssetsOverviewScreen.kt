@@ -13,7 +13,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.Lifecycle
@@ -21,12 +20,6 @@ import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.crypto.cryptoview.presentation.component.assetsOverview.chart.ChartData
 import com.crypto.cryptoview.presentation.component.assetsOverview.chart.DonutChart
-import com.crypto.cryptoview.presentation.main.ExchangeData
-import com.crypto.cryptoview.presentation.main.ExchangeType
-import com.crypto.cryptoview.presentation.main.HoldingData
-import com.crypto.cryptoview.presentation.main.MainUiState
-import com.crypto.cryptoview.ui.theme.CryptoViewTheme
-import kotlin.compareTo
 
 @Composable
 fun AssetsOverviewScreen(

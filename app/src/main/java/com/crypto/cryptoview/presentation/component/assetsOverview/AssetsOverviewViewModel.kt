@@ -5,9 +5,6 @@ import androidx.lifecycle.viewModelScope
 import com.crypto.cryptoview.domain.usecase.BalanceCalculator
 import com.crypto.cryptoview.domain.usecase.GetUpbitAccountBalancesUseCase
 import com.crypto.cryptoview.domain.usecase.GetUpbitMTickerUseCase
-import com.crypto.cryptoview.presentation.main.ExchangeData
-import com.crypto.cryptoview.presentation.main.ExchangeType
-import com.crypto.cryptoview.presentation.main.MainUiState
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay

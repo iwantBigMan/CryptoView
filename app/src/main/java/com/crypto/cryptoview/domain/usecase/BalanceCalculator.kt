@@ -2,9 +2,9 @@ package com.crypto.cryptoview.domain.usecase
 
 import com.crypto.cryptoview.domain.model.UpbitAccountBalance
 import com.crypto.cryptoview.domain.model.UpbitMarketTicker
-import com.crypto.cryptoview.presentation.main.ExchangeData
-import com.crypto.cryptoview.presentation.main.ExchangeType
-import com.crypto.cryptoview.presentation.main.HoldingData
+import com.crypto.cryptoview.presentation.component.assetsOverview.ExchangeData
+import com.crypto.cryptoview.presentation.component.assetsOverview.ExchangeType
+import com.crypto.cryptoview.presentation.component.assetsOverview.HoldingData
 import javax.inject.Inject
 
 class BalanceCalculator @Inject constructor() {

@@ -1,4 +1,4 @@
-package com.crypto.cryptoview.presentation.main
+package com.crypto.cryptoview.presentation.component.assetsOverview
 
 import androidx.compose.ui.graphics.Color
 
