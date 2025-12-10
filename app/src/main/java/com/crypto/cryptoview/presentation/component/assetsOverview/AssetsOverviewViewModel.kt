@@ -1,20 +1,25 @@
-package com.crypto.cryptoview.presentation.main
+package com.crypto.cryptoview.presentation.component.assetsOverview
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.crypto.cryptoview.domain.usecase.BalanceCalculator
 import com.crypto.cryptoview.domain.usecase.GetUpbitAccountBalancesUseCase
 import com.crypto.cryptoview.domain.usecase.GetUpbitMTickerUseCase
+import com.crypto.cryptoview.presentation.main.ExchangeData
+import com.crypto.cryptoview.presentation.main.ExchangeType
+import com.crypto.cryptoview.presentation.main.MainUiState
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @HiltViewModel
-class MainViewModel @Inject constructor(
+class AssetsOverviewViewModel @Inject constructor(
     private val getUpbitAccountBalance: GetUpbitAccountBalancesUseCase,
     private val getUpbitMarketTicker: GetUpbitMTickerUseCase,
     private val balanceCalculator: BalanceCalculator
@@ -23,19 +28,29 @@ class MainViewModel @Inject constructor(
     private val _uiState = MutableStateFlow(MainUiState())
     val uiState: StateFlow<MainUiState> = _uiState.asStateFlow()
 
+    private var autoRefreshJob: Job? = null
     private var isAutoRefreshEnabled = true
 
     init {
         startAutoRefresh()
     }
 
-    private fun startAutoRefresh() {
-        viewModelScope.launch {
-            while (isAutoRefreshEnabled) {
+    fun startAutoRefresh() {
+        if (autoRefreshJob?.isActive == true) return
+
+        isAutoRefreshEnabled = true
+
+        autoRefreshJob = viewModelScope.launch {
+            while (isActive && isAutoRefreshEnabled) {
                 loadData()
-                delay(1000) // 1초마다 갱신
+                delay(1000)
             }
         }
+    }
+
+    fun stopAutoRefresh() {
+        isAutoRefreshEnabled = false
+        autoRefreshJob?.cancel()
     }
 
     private suspend fun loadData() {
@@ -87,19 +102,6 @@ class MainViewModel @Inject constructor(
         return balanceCalculator.calculateUpbit(balances, tickers)
     }
 
-    fun refresh() {
-        viewModelScope.launch {
-            loadData()
-        }
-    }
-
-    fun setAutoRefresh(enabled: Boolean) {
-        val wasEnabled = isAutoRefreshEnabled
-        isAutoRefreshEnabled = enabled
-        if (!wasEnabled && enabled) {
-            startAutoRefresh()
-        }
-    }
 
     override fun onCleared() {
         super.onCleared()

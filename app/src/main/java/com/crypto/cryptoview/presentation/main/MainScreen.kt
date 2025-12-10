@@ -5,18 +5,28 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.outlined.AccountBalanceWallet
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material3.Icon
+import androidx.compose.material3.NavigationBar
+import androidx.compose.material3.NavigationBarItem
+import androidx.compose.material3.NavigationBarItemDefaults
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.tooling.preview.Preview
-import com.crypto.cryptoview.presentation.main.component.HoldingsScreen
-import com.crypto.cryptoview.presentation.main.component.HomeScreen
-import com.crypto.cryptoview.presentation.main.component.SettingsScreen
+import com.crypto.cryptoview.presentation.component.HoldingsScreen
+import com.crypto.cryptoview.presentation.component.SettingsScreen
+import com.crypto.cryptoview.presentation.component.assetsOverview.AssetsOverviewScreen
+import com.crypto.cryptoview.presentation.component.assetsOverview.AssetsOverviewViewModel
 import com.crypto.cryptoview.ui.theme.CryptoViewTheme
 
 @Composable
-fun MainScreen(viewModel: MainViewModel) {
+fun MainScreen(viewModel: AssetsOverviewViewModel) {
     var selectedTab by remember { mutableIntStateOf(0) }
 
     Scaffold(
@@ -68,7 +78,7 @@ fun MainScreen(viewModel: MainViewModel) {
         }
     ) { paddingValues ->
         when (selectedTab) {
-            0 -> HomeScreen(
+            0 ->AssetsOverviewScreen(
                 modifier = Modifier.padding(paddingValues),
                 viewModel = viewModel,
                 onNavigateToHoldings = { selectedTab = 1 }

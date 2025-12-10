@@ -10,6 +10,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.ui.Modifier
 import androidx.core.view.WindowCompat
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import com.crypto.cryptoview.presentation.component.assetsOverview.AssetsOverviewViewModel
 import com.crypto.cryptoview.ui.theme.CryptoViewTheme
 import dagger.hilt.android.AndroidEntryPoint
 
@@ -33,7 +34,7 @@ class MainActivity : ComponentActivity() {
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
-                    val viewModel: MainViewModel = hiltViewModel()
+                    val viewModel: AssetsOverviewViewModel = hiltViewModel()
                     MainScreen(viewModel = viewModel)
                 }
             }
