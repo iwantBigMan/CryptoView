@@ -1,4 +1,4 @@
-package com.crypto.cryptoview.presentation.main.component
+package com.crypto.cryptoview.presentation.component.assetsOverview
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -7,6 +7,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -15,17 +16,49 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.compose.LocalLifecycleOwner
+import com.crypto.cryptoview.presentation.component.assetsOverview.chart.ChartData
+import com.crypto.cryptoview.presentation.component.assetsOverview.chart.DonutChart
 import com.crypto.cryptoview.presentation.main.ExchangeData
+import com.crypto.cryptoview.presentation.main.ExchangeType
 import com.crypto.cryptoview.presentation.main.HoldingData
-import com.crypto.cryptoview.presentation.main.MainViewModel
+import com.crypto.cryptoview.presentation.main.MainUiState
+import com.crypto.cryptoview.ui.theme.CryptoViewTheme
+import kotlin.compareTo
 
 @Composable
-fun HomeScreen(
+fun AssetsOverviewScreen(
     modifier: Modifier = Modifier,
-    viewModel: MainViewModel,
+    viewModel: AssetsOverviewViewModel,
     onNavigateToHoldings: () -> Unit = {}
 ) {
     val uiState = viewModel.uiState.collectAsState().value
+    val lifecycleOwner = LocalLifecycleOwner.current
+
+
+    DisposableEffect(lifecycleOwner) {
+        val observer = LifecycleEventObserver { _, event ->
+            when (event) {
+                Lifecycle.Event.ON_START -> {
+                    viewModel.startAutoRefresh()
+                }
+
+                Lifecycle.Event.ON_STOP -> {
+                    viewModel.stopAutoRefresh()
+                }
+
+                else -> {}
+            }
+        }
+
+        lifecycleOwner.lifecycle.addObserver(observer)
+
+        onDispose {
+            lifecycleOwner.lifecycle.removeObserver(observer)
+        }
+    }
 
     LazyColumn(
         modifier = modifier
@@ -108,6 +141,9 @@ private fun TotalBalanceCard(
 private fun ExchangeBreakdownCard(
     exchanges: List<ExchangeData> = emptyList()
 ) {
+
+    val sortedExchanges = exchanges.sortedByDescending { it.totalValue }
+
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(16.dp),
@@ -118,20 +154,35 @@ private fun ExchangeBreakdownCard(
         ) {
             Text(
                 text = "Exchange Breakdown",
+                style = MaterialTheme.typography.titleMedium,
                 color = Color.White,
-                fontSize = 18.sp,
-                fontWeight = FontWeight.Bold
-            )
-            Spacer(modifier = Modifier.height(20.dp))
-            Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(200.dp),
-                contentAlignment = Alignment.Center
+                    .padding(bottom = 16.dp)
+            )
+
+            Spacer(modifier = Modifier.height(5.dp))
+
+            Box(
+                modifier = Modifier
+                    .size(200.dp)
+                    .padding(bottom = 16.dp)
+                    .align(Alignment.CenterHorizontally)
             ) {
-                Text("Chart Placeholder", color = Color.Gray)
+               DonutChart(
+                   data = exchanges.map { exchange ->
+                       ChartData(
+                           exchange.type.displayName,
+                           exchange.totalValue,
+                           exchange.type.color
+                       )
+                   }.filter { it.value > 0 },
+                   modifier = Modifier.fillMaxWidth()
+               )
             }
+
             Spacer(modifier = Modifier.height(20.dp))
+
             Column(
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
@@ -143,9 +194,40 @@ private fun ExchangeBreakdownCard(
                         row.forEach { exchange ->
                             ExchangeItem(
                                 name = exchange.type.displayName,
-                                amount = "₩${String.format("%,.0f", exchange.totalValue)}",
                                 color = exchange.type.color
                             )
+                        }
+                    }
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    /* 거래소 별 금액 표시
+                    * 양쪽으로 정렬 2개 이후 줄바꿈
+                    * */
+                 // 거래소 별 금액 표시 (값이 0보다 큰 것만)
+                    val visibleExchanges = sortedExchanges.filter { it.totalValue > 0 }
+
+                    visibleExchanges.chunked(2).forEach { rowItems ->
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(16.dp, 0.dp),
+                            horizontalArrangement = if (rowItems.size == 1) {
+                                Arrangement.Center
+                            } else {
+                                Arrangement.SpaceBetween
+                            }
+                        ) {
+                            rowItems.forEach { exchange ->
+                                ExchangeAmount(
+                                    name = exchange.type.displayName,
+                                    amount = "${String.format("%,.0f", exchange.totalValue)}",
+                                    color = exchange.type.color,
+                                    modifier = Modifier.weight(1f)
+                                )
+                            }
+                        }
+                        if (rowItems != visibleExchanges.chunked(2).last()) {
+                            Spacer(modifier = Modifier.height(8.dp))
                         }
                     }
                 }
@@ -155,13 +237,13 @@ private fun ExchangeBreakdownCard(
 }
 
 @Composable
-private fun ExchangeItem(name: String, amount: String, color: Color) {
+private fun ExchangeItem(name: String, color: Color) {
     Column(
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Box(
             modifier = Modifier
-                .size(8.dp)
+                .size(12.dp)
                 .background(color, CircleShape)
         )
         Spacer(modifier = Modifier.height(4.dp))
@@ -170,15 +252,38 @@ private fun ExchangeItem(name: String, amount: String, color: Color) {
             color = Color.White.copy(alpha = 0.7f),
             fontSize = 12.sp
         )
-        Text(
-            text = amount,
-            color = Color.White,
-            fontSize = 14.sp,
-            fontWeight = FontWeight.Bold
-        )
     }
 }
 
+@Composable
+private fun ExchangeAmount(
+    name: String,
+    amount: String,
+    color: Color,
+    modifier: Modifier = Modifier
+) {
+    Column(
+        modifier = modifier,
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Box(
+            modifier = Modifier
+                .size(8.dp)
+                .background(color, shape = CircleShape)
+        )
+        Spacer(modifier = Modifier.height(4.dp))
+        Text(
+            text = name,
+            style = MaterialTheme.typography.bodySmall,
+            color = Color.White.copy(alpha = 0.7f)
+        )
+        Text(
+            text = amount,
+            style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold),
+            color = Color.White
+        )
+    }
+}
 @Composable
 private fun TopHoldingsCard(
     holdings: List<HoldingData> = emptyList(),
@@ -214,7 +319,7 @@ private fun TopHoldingsCard(
             Column(
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                holdings.forEach { holding ->
+                holdings.sortedByDescending { it.totalValue }.take(5).forEach { holding ->
                     HoldingItem(
                         symbol = holding.symbol,
                         name = holding.name,
@@ -301,4 +406,3 @@ private fun HoldingItem(
         }
     }
 }
-
