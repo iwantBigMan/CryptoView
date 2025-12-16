@@ -10,7 +10,7 @@ CryptoView는 여러 거래소(예: Upbit, Binance)의 API를 연동해 개인 �
 
 1. **로그인 / 연동 (ConnectExchanges)**
    - 업비트, 바이낸스 등 거래소 API Key 입력 및 검증
-   - 거래소 선택 → API Key/Secret 입력 → 안전한 저장(DataStore/Room)
+   - 거래소 선택 → API Key/Secret 입력 → 안전한 저장(DataStore)
    - 키 상태: Idle / Validating / Error
    - 오프라인 사용자 경험을 위한 "나중에 연결" 스킵 옵션
 
@@ -60,11 +60,15 @@ CryptoView는 여러 거래소(예: Upbit, Binance)의 API를 연동해 개인 �
 
 ---
 
-## 진행 상황 (Progress)
+## 진행 상황 (Progress) - 현재 업비트만 연동, 게이트 아이오 연동 중
 
 ### ✅ 홈 대시보드 (Home) — 완료
 - 전체 자산 요약, 거래소별 요약(원형 차트), Top 5 보유코인 UI 구현 완료
 - 화면 상태: Loading / Success / Error / Empty 모두 처리
+
+### 🚧 보유 자산 상세 (Holding Coin View) — 진행 중
+- 보유 코인 리스트를 LazyColumn 기반으로 구성
+- 코인별 자산 정보 아이템 UI 구현 완료
 
 ### ✅ 업비트 연동 (Upbit Integration) — 완료
 - API Key 입력 → 검증 → 로컬 저장 흐름 구현
@@ -72,7 +76,7 @@ CryptoView는 여러 거래소(예: Upbit, Binance)의 API를 연동해 개인 �
 - 키 상태 처리(Idle / Validating / Error) 반영
 - 기본 예외 처리 및 오류 UI 적용
 
-### ⏳ 바이낸스 연동 — 진행 중
+### ⏳ 게이트아이오 연동 — 진행 중
 - REST API 연동 흐름 설계 완료
 - 인증 및 시그니처 생성 구현 예정
 
@@ -84,15 +88,8 @@ CryptoView는 여러 거래소(예: Upbit, Binance)의 API를 연동해 개인 �
 
 ---
 
-## 설치 및 실행
+### 🔜 다음 작업 예정 (Optional로 넣어도 좋음)
 
-1. Android Studio로 프로젝트 열기  
-2. Gradle Sync 후 앱 실행  
-3. 개발환경에서는 `local.properties` 또는 환경 변수 등을 통해 API Key 주입  
-> 실제 배포 시 Android Keystore 기반 암호화 저장 필수
-
----
-
-## 프로젝트 구조 예시
-
-
+- Gate.io 잔고 / 시세 연동
+- 해외 거래소 자산 USDT → KRW 환산 적용
+- 거래소 앱 딥링크 이동 기능 (자산 클릭 시 해당 거래소 앱으로 이동)
