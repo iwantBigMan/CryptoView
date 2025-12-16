@@ -117,4 +117,7 @@ object NetworkModule {
     ): com.crypto.cryptoview.data.remote.api.UpbitMarketApi {
         return createApiService("https://api.upbit.com/", okHttpClient, json)
     }
+
+    // Gate.io
+
 }

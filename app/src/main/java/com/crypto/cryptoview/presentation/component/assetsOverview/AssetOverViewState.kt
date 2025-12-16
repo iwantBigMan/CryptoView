@@ -1,6 +1,8 @@
 package com.crypto.cryptoview.presentation.component.assetsOverview
 
 import androidx.compose.ui.graphics.Color
+import com.crypto.cryptoview.domain.model.ExchangeData
+import com.crypto.cryptoview.domain.model.HoldingData
 
 data class MainUiState(
     val totalValue: Double = 0.0,
@@ -12,25 +14,5 @@ data class MainUiState(
     val error: String? = null
 )
 
-data class HoldingData(
-    val symbol: String,
-    val name: String,
-    val currentPrice: Double,
-    val balance: Double,
-    val totalValue: Double,
-    val change: Double,
-    val changePercent: Double,
-    val exchange: ExchangeType
-)
 
-data class ExchangeData(
-    val type: ExchangeType,
-    val totalValue: Double
-)
 
-enum class ExchangeType(val displayName: String, val color: Color) {
-    UPBIT("Upbit", Color(0xFF2196F3)),
-    BINANCE("Binance", Color(0xFFFFC107)),
-    GATEIO("Gate.io", Color(0xFF9C27B0)),
-    BYBIT("Bybit", Color(0xFFE91E63))
-}

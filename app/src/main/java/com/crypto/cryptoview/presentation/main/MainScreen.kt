@@ -19,14 +19,18 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.tooling.preview.Preview
-import com.crypto.cryptoview.presentation.component.holdingColins.HoldingsScreen
+import com.crypto.cryptoview.presentation.component.holdingColins.preview.HoldingsScreen
 import com.crypto.cryptoview.presentation.component.SettingsScreen
 import com.crypto.cryptoview.presentation.component.assetsOverview.AssetsOverviewScreen
 import com.crypto.cryptoview.presentation.component.assetsOverview.AssetsOverviewViewModel
+import com.crypto.cryptoview.presentation.component.holdingColins.HoldingCoinsViewModel
+import com.crypto.cryptoview.presentation.component.holdingColins.HoldingsScreen
 import com.crypto.cryptoview.ui.theme.CryptoViewTheme
 
 @Composable
-fun MainScreen(viewModel: AssetsOverviewViewModel) {
+fun MainScreen(
+    viewModel: AssetsOverviewViewModel,
+    holdingsViewModel: HoldingCoinsViewModel) {
     var selectedTab by remember { mutableIntStateOf(0) }
 
     Scaffold(
@@ -85,7 +89,7 @@ fun MainScreen(viewModel: AssetsOverviewViewModel) {
             )
             1 -> HoldingsScreen(
                 modifier = Modifier.padding(paddingValues),
-                viewModel = viewModel
+                viewModel = holdingsViewModel
             )
             2 -> SettingsScreen(Modifier.padding(paddingValues))
         }
