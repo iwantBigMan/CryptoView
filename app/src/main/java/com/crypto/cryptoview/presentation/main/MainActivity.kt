@@ -11,7 +11,7 @@ import androidx.compose.ui.Modifier
 import androidx.core.view.WindowCompat
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.crypto.cryptoview.presentation.component.assetsOverview.AssetsOverviewViewModel
-import com.crypto.cryptoview.presentation.component.holdingColins.HoldingCoinsViewModel
+import com.crypto.cryptoview.presentation.component.holdingCoinView.HoldingCoinsViewModel
 import com.crypto.cryptoview.ui.theme.CryptoViewTheme
 import dagger.hilt.android.AndroidEntryPoint
 

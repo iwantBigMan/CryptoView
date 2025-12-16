@@ -1,4 +1,4 @@
-package com.crypto.cryptoview.presentation.component.holdingColins.preview
+package com.crypto.cryptoview.presentation.component.holdingCoinView.preview
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*

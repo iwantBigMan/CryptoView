@@ -1,3 +1,5 @@
 <resources>
     <string name="app_name">CryptoView</string>
+    <string name="total_value">자산</string>
+    <string name="ROI">ROI</string>
 </resources>

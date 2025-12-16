@@ -1,4 +1,4 @@
-package com.crypto.cryptoview.presentation.component.holdingColins.preview
+package com.crypto.cryptoview.presentation.component.holdingCoinView.preview
 
 import androidx.compose.ui.graphics.Color
 import com.crypto.cryptoview.ui.theme.AVAXRed

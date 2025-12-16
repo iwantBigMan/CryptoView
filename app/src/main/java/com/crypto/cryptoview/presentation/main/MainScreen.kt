@@ -19,79 +19,96 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.tooling.preview.Preview
-import com.crypto.cryptoview.presentation.component.holdingColins.preview.HoldingsScreen
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import androidx.navigation.compose.rememberNavController
 import com.crypto.cryptoview.presentation.component.SettingsScreen
 import com.crypto.cryptoview.presentation.component.assetsOverview.AssetsOverviewScreen
 import com.crypto.cryptoview.presentation.component.assetsOverview.AssetsOverviewViewModel
-import com.crypto.cryptoview.presentation.component.holdingColins.HoldingCoinsViewModel
-import com.crypto.cryptoview.presentation.component.holdingColins.HoldingsScreen
+import com.crypto.cryptoview.presentation.component.holdingCoinView.HoldingCoinsViewModel
+import com.crypto.cryptoview.presentation.component.holdingCoinView.HoldingDetailScreen
+import com.crypto.cryptoview.presentation.component.holdingCoinView.HoldingsScreen
 import com.crypto.cryptoview.ui.theme.CryptoViewTheme
 
 @Composable
 fun MainScreen(
     viewModel: AssetsOverviewViewModel,
-    holdingsViewModel: HoldingCoinsViewModel) {
+    holdingsViewModel: HoldingCoinsViewModel
+) {
+    val navController = rememberNavController()
     var selectedTab by remember { mutableIntStateOf(0) }
 
-    Scaffold(
-        bottomBar = {
-            NavigationBar(
-                containerColor = Color(0xFF1A1D2E),
-                contentColor = Color.White
-            ) {
-                NavigationBarItem(
-                    icon = { Icon(Icons.Default.Home, contentDescription = "Home") },
-                    label = { Text("Home") },
-                    selected = selectedTab == 0,
-                    onClick = { selectedTab = 0 },
-                    colors = NavigationBarItemDefaults.colors(
-                        selectedIconColor = Color(0xFF5B7FFF),
-                        selectedTextColor = Color(0xFF5B7FFF),
-                        unselectedIconColor = Color.Gray,
-                        unselectedTextColor = Color.Gray,
-                        indicatorColor = Color.Transparent
+    NavHost(navController = navController, startDestination = "main") {
+        composable("main") {
+            Scaffold(
+                bottomBar = {
+                    NavigationBar(
+                        containerColor = Color(0xFF1A1D2E),
+                        contentColor = Color.White
+                    ) {
+                        NavigationBarItem(
+                            icon = { Icon(Icons.Default.Home, contentDescription = "Home") },
+                            label = { Text("Home") },
+                            selected = selectedTab == 0,
+                            onClick = { selectedTab = 0 },
+                            colors = NavigationBarItemDefaults.colors(
+                                selectedIconColor = Color(0xFF5B7FFF),
+                                selectedTextColor = Color(0xFF5B7FFF),
+                                unselectedIconColor = Color.Gray,
+                                unselectedTextColor = Color.Gray,
+                                indicatorColor = Color.Transparent
+                            )
+                        )
+                        NavigationBarItem(
+                            icon = { Icon(Icons.Outlined.AccountBalanceWallet, contentDescription = "Holdings") },
+                            label = { Text("Holdings") },
+                            selected = selectedTab == 1,
+                            onClick = { selectedTab = 1 },
+                            colors = NavigationBarItemDefaults.colors(
+                                selectedIconColor = Color(0xFF5B7FFF),
+                                selectedTextColor = Color(0xFF5B7FFF),
+                                unselectedIconColor = Color.Gray,
+                                unselectedTextColor = Color.Gray,
+                                indicatorColor = Color.Transparent
+                            )
+                        )
+                        NavigationBarItem(
+                            icon = { Icon(Icons.Default.Settings, contentDescription = "Settings") },
+                            label = { Text("Settings") },
+                            selected = selectedTab == 2,
+                            onClick = { selectedTab = 2 },
+                            colors = NavigationBarItemDefaults.colors(
+                                selectedIconColor = Color(0xFF5B7FFF),
+                                selectedTextColor = Color(0xFF5B7FFF),
+                                unselectedIconColor = Color.Gray,
+                                unselectedTextColor = Color.Gray,
+                                indicatorColor = Color.Transparent
+                            )
+                        )
+                    }
+                }
+            ) { paddingValues ->
+                when (selectedTab) {
+                    0 -> AssetsOverviewScreen(
+                        modifier = Modifier.padding(paddingValues),
+                        viewModel = viewModel,
+                        onNavigateToHoldings = { selectedTab = 1 }
                     )
-                )
-                NavigationBarItem(
-                    icon = { Icon(Icons.Outlined.AccountBalanceWallet, contentDescription = "Holdings") },
-                    label = { Text("Holdings") },
-                    selected = selectedTab == 1,
-                    onClick = { selectedTab = 1 },
-                    colors = NavigationBarItemDefaults.colors(
-                        selectedIconColor = Color(0xFF5B7FFF),
-                        selectedTextColor = Color(0xFF5B7FFF),
-                        unselectedIconColor = Color.Gray,
-                        unselectedTextColor = Color.Gray,
-                        indicatorColor = Color.Transparent
+                    1 -> HoldingsScreen(
+                        modifier = Modifier.padding(paddingValues),
+                        viewModel = holdingsViewModel,
+                        onHoldingClick = { symbol -> navController.navigate("holding/$symbol") }
                     )
-                )
-                NavigationBarItem(
-                    icon = { Icon(Icons.Default.Settings, contentDescription = "Settings") },
-                    label = { Text("Settings") },
-                    selected = selectedTab == 2,
-                    onClick = { selectedTab = 2 },
-                    colors = NavigationBarItemDefaults.colors(
-                        selectedIconColor = Color(0xFF5B7FFF),
-                        selectedTextColor = Color(0xFF5B7FFF),
-                        unselectedIconColor = Color.Gray,
-                        unselectedTextColor = Color.Gray,
-                        indicatorColor = Color.Transparent
-                    )
-                )
+                    2 -> SettingsScreen(Modifier.padding(paddingValues))
+                }
             }
         }
-    ) { paddingValues ->
-        when (selectedTab) {
-            0 ->AssetsOverviewScreen(
-                modifier = Modifier.padding(paddingValues),
-                viewModel = viewModel,
-                onNavigateToHoldings = { selectedTab = 1 }
+        composable("holding/{symbol}") { backStackEntry ->
+            val symbol = backStackEntry.arguments?.getString("symbol") ?: ""
+            HoldingDetailScreen(
+                symbol = symbol,
+                onBack = { navController.popBackStack() }
             )
-            1 -> HoldingsScreen(
-                modifier = Modifier.padding(paddingValues),
-                viewModel = holdingsViewModel
-            )
-            2 -> SettingsScreen(Modifier.padding(paddingValues))
         }
     }
 }

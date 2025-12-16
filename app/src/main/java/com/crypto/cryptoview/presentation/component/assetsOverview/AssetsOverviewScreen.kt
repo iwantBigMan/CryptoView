@@ -12,12 +12,14 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
+import com.crypto.cryptoview.R
 import com.crypto.cryptoview.domain.model.ExchangeData
 import com.crypto.cryptoview.domain.model.HoldingData  // 추가
 import com.crypto.cryptoview.presentation.component.assetsOverview.chart.ChartData
@@ -85,7 +87,7 @@ private fun TotalBalanceCard(
     ) {
         Column(modifier = Modifier.padding(20.dp)) {
             Text(
-                text = "Total Value",
+                text = stringResource(R.string.total_value),
                 color = Color.White.copy(alpha = 0.7f),
                 fontSize = 14.sp
             )

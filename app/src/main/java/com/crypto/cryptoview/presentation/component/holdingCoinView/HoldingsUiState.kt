@@ -1,7 +1,7 @@
-package com.crypto.cryptoview.presentation.component.holdingColins
+package com.crypto.cryptoview.presentation.component.holdingCoinView
 
 import com.crypto.cryptoview.domain.model.HoldingData
-import com.crypto.cryptoview.presentation.component.holdingColins.preview.SortType
+import com.crypto.cryptoview.presentation.component.holdingCoinView.preview.SortType
 
 /**
  * 보유 코인 화면 UI 상태
