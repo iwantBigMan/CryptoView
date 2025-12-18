@@ -1,5 +1,5 @@
 // language: kotlin
-package com.crypto.cryptoview.util
+package com.crypto.cryptoview.util.authHelper
 
 import com.auth0.jwt.JWT
 import com.auth0.jwt.algorithms.Algorithm

@@ -1,13 +1,13 @@
 [versions]
 agp = "8.13.2"
-kotlin = "2.2.21"
+kotlin = "2.3.0"
 coreKtx = "1.17.0"
 junit = "4.13.2"
 junitVersion = "1.3.0"
 espressoCore = "3.7.0"
 lifecycleRuntimeKtx = "2.10.0"
-activityCompose = "1.12.1"
-composeBom = "2025.12.00"
+activityCompose = "1.12.2"
+composeBom = "2025.12.01"
 material3 = "1.4.0"
 material-icons-extended = "1.7.8"
 uiText = "1.10.0"
@@ -25,6 +25,8 @@ coroutines = "1.10.2"
 ksp = "2.2.10-2.0.2"
 javaJwt = "4.5.0"
 junitKtx = "1.3.0"
+gson = "2.13.2"
+converterGson = "3.0.0"
 
 # 테스트 라이브러리 버전 추가
 mockk = "1.14.6"
@@ -61,6 +63,8 @@ androidx-datastore-core = { group = "androidx.datastore", name = "datastore-core
 # Retrofit (네트워크 통신)
 retrofit = { group = "com.squareup.retrofit2", name = "retrofit", version.ref = "retrofit" }
 retrofit-converter-kotlinx-serialization = { group = "com.squareup.retrofit2", name = "converter-kotlinx-serialization", version.ref = "retrofit" }
+gson = { group = "com.google.code.gson", name = "gson", version.ref = "gson" }
+retrofit-converter-gson = { group = "com.squareup.retrofit2", name = "converter-gson", version.ref = "converterGson" }
 
 # OkHttp (HTTP 클라이언트)
 okhttp = { group = "com.squareup.okhttp3", name = "okhttp", version.ref = "okhttp" }

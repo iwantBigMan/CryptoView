@@ -40,6 +40,23 @@ android {
             "UPBIT_SECRET_KEY",
             "\"${properties.getProperty("upbit.secret.key", "")}\""
         )
+        buildConfigField(
+            "String",
+            "GATE_IO_API_KEY",
+            "\"${properties.getProperty("gate.io.api.key", "")}\""
+        )
+        buildConfigField(
+            "String",
+            "GATE_IO_SECRET_KEY",
+            "\"${properties.getProperty("gate.io.secret.key", "")}\""
+        )
+        defaultConfig {
+            buildConfigField(
+                "String",
+                "GATE_BASE_URL",
+                "\"https://api.gateio.ws/api/v4/\""
+            )
+        }
     }
 
     buildTypes {
@@ -57,9 +74,13 @@ android {
         targetCompatibility = JavaVersion.VERSION_17
     }
 
-    kotlinOptions {
-        jvmTarget = "17"
+    kotlin {
+        compilerOptions {
+            jvmTarget = org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17
+        }
     }
+
+
 
     buildFeatures {
         compose = true
@@ -101,6 +122,8 @@ dependencies {
     implementation(libs.retrofit.converter.kotlinx.serialization)
     implementation(libs.okhttp)
     implementation(libs.okhttp.logging.interceptor)
+    implementation(libs.gson)
+    implementation(libs.retrofit.converter.gson)
 
     // Kotlinx Serialization
     implementation(libs.kotlinx.serialization.json)

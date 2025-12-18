@@ -1,6 +1,6 @@
 package com.crypto.cryptoview
 
-import com.crypto.cryptoview.data.remote.dto.UpbitAccountBalanceDto
+import com.crypto.cryptoview.data.remote.dto.upbit.UpbitAccountBalanceDto
 import org.junit.Assert
 import org.junit.Test
 

@@ -1,6 +1,6 @@
 package com.crypto.cryptoview.data.remote.interceptor
 
-import com.crypto.cryptoview.util.UpbitAuthHelper
+import com.crypto.cryptoview.util.authHelper.UpbitAuthHelper
 import okhttp3.Interceptor
 import okhttp3.Response
 

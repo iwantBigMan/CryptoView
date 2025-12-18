@@ -1,7 +1,7 @@
 package com.crypto.cryptoview.data.remote.api
 
-import com.crypto.cryptoview.data.remote.dto.UpbitAccountBalanceDto
-import com.crypto.cryptoview.data.remote.dto.UpbitMarketTickerDto
+import com.crypto.cryptoview.data.remote.dto.upbit.UpbitAccountBalanceDto
+import com.crypto.cryptoview.data.remote.dto.upbit.UpbitMarketTickerDto
 import retrofit2.http.GET
 import retrofit2.http.Query
 
@@ -16,3 +16,4 @@ interface UpbitMarketApi {
         @Query("markets") markets: String
     ): List<UpbitMarketTickerDto>
 }
+
