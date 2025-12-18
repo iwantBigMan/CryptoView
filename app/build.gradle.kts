@@ -48,16 +48,16 @@ android {
         buildConfigField(
             "String",
             "GATE_IO_SECRET_KEY",
-            "\"${properties.getProperty("gate.io.secret.key", "")}\""
+            "\"${properties.getProperty("gate.io.api.secret", "")}\""
         )
-        defaultConfig {
-            buildConfigField(
-                "String",
-                "GATE_BASE_URL",
-                "\"https://api.gateio.ws/api/v4/\""
-            )
-        }
+        buildConfigField(
+            "String",
+            "GATE_BASE_URL",
+            "\"https://api.gateio.ws/api/v4/\""
+        )
     }
+
+
 
     buildTypes {
         release {

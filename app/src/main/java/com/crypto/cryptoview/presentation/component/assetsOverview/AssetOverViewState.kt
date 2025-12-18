@@ -11,7 +11,7 @@ data class MainUiState(
     val topHoldings: List<HoldingData> = emptyList(),
     val exchangeBreakdown: List<ExchangeData> = emptyList(),
     val isLoading: Boolean = false,
-    val error: String? = null
+    val error: String? = null,
 )
 
 

@@ -3,7 +3,7 @@ package com.crypto.cryptoview
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.crypto.cryptoview.data.remote.api.UpbitApi
 import com.crypto.cryptoview.data.remote.interceptor.UpbitAuthInterceptor
-import com.crypto.cryptoview.data.repository.UpbitRepositoryImpl
+import com.crypto.cryptoview.data.repository.upbitRepoImpl.UpbitRepositoryImpl
 import kotlinx.coroutines.test.runTest
 import kotlinx.serialization.json.Json
 import okhttp3.MediaType.Companion.toMediaType

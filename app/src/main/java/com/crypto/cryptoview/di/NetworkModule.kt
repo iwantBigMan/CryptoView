@@ -1,6 +1,8 @@
 package com.crypto.cryptoview.di
 
 import com.crypto.cryptoview.BuildConfig
+import com.crypto.cryptoview.data.remote.api.GateFuturesApi
+import com.crypto.cryptoview.data.remote.api.GateSpotApi
 import com.crypto.cryptoview.data.remote.api.UpbitApi
 import com.crypto.cryptoview.data.remote.api.UpbitMarketApi
 import com.crypto.cryptoview.data.remote.interceptor.GateIOAuthInterceptor
@@ -128,19 +130,39 @@ object NetworkModule {
     fun provideGateIoOkHttpClient(
         loggingInterceptor: HttpLoggingInterceptor
     ): OkHttpClient {
-        return OkHttpClient.Builder()
-            .addInterceptor(loggingInterceptor)
-            .addInterceptor(
-                GateIOAuthInterceptor(
-                    apiKey = BuildConfig.GATE_IO_API_KEY,
-                    secretKey = BuildConfig.GATE_IO_SECRET_KEY
-                )
+        return createOkHttpClient(
+            loggingInterceptor,
+            GateIOAuthInterceptor(
+                apiKey = BuildConfig.GATE_IO_API_KEY,
+                secretKey = BuildConfig.GATE_IO_SECRET_KEY
             )
-            .connectTimeout(30, TimeUnit.SECONDS)
-            .readTimeout(30, TimeUnit.SECONDS)
-            .build()
+        )
     }
 
 
+    @Provides
+    @Singleton
+    fun provideGateSpotApi(
+        @GateIoClient okHttpClient: OkHttpClient,
+        json: Json
+    ): GateSpotApi {
+        return createApiService(
+            baseUrl = BuildConfig.GATE_BASE_URL,
+            okHttpClient = okHttpClient,
+            json = json
+        )
+    }
 
+    @Provides
+    @Singleton
+    fun provideGateFuturesApi(
+        @GateIoClient okHttpClient: OkHttpClient,
+        json: Json
+    ): GateFuturesApi {
+        return createApiService(
+            baseUrl = BuildConfig.GATE_BASE_URL,
+            okHttpClient = okHttpClient,
+            json = json
+        )
+    }
 }

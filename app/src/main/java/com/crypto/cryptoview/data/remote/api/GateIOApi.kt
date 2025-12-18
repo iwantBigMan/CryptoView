@@ -1,9 +1,10 @@
 package com.crypto.cryptoview.data.remote.api
 
-import com.crypto.cryptoview.data.remote.dto.upbit.gateio.GateFuturesAccountDto
-import com.crypto.cryptoview.data.remote.dto.upbit.gateio.GateFuturesPositionDto
-import com.crypto.cryptoview.data.remote.dto.upbit.gateio.GateSpotBalanceDto
-import com.crypto.cryptoview.data.remote.dto.upbit.gateio.GateTickerDto
+import com.crypto.cryptoview.data.remote.dto.gateio.GateFuturesAccountDto
+import com.crypto.cryptoview.data.remote.dto.gateio.GateFuturesPositionDto
+import com.crypto.cryptoview.data.remote.dto.gateio.GateFuturesTickerDto
+import com.crypto.cryptoview.data.remote.dto.gateio.GateSpotBalanceDto
+import com.crypto.cryptoview.data.remote.dto.gateio.GateSpotTickerDto
 import retrofit2.http.GET
 import retrofit2.http.Query
 
@@ -17,7 +18,7 @@ interface GateSpotApi {
     @GET("spot/tickers")
     suspend fun getSpotTickers(
         @Query("currency_pair") currencyPair: String
-    ): List<GateTickerDto>
+    ): List<GateSpotTickerDto>
 }
 
 interface GateFuturesApi {
@@ -33,7 +34,6 @@ interface GateFuturesApi {
     // 선물 ticker
     @GET("futures/usdt/tickers")
     suspend fun getFuturesTickers(
-        @Query("contract") contract: String
-    ): List<GateTickerDto>
+    ): List<GateFuturesTickerDto>
 }
 

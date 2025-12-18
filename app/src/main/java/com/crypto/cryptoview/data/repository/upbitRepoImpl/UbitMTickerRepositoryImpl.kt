@@ -1,4 +1,4 @@
-package com.crypto.cryptoview.data.repository
+package com.crypto.cryptoview.data.repository.upbitRepoImpl
 
 import com.crypto.cryptoview.data.remote.api.UpbitApi
 import com.crypto.cryptoview.data.remote.api.UpbitMarketApi

@@ -8,3 +8,8 @@ enum class ExchangeType(val displayName: String, val color: Color) {
     GATEIO("Gate.io", Color(0xFF9C27B0)),
     BYBIT("Bybit", Color(0xFFE91E63))
 }
+
+enum class PositionSide {
+    LONG,
+    SHORT
+}

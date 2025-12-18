@@ -4,8 +4,8 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.crypto.cryptoview.domain.model.HoldingData
 import com.crypto.cryptoview.domain.usecase.CalculateBalanceUseCase
-import com.crypto.cryptoview.domain.usecase.GetUpbitAccountBalancesUseCase
-import com.crypto.cryptoview.domain.usecase.GetUpbitMTickerUseCase
+import com.crypto.cryptoview.domain.usecase.upbit.GetUpbitAccountBalancesUseCase
+import com.crypto.cryptoview.domain.usecase.upbit.GetUpbitMTickerUseCase
 import com.crypto.cryptoview.presentation.component.holdingCoinView.preview.SortType
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job

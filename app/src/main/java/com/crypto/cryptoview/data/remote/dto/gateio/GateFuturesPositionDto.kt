@@ -1,4 +1,4 @@
-package com.crypto.cryptoview.data.remote.dto.upbit.gateio
+package com.crypto.cryptoview.data.remote.dto.gateio
 
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable

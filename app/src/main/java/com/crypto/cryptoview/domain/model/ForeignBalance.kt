@@ -13,3 +13,4 @@ data class ForeignBalance(
     val locked: Double = 0.0,
     val avgBuyPriceUsdt: Double = 0.0
 )
+

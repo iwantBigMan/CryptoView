@@ -3,6 +3,7 @@ package com.crypto.cryptoview.domain.usecase.calculator
 import com.crypto.cryptoview.domain.model.ExchangeData
 import com.crypto.cryptoview.domain.model.ExchangeType
 import com.crypto.cryptoview.domain.model.ForeignBalance
+import com.crypto.cryptoview.domain.model.GateSpotBalance
 import javax.inject.Inject
 
 

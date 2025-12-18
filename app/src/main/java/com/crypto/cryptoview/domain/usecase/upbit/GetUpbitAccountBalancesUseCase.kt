@@ -1,4 +1,4 @@
-package com.crypto.cryptoview.domain.usecase
+package com.crypto.cryptoview.domain.usecase.upbit
 
 import com.crypto.cryptoview.domain.model.UpbitAccountBalance
 import com.crypto.cryptoview.domain.repository.UpbitAssetRepository
