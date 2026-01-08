@@ -3,9 +3,7 @@ package com.crypto.cryptoview.domain.usecase.calculator
 import com.crypto.cryptoview.domain.model.ExchangeData
 import com.crypto.cryptoview.domain.model.ExchangeType
 import com.crypto.cryptoview.domain.model.ForeignBalance
-import com.crypto.cryptoview.domain.model.GateSpotBalance
 import javax.inject.Inject
-
 
 
 /**
@@ -37,15 +35,12 @@ class ForeignBalanceCalculator @Inject constructor() :
 
         val holdings = balances
             .filter { it.free > 0 }
-            .mapNotNull { balance ->
+            .map { balance ->
                 // USDT 가격 조회 (USDT는 1.0)
-                val priceUsdt = when (balance.asset) {
-                    "USDT" -> 1.0
-                    else -> tickers["${balance.asset}USDT"] ?: return@mapNotNull null
-                }
+                val priceUsdt = tickers["${balance.asset}USDT"]
 
                 // KRW 환산
-                val priceKrw = priceUsdt * usdtKrwRate
+                val priceKrw = priceUsdt?.times(usdtKrwRate)
                 val avgBuyPriceKrw = balance.avgBuyPriceUsdt * usdtKrwRate
 
                 createHoldingData(

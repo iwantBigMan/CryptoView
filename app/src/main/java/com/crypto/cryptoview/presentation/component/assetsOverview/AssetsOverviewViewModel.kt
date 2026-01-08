@@ -2,14 +2,17 @@ package com.crypto.cryptoview.presentation.component.assetsOverview
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.crypto.cryptoview.domain.model.ExchangeType
 import com.crypto.cryptoview.domain.model.toForeignBalance
 import com.crypto.cryptoview.domain.usecase.CalculateBalanceUseCase
+import com.crypto.cryptoview.domain.usecase.calculator.BalanceCalculator
 import com.crypto.cryptoview.domain.usecase.gate.GetGateSpotBalancesUseCase
 import com.crypto.cryptoview.domain.usecase.gate.GetGateSpotTickersUseCase
 import com.crypto.cryptoview.domain.usecase.upbit.GetUpbitAccountBalancesUseCase
 import com.crypto.cryptoview.domain.usecase.upbit.GetUpbitMTickerUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.async
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -18,10 +21,6 @@ import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
-/**
- * 자산 개요 화면의 ViewModel
- * UseCase만 호출, UI 상태 관리만 담당
- */
 @HiltViewModel
 class AssetsOverviewViewModel @Inject constructor(
     private val getUpbitAccountBalance: GetUpbitAccountBalancesUseCase,
@@ -43,7 +42,6 @@ class AssetsOverviewViewModel @Inject constructor(
 
     fun startAutoRefresh() {
         if (autoRefreshJob?.isActive == true) return
-
         isAutoRefreshEnabled = true
 
         autoRefreshJob = viewModelScope.launch {
@@ -59,66 +57,64 @@ class AssetsOverviewViewModel @Inject constructor(
         autoRefreshJob?.cancel()
     }
 
-private suspend fun loadData() {
-    _uiState.value = _uiState.value.copy(isLoading = true)
+    private suspend fun loadData() {
+        _uiState.value = _uiState.value.copy(isLoading = true, error = null)
 
-    try {
-        val upbitBalances = getUpbitAccountBalance().getOrElse {
-            _uiState.value = _uiState.value.copy(isLoading = false, error = it.message)
-            return
+        try {
+            // 병렬 API 호출
+            val upbitBalancesDeferred = viewModelScope.async { getUpbitAccountBalance() }
+            val upbitTickersDeferred = viewModelScope.async { getUpbitMarketTicker() }
+            val gateBalancesDeferred = viewModelScope.async { getGateSpotBalance() }
+
+            val upbitBalances = upbitBalancesDeferred.await().getOrElse { emptyList() }
+            val upbitTickers = upbitTickersDeferred.await().getOrElse { emptyList() }
+            val gateBalances = gateBalancesDeferred.await().getOrElse { emptyList() }
+
+            // Gate 티커 조회
+            val tickerMap = fetchGateTickers(gateBalances.map { it.currency })
+
+            // 잔고 계산
+            val usdtKrwRate = calculateBalanceUseCase.getUsdtKrwRate(upbitTickers)
+            val upbitResult = calculateBalanceUseCase.calculateUpbit(upbitBalances, upbitTickers)
+            val gateResult = calculateBalanceUseCase.calculateForeign(
+                balances = gateBalances.map { it.toForeignBalance() },
+                tickers = tickerMap,
+                usdtKrwRate = usdtKrwRate,
+                exchangeType = ExchangeType.GATEIO
+            )
+
+            updateUiState(listOf(upbitResult, gateResult))
+        } catch (e: Exception) {
+            _uiState.value = _uiState.value.copy(isLoading = false, error = e.message)
         }
-        val gateBalances = getGateSpotBalance().getOrElse {
-            _uiState.value = _uiState.value.copy(isLoading = false, error = it.message)
-            return
-        }
-        val upbitTickers = getUpbitMarketTicker().getOrElse { emptyList() }
+    }
 
-        // 게이트 거래소에서 필요한 코인 목록 추출
-        val gateCurrencies = gateBalances.map { it.currency }.distinct()
-        val gateTickers = getGateSpotTickers(gateCurrencies.joinToString(",")).getOrElse { emptyList() }
+    private suspend fun fetchGateTickers(currencies: List<String>): Map<String, Double> {
+        return currencies
+            .filter { it != "USDT" && it != "POINT" }
+            .distinct()
+            .mapNotNull { currency ->
+                getGateSpotTickers("${currency}_USDT").getOrNull()?.firstOrNull()
+            }
+            .associate { it.symbol.substringBefore("_") to it.lastPrice }
+    }
 
-        // 게이트 시세 매핑 로직 수정
-        val tickerMap = gateTickers.associate { ticker ->
-            ticker.symbol to ticker.lastPrice // 필드 이름 확인 후 수정
-        }
-
-        // 업비트 계산
-        val upbitResult = calculateBalanceUseCase.calculateUpbit(upbitBalances, upbitTickers)
-
-        // 게이트 계산
-        val gateResult = calculateBalanceUseCase.calculateForeign(
-            balances = gateBalances.map { it.toForeignBalance() },
-            tickers = tickerMap,
-            usdtKrwRate = calculateBalanceUseCase.getUsdtKrwRate(upbitTickers),
-            exchangeType = com.crypto.cryptoview.domain.model.ExchangeType.GATEIO
-        )
-
-        val totalResult = listOf(upbitResult, gateResult)
-        val totalValue = totalResult.sumOf { it.totalValue }
-        val totalChange = totalResult.sumOf { it.holdings.sumOf { holding -> holding.change } }
-        val totalChangeRate = if (totalValue > 0) {
-            (totalChange / (totalValue - totalChange)) * 100
-        } else 0.0
-
-        val topHoldings = totalResult.flatMap { it.holdings }
-            .sortedByDescending { it.totalValue }
-            .take(5)
+    private fun updateUiState(results: List<BalanceCalculator.CalculationResult>) {
+        val totalValue = results.sumOf { it.totalValue }
+        val totalChange = results.sumOf { r -> r.holdings.sumOf { it.change } }
+        val buyValue = totalValue - totalChange
+        val totalChangeRate = if (buyValue > 0) (totalChange / buyValue) * 100 else 0.0
 
         _uiState.value = MainUiState(
             totalValue = totalValue,
             totalChange = totalChange,
             totalChangeRate = totalChangeRate,
-            topHoldings = topHoldings,
-            exchangeBreakdown = totalResult.map { it.exchangeData },
+            topHoldings = results.flatMap { it.holdings }.sortedByDescending { it.totalValue }.take(5),
+            exchangeBreakdown = results.map { it.exchangeData },
             isLoading = false
         )
-    } catch (e: Exception) {
-        _uiState.value = _uiState.value.copy(
-            isLoading = false,
-            error = e.message
-        )
     }
-}
+
     override fun onCleared() {
         super.onCleared()
         isAutoRefreshEnabled = false

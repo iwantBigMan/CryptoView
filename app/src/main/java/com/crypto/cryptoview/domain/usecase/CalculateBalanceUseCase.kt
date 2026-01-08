@@ -70,10 +70,6 @@ class CalculateBalanceUseCase @Inject constructor(
 fun calculateAll(
     upbitBalances: List<UpbitAccountBalance>,
     upbitTickers: List<UpbitMarketTicker>,
-    binanceBalances: List<ForeignBalance> = emptyList(),
-    binanceTickers: Map<String, Double> = emptyMap(),
-    bybitBalances: List<ForeignBalance> = emptyList(),
-    bybitTickers: Map<String, Double> = emptyMap(),
     gateioBalances: List<GateSpotBalance>,
     gateioTickers: List<GateSpotTicker>
 ): TotalBalanceResult {
@@ -84,16 +80,17 @@ fun calculateAll(
     results.add(calculateUpbit(upbitBalances, upbitTickers))
 
     // 해외 거래소 계산 (잔고가 있는 경우만)
-    if (binanceBalances.isNotEmpty()) {
-        results.add(calculateForeign(binanceBalances, binanceTickers, usdtKrwRate, ExchangeType.BINANCE))
-    }
-    if (bybitBalances.isNotEmpty()) {
-        results.add(calculateForeign(bybitBalances, bybitTickers, usdtKrwRate, ExchangeType.BYBIT))
-    }
+//    if (binanceBalances.isNotEmpty()) {
+//        results.add(calculateForeign(binanceBalances, binanceTickers, usdtKrwRate, ExchangeType.BINANCE))
+//    }
+//    if (bybitBalances.isNotEmpty()) {
+//        results.add(calculateForeign(bybitBalances, bybitTickers, usdtKrwRate, ExchangeType.BYBIT))
+//    }
 if (gateioBalances.isNotEmpty()) {
     val foreignBalances = gateioBalances.map { it.toForeignBalance() }
     val tickerMap = gateioTickers.associate { ticker ->
-        ticker.symbol to ticker.lastPrice // 필드 이름을 올바르게 수정
+        // XRP_USDT -> XRPUSDT 변환
+        ticker.symbol.replace("_", "") to ticker.lastPrice
     }
     results.add(calculateForeign(foreignBalances, tickerMap, usdtKrwRate, ExchangeType.GATEIO))
 }

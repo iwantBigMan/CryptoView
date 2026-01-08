@@ -30,10 +30,10 @@ abstract class BaseBalanceCalculator<BALANCE, TICKER> : BalanceCalculator<BALANC
         symbol: String,
         amount: Double,
         avgBuyPrice: Double,
-        currentPrice: Double,
+        currentPrice: Double?,
         exchange: ExchangeType
     ): HoldingData {
-        val totalValue = amount * currentPrice
+        val totalValue = amount * currentPrice!!
         val buyValue = amount * avgBuyPrice
         val change = totalValue - buyValue
         val changePercent = if (buyValue > 0) (change / buyValue) * 100 else 0.0

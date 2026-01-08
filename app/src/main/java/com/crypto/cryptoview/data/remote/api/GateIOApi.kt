@@ -17,7 +17,7 @@ interface GateSpotApi {
     // 현물 ticker (단일)
     @GET("spot/tickers")
     suspend fun getSpotTickers(
-        @Query("currency_pair") currencyPair: String
+        @Query("currency_pair") currencyPair: String?
     ): List<GateSpotTickerDto>
 }
 
