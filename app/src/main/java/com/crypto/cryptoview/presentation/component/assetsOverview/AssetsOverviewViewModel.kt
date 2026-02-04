@@ -2,17 +2,15 @@ package com.crypto.cryptoview.presentation.component.assetsOverview
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.crypto.cryptoview.domain.model.ExchangeType
-import com.crypto.cryptoview.domain.model.toForeignBalance
 import com.crypto.cryptoview.domain.usecase.CalculateBalanceUseCase
-import com.crypto.cryptoview.domain.usecase.calculator.BalanceCalculator
+import com.crypto.cryptoview.domain.usecase.calculator.ExchangeRateProvider
 import com.crypto.cryptoview.domain.usecase.gate.GetGateSpotBalancesUseCase
 import com.crypto.cryptoview.domain.usecase.gate.GetGateSpotTickersUseCase
 import com.crypto.cryptoview.domain.usecase.upbit.GetUpbitAccountBalancesUseCase
 import com.crypto.cryptoview.domain.usecase.upbit.GetUpbitMTickerUseCase
+import com.crypto.cryptoview.domain.usecase.upbit.GetUpbitTickerAllUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.async
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -25,9 +23,11 @@ import javax.inject.Inject
 class AssetsOverviewViewModel @Inject constructor(
     private val getUpbitAccountBalance: GetUpbitAccountBalancesUseCase,
     private val getUpbitMarketTicker: GetUpbitMTickerUseCase,
-    private val getGateSpotBalance: GetGateSpotBalancesUseCase,
+    private val getUpbitTickerAll: GetUpbitTickerAllUseCase,
+    private val getGateSpotBalances: GetGateSpotBalancesUseCase,
     private val getGateSpotTickers: GetGateSpotTickersUseCase,
-    private val calculateBalanceUseCase: CalculateBalanceUseCase
+    private val calculateBalanceUseCase: CalculateBalanceUseCase,
+    private val exchangeRateProvider: ExchangeRateProvider
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(MainUiState())
@@ -42,12 +42,13 @@ class AssetsOverviewViewModel @Inject constructor(
 
     fun startAutoRefresh() {
         if (autoRefreshJob?.isActive == true) return
+
         isAutoRefreshEnabled = true
 
         autoRefreshJob = viewModelScope.launch {
             while (isActive && isAutoRefreshEnabled) {
-                loadData()
-                delay(5000)
+                loadAssets()
+                delay(1000)
             }
         }
     }
@@ -57,66 +58,68 @@ class AssetsOverviewViewModel @Inject constructor(
         autoRefreshJob?.cancel()
     }
 
-    private suspend fun loadData() {
-        _uiState.value = _uiState.value.copy(isLoading = true, error = null)
+    private fun loadAssets() {
+        viewModelScope.launch {
+            _uiState.value = _uiState.value.copy(isLoading = true)
 
-        try {
-            // 병렬 API 호출
-            val upbitBalancesDeferred = viewModelScope.async { getUpbitAccountBalance() }
-            val upbitTickersDeferred = viewModelScope.async { getUpbitMarketTicker() }
-            val gateBalancesDeferred = viewModelScope.async { getGateSpotBalance() }
+            try {
+                val upbitBalances = getUpbitAccountBalance().getOrNull() ?: emptyList()
+                val upbitTickers = getUpbitMarketTicker().getOrNull() ?: emptyList()
+                val upbitTickerAll = getUpbitTickerAll().getOrNull() ?: emptyList()
+                val gateBalances = getGateSpotBalances().getOrNull() ?: emptyList()
+                val gateTickers = getGateSpotTickers().getOrNull() ?: emptyList()
 
-            val upbitBalances = upbitBalancesDeferred.await().getOrElse { emptyList() }
-            val upbitTickers = upbitTickersDeferred.await().getOrElse { emptyList() }
-            val gateBalances = gateBalancesDeferred.await().getOrElse { emptyList() }
+                val usdtKrwRate = exchangeRateProvider.getUsdtKrwRate(upbitTickers)
+                android.util.Log.d("AssetsOverview", "USDT/KRW Rate: $usdtKrwRate")
 
-            // Gate 티커 조회
-            val tickerMap = fetchGateTickers(gateBalances.map { it.currency })
+                val result = calculateBalanceUseCase.calculateAll(
+                    upbitBalances = upbitBalances,
+                    upbitTickers = upbitTickers,
+                    upbitAllTickers = upbitTickerAll,
+                    gateioBalances = gateBalances,
+                    gateioTickers = gateTickers
+                )
 
-            // 잔고 계산
-            val usdtKrwRate = calculateBalanceUseCase.getUsdtKrwRate(upbitTickers)
-            val upbitResult = calculateBalanceUseCase.calculateUpbit(upbitBalances, upbitTickers)
-            val gateResult = calculateBalanceUseCase.calculateForeign(
-                balances = gateBalances.map { it.toForeignBalance() },
-                tickers = tickerMap,
-                usdtKrwRate = usdtKrwRate,
-                exchangeType = ExchangeType.GATEIO
-            )
+                // ViewModel에서 필터링, 정렬, Top 5 추출
+                val allHoldings = result.results
+                    .flatMap { it.holdings }
+                    .filter { it.totalValue > 1.0 }
+                    .sortedByDescending { it.totalValue }
 
-            updateUiState(listOf(upbitResult, gateResult))
-        } catch (e: Exception) {
-            _uiState.value = _uiState.value.copy(isLoading = false, error = e.message)
+                _uiState.value = _uiState.value.copy(
+                    totalValue = result.totalValue,
+                    totalChange = result.results.sumOf { res ->
+                        res.holdings.sumOf { it.change }
+                    },
+                    totalChangeRate = calculateTotalChangeRate(result),
+                    topHoldings = allHoldings.take(5),  // ← Top 5만 저장
+                    exchangeBreakdown = result.results.map { it.exchangeData },
+                    isLoading = false,
+                    error = null
+                )
+            } catch (e: Exception) {
+                _uiState.value = _uiState.value.copy(
+                    isLoading = false,
+                    error = e.message
+                )
+                android.util.Log.e("AssetsOverview", "Error loading assets", e)
+            }
         }
     }
 
-    private suspend fun fetchGateTickers(currencies: List<String>): Map<String, Double> {
-        return currencies
-            .filter { it != "USDT" && it != "POINT" }
-            .distinct()
-            .mapNotNull { currency ->
-                getGateSpotTickers("${currency}_USDT").getOrNull()?.firstOrNull()
-            }
-            .associate { it.symbol.substringBefore("_") to it.lastPrice }
-    }
+    private fun calculateTotalChangeRate(result: CalculateBalanceUseCase.TotalBalanceResult): Double {
+        val totalBuyValue = result.results.flatMap { it.holdings }
+            .sumOf { it.totalValue - it.change }
 
-    private fun updateUiState(results: List<BalanceCalculator.CalculationResult>) {
-        val totalValue = results.sumOf { it.totalValue }
-        val totalChange = results.sumOf { r -> r.holdings.sumOf { it.change } }
-        val buyValue = totalValue - totalChange
-        val totalChangeRate = if (buyValue > 0) (totalChange / buyValue) * 100 else 0.0
-
-        _uiState.value = MainUiState(
-            totalValue = totalValue,
-            totalChange = totalChange,
-            totalChangeRate = totalChangeRate,
-            topHoldings = results.flatMap { it.holdings }.sortedByDescending { it.totalValue }.take(5),
-            exchangeBreakdown = results.map { it.exchangeData },
-            isLoading = false
-        )
+        return if (totalBuyValue > 0) {
+            (result.totalValue - totalBuyValue) / totalBuyValue * 100
+        } else {
+            0.0
+        }
     }
 
     override fun onCleared() {
         super.onCleared()
-        isAutoRefreshEnabled = false
+        stopAutoRefresh()
     }
 }

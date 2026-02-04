@@ -24,6 +24,7 @@ import com.crypto.cryptoview.domain.model.ExchangeData
 import com.crypto.cryptoview.domain.model.HoldingData  // 추가
 import com.crypto.cryptoview.presentation.component.assetsOverview.chart.ChartData
 import com.crypto.cryptoview.presentation.component.assetsOverview.chart.DonutChart
+import kotlin.compareTo
 
 @Composable
 fun AssetsOverviewScreen(
@@ -261,7 +262,7 @@ private fun ExchangeAmount(
 
 @Composable
 private fun TopHoldingsCard(
-    holdings: List<HoldingData> = emptyList(),  // 타입 명시
+    holdings: List<HoldingData> = emptyList(),
     onViewAllClick: () -> Unit = {}
 ) {
     Card(
@@ -287,7 +288,7 @@ private fun TopHoldingsCard(
             }
             Spacer(modifier = Modifier.height(16.dp))
             Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                holdings.sortedByDescending { it.totalValue }.take(5).forEach { holding ->
+                holdings.forEach { holding ->  // ← 필터링/정렬 제거 (ViewModel에서 처리됨)
                     HoldingItem(
                         symbol = holding.symbol,
                         name = holding.name,

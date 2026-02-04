@@ -5,6 +5,7 @@ import com.crypto.cryptoview.data.remote.api.GateFuturesApi
 import com.crypto.cryptoview.data.remote.api.GateSpotApi
 import com.crypto.cryptoview.data.remote.api.UpbitApi
 import com.crypto.cryptoview.data.remote.api.UpbitMarketApi
+import com.crypto.cryptoview.data.remote.api.UpbitTickerAllApi
 import com.crypto.cryptoview.data.remote.interceptor.GateIOAuthInterceptor
 import com.crypto.cryptoview.data.remote.interceptor.UpbitAuthInterceptor
 import dagger.Module
@@ -119,6 +120,15 @@ object NetworkModule {
         @UpbitClient okHttpClient: OkHttpClient,
         json: Json
     ): UpbitMarketApi {
+        return createApiService("https://api.upbit.com/", okHttpClient, json)
+    }
+
+    @Provides
+    @Singleton
+    fun provideUpbitTickerAllApi(
+        @UpbitClient okHttpClient: OkHttpClient,
+        json: Json
+    ): UpbitTickerAllApi {
         return createApiService("https://api.upbit.com/", okHttpClient, json)
     }
 

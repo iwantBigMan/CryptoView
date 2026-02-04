@@ -5,6 +5,7 @@ import com.crypto.cryptoview.domain.model.ForeignBalance
 import com.crypto.cryptoview.domain.model.GateSpotBalance
 import com.crypto.cryptoview.domain.model.UpbitAccountBalance
 import com.crypto.cryptoview.domain.model.UpbitMarketTicker
+import com.crypto.cryptoview.domain.model.UpbitTickerAll
 import com.crypto.cryptoview.domain.model.gate.GateSpotTicker
 import com.crypto.cryptoview.domain.model.toForeignBalance
 import com.crypto.cryptoview.domain.usecase.calculator.BalanceCalculator
@@ -68,10 +69,11 @@ class CalculateBalanceUseCase @Inject constructor(
      * @return 통합 계산 결과
      */
 fun calculateAll(
-    upbitBalances: List<UpbitAccountBalance>,
-    upbitTickers: List<UpbitMarketTicker>,
-    gateioBalances: List<GateSpotBalance>,
-    gateioTickers: List<GateSpotTicker>
+        upbitBalances: List<UpbitAccountBalance>,
+        upbitTickers: List<UpbitMarketTicker>,
+        upbitAllTickers: List<UpbitTickerAll>,
+        gateioBalances: List<GateSpotBalance>,
+        gateioTickers: List<GateSpotTicker>
 ): TotalBalanceResult {
     val usdtKrwRate = getUsdtKrwRate(upbitTickers)
     val results = mutableListOf<BalanceCalculator.CalculationResult>()

@@ -4,8 +4,12 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.crypto.cryptoview.domain.model.HoldingData
 import com.crypto.cryptoview.domain.usecase.CalculateBalanceUseCase
+import com.crypto.cryptoview.domain.usecase.calculator.ExchangeRateProvider
+import com.crypto.cryptoview.domain.usecase.gate.GetGateSpotBalancesUseCase
+import com.crypto.cryptoview.domain.usecase.gate.GetGateSpotTickersUseCase
 import com.crypto.cryptoview.domain.usecase.upbit.GetUpbitAccountBalancesUseCase
 import com.crypto.cryptoview.domain.usecase.upbit.GetUpbitMTickerUseCase
+import com.crypto.cryptoview.domain.usecase.upbit.GetUpbitTickerAllUseCase
 import com.crypto.cryptoview.presentation.component.holdingCoinView.preview.SortType
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
@@ -21,7 +25,11 @@ import javax.inject.Inject
 class HoldingCoinsViewModel @Inject constructor(
     private val getUpbitAccountBalance: GetUpbitAccountBalancesUseCase,
     private val getUpbitMarketTicker: GetUpbitMTickerUseCase,
-    private val calculateBalanceUseCase: CalculateBalanceUseCase
+    private val getUpbitTickerAll: GetUpbitTickerAllUseCase,
+    private val getGateSpotBalances: GetGateSpotBalancesUseCase,
+    private val getGateSpotTickers: GetGateSpotTickersUseCase,
+    private val calculateBalanceUseCase: CalculateBalanceUseCase,
+    private val exchangeRateProvider: ExchangeRateProvider
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(HoldingsUiState())
@@ -53,22 +61,42 @@ class HoldingCoinsViewModel @Inject constructor(
     }
 
     /**
-     * 보유 자산 데이터 로드
+     * 보유 자산 데이터 로드 (업비트 + Gate.io 통합)
      */
     fun loadHoldings() {
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(isLoading = true)
 
             try {
-                val balances = getUpbitAccountBalance().getOrNull() ?: emptyList()
-                val tickers = getUpbitMarketTicker().getOrNull() ?: emptyList()
+                // 데이터 로드
+                val upbitBalances = getUpbitAccountBalance().getOrNull() ?: emptyList()
+                val upbitTickers = getUpbitMarketTicker().getOrNull() ?: emptyList()
+                val upbitTickerAll = getUpbitTickerAll().getOrNull() ?: emptyList()
+                val gateBalances = getGateSpotBalances().getOrNull() ?: emptyList()
+                val gateTickers = getGateSpotTickers().getOrNull() ?: emptyList()
 
-                val result = calculateBalanceUseCase.calculateUpbit(balances, tickers)
+                // USDT/KRW 환율 계산
+                val usdtKrwRate = exchangeRateProvider.getUsdtKrwRate(upbitTickers)
+
+                android.util.Log.d("HoldingCoinsViewModel", "USDT/KRW Rate: $usdtKrwRate")
+
+                // 전체 거래소 잔고 계산
+                val result = calculateBalanceUseCase.calculateAll(
+                    upbitBalances = upbitBalances,
+                    upbitTickers = upbitTickers,
+                    upbitAllTickers = upbitTickerAll,
+                    gateioBalances = gateBalances,
+                    gateioTickers = gateTickers
+                )
+
+                // 모든 거래소의 Holdings 통합
+                val allHoldings = result.results.flatMap { it.holdings }
+                    .filter { it.totalValue > 0 }  // 0원 이하 제외
 
                 _uiState.value = _uiState.value.copy(
-                    allHoldings = result.holdings,
+                    allHoldings = allHoldings,
                     filteredHoldings = applyFilters(
-                        result.holdings,
+                        allHoldings,
                         _uiState.value.searchQuery,
                         _uiState.value.sortType
                     ),
@@ -76,14 +104,16 @@ class HoldingCoinsViewModel @Inject constructor(
                 )
             } catch (e: Exception) {
                 _uiState.value = _uiState.value.copy(isLoading = false)
+                android.util.Log.e("HoldingCoinsViewModel", "Error loading holdings", e)
             }
         }
     }
 
     fun setHoldings(holdings: List<HoldingData>) {
+        val filtered = holdings.filter { it.totalValue > 0 }  // 0원 이하 제외
         _uiState.value = _uiState.value.copy(
-            allHoldings = holdings,
-            filteredHoldings = applyFilters(holdings, _uiState.value.searchQuery, _uiState.value.sortType)
+            allHoldings = filtered,
+            filteredHoldings = applyFilters(filtered, _uiState.value.searchQuery, _uiState.value.sortType)
         )
     }
 
@@ -107,6 +137,7 @@ class HoldingCoinsViewModel @Inject constructor(
         sortType: SortType
     ): List<HoldingData> {
         return holdings
+            .filter { it.totalValue > 1 }  // 0원 이하 제외
             .filter { it.symbol.contains(query, ignoreCase = true) || it.name.contains(query, ignoreCase = true) }
             .let { filtered ->
                 when (sortType) {
