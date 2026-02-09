@@ -33,7 +33,8 @@ import com.crypto.cryptoview.ui.theme.CryptoViewTheme
 @Composable
 fun MainScreen(
     viewModel: AssetsOverviewViewModel,
-    holdingsViewModel: HoldingCoinsViewModel
+    holdingsViewModel: HoldingCoinsViewModel,
+    onLogout: () -> Unit = {}
 ) {
     val navController = rememberNavController()
     var selectedTab by remember { mutableIntStateOf(0) }
@@ -99,7 +100,10 @@ fun MainScreen(
                         viewModel = holdingsViewModel,
                         onHoldingClick = { symbol -> navController.navigate("holding/$symbol") }
                     )
-                    2 -> SettingsScreen(Modifier.padding(paddingValues))
+                    2 -> SettingsScreen(
+                        modifier = Modifier.padding(paddingValues),
+                        onLogout = onLogout
+                    )
                 }
             }
         }
