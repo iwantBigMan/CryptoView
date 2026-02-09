@@ -19,16 +19,19 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import java.util.Locale
 import com.crypto.cryptoview.R
 import com.crypto.cryptoview.domain.model.ExchangeData
 import com.crypto.cryptoview.domain.model.HoldingData  // 추가
 import com.crypto.cryptoview.presentation.component.assetsOverview.chart.ChartData
 import com.crypto.cryptoview.presentation.component.assetsOverview.chart.DonutChart
+import kotlin.compareTo
 
 @Composable
 fun AssetsOverviewScreen(
     modifier: Modifier = Modifier,
-    viewModel: AssetsOverviewViewModel,
+    viewModel: AssetsOverviewViewModel = hiltViewModel(),
     onNavigateToHoldings: () -> Unit = {}
 ) {
     val uiState = viewModel.uiState.collectAsState().value
@@ -94,7 +97,7 @@ private fun TotalBalanceCard(
             Spacer(modifier = Modifier.height(8.dp))
             Row(verticalAlignment = Alignment.Bottom) {
                 Text(
-                    text = "₩${String.format("%,.0f", totalValue)}",
+                    text = String.format(Locale.getDefault(), "₩%,.0f", totalValue),
                     color = Color.White,
                     fontSize = 32.sp,
                     fontWeight = FontWeight.Bold
@@ -106,12 +109,12 @@ private fun TotalBalanceCard(
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 Text(
-                    text = "${if (isPositive) "+" else ""}₩${String.format("%,.0f", totalChange)}",
+                    text = String.format(Locale.getDefault(), "%s₩%,.0f", if (isPositive) "+" else "", totalChange),
                     color = if (isPositive) Color(0xFF4CAF50) else Color(0xFFF44336),
                     fontSize = 18.sp
                 )
                 Text(
-                    text = "(${String.format("%.2f", totalChangeRate)}%)",
+                    text = String.format(Locale.getDefault(), "(%.2f%%)", totalChangeRate),
                     color = if (isPositive) Color(0xFF4CAF50) else Color(0xFFF44336),
                     fontSize = 18.sp
                 )
@@ -196,8 +199,8 @@ private fun ExchangeBreakdownCard(
                     ) {
                         rowItems.forEach { exchange ->
                             ExchangeAmount(
-                                name = exchange.exchange.displayName,  // type -> exchangeType
-                                amount = "₩${String.format("%,.0f", exchange.totalValue)}",
+                                name = exchange.exchange.displayName,
+                                amount = String.format(Locale.getDefault(), "₩%,.0f", exchange.totalValue),
                                 color = exchange.exchange.color,  // type -> exchangeType
                                 modifier = Modifier.weight(1f)
                             )
@@ -261,7 +264,7 @@ private fun ExchangeAmount(
 
 @Composable
 private fun TopHoldingsCard(
-    holdings: List<HoldingData> = emptyList(),  // 타입 명시
+    holdings: List<HoldingData> = emptyList(),
     onViewAllClick: () -> Unit = {}
 ) {
     Card(
@@ -287,13 +290,13 @@ private fun TopHoldingsCard(
             }
             Spacer(modifier = Modifier.height(16.dp))
             Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                holdings.sortedByDescending { it.totalValue }.take(5).forEach { holding ->
+                holdings.forEach { holding ->  // ← 필터링/정렬 제거 (ViewModel에서 처리됨)
                     HoldingItem(
                         symbol = holding.symbol,
                         name = holding.name,
-                        price = "₩${String.format("%,.0f", holding.totalValue)}",
-                        change = "${if (holding.change >= 0) "+" else ""}₩${String.format("%,.0f", holding.change)}",
-                        changePercent = "${String.format("%.2f", holding.changePercent)}%",
+                        price = String.format(Locale.getDefault(), "₩%,.0f", holding.totalValue),
+                        change = String.format(Locale.getDefault(), "%s₩%,.0f", if (holding.change >= 0) "+" else "", holding.change),
+                        changePercent = String.format(Locale.getDefault(), "%.2f%%", holding.changePercent),
                         isPositive = holding.change >= 0
                     )
                 }

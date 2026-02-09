@@ -1,16 +1,22 @@
 package com.crypto.cryptoview.di
 
 import com.crypto.cryptoview.BuildConfig
+import com.crypto.cryptoview.data.local.CredentialsManager
+import com.crypto.cryptoview.data.local.CredentialsProvider
 import com.crypto.cryptoview.data.remote.api.GateFuturesApi
 import com.crypto.cryptoview.data.remote.api.GateSpotApi
 import com.crypto.cryptoview.data.remote.api.UpbitApi
 import com.crypto.cryptoview.data.remote.api.UpbitMarketApi
+import com.crypto.cryptoview.data.remote.api.UpbitTickerAllApi
 import com.crypto.cryptoview.data.remote.interceptor.GateIOAuthInterceptor
 import com.crypto.cryptoview.data.remote.interceptor.UpbitAuthInterceptor
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.serialization.json.Json
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
@@ -41,6 +47,14 @@ annotation class GateIoClient
 @Module
 @InstallIn(SingletonComponent::class)
 object NetworkModule {
+
+    @Provides
+    @Singleton
+    fun provideCredentialsProvider(credentialsManager: CredentialsManager): CredentialsProvider {
+        // create a background scope to observe DataStore and keep latest credentials in memory
+        val scope = CoroutineScope(Dispatchers.Default + SupervisorJob())
+        return CredentialsProvider(credentialsManager, scope)
+    }
 
     @Provides
     @Singleton
@@ -93,14 +107,12 @@ object NetworkModule {
     @Singleton
     @UpbitClient
     fun provideUpbitOkHttpClient(
-        loggingInterceptor: HttpLoggingInterceptor
+        loggingInterceptor: HttpLoggingInterceptor,
+        credentialsProvider: CredentialsProvider
     ): OkHttpClient {
         return createOkHttpClient(
             loggingInterceptor,
-            UpbitAuthInterceptor(
-                accessKey = BuildConfig.UPBIT_ACCESS_KEY,
-                secretKey = BuildConfig.UPBIT_SECRET_KEY
-            )
+            UpbitAuthInterceptor(credentialsProvider)
         )
     }
 
@@ -122,20 +134,27 @@ object NetworkModule {
         return createApiService("https://api.upbit.com/", okHttpClient, json)
     }
 
+    @Provides
+    @Singleton
+    fun provideUpbitTickerAllApi(
+        @UpbitClient okHttpClient: OkHttpClient,
+        json: Json
+    ): UpbitTickerAllApi {
+        return createApiService("https://api.upbit.com/", okHttpClient, json)
+    }
+
     // Gate.io
 
     @Provides
     @Singleton
     @GateIoClient
     fun provideGateIoOkHttpClient(
-        loggingInterceptor: HttpLoggingInterceptor
+        loggingInterceptor: HttpLoggingInterceptor,
+        credentialsProvider: CredentialsProvider
     ): OkHttpClient {
         return createOkHttpClient(
             loggingInterceptor,
-            GateIOAuthInterceptor(
-                apiKey = BuildConfig.GATE_IO_API_KEY,
-                secretKey = BuildConfig.GATE_IO_SECRET_KEY
-            )
+            GateIOAuthInterceptor(credentialsProvider)
         )
     }
 

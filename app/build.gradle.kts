@@ -32,26 +32,6 @@ android {
 
         buildConfigField(
             "String",
-            "UPBIT_ACCESS_KEY",
-            "\"${properties.getProperty("upbit.access.key", "")}\""  // 키 이름으로 수정
-        )
-        buildConfigField(
-            "String",
-            "UPBIT_SECRET_KEY",
-            "\"${properties.getProperty("upbit.secret.key", "")}\""
-        )
-        buildConfigField(
-            "String",
-            "GATE_IO_API_KEY",
-            "\"${properties.getProperty("gate.io.api.key", "")}\""
-        )
-        buildConfigField(
-            "String",
-            "GATE_IO_SECRET_KEY",
-            "\"${properties.getProperty("gate.io.api.secret", "")}\""
-        )
-        buildConfigField(
-            "String",
             "GATE_BASE_URL",
             "\"https://api.gateio.ws/api/v4/\""
         )
@@ -133,6 +113,8 @@ dependencies {
     implementation(libs.androidx.room.ktx)
     implementation(libs.androidx.junit.ktx)
     implementation(libs.androidx.compose.foundation.layout)
+    implementation(libs.androidx.compose.foundation)
+    implementation(libs.androidx.compose.remote.creation.core)
     ksp(libs.androidx.room.compiler)
 
     // Hilt

@@ -2,7 +2,6 @@ package com.crypto.cryptoview.presentation.component.holdingCoinView
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.gestures.snapping.SnapPosition
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
@@ -18,14 +17,14 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.res.stringResource
+import java.util.Locale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
-import com.crypto.cryptoview.R
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.crypto.cryptoview.domain.model.HoldingData
 import com.crypto.cryptoview.presentation.component.holdingCoinView.preview.SortType
 import com.crypto.cryptoview.ui.theme.TextPrimary
@@ -39,7 +38,7 @@ import com.crypto.cryptoview.ui.theme.TextSecondary
 @Composable
 fun HoldingsScreen(
     modifier: Modifier = Modifier,
-    viewModel: HoldingCoinsViewModel,
+    viewModel: HoldingCoinsViewModel = hiltViewModel(),
     onHoldingClick: (String) -> Unit = {}
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -233,7 +232,7 @@ private fun HoldingCard(holding: HoldingData,
                         fontSize = 16.sp
                     )
                     Text(
-                        text = "${String.format("%.2f", holding.balance)} ${holding.symbol}",
+                        text = String.format(Locale.getDefault(), "%.2f %s", holding.balance, holding.symbol),
                         color = Color.White.copy(alpha = 0.6f),
                         fontSize = 12.sp
                     )
@@ -245,13 +244,13 @@ private fun HoldingCard(holding: HoldingData,
             // 가격 정보 (오른쪽)
             Column(horizontalAlignment = Alignment.End) {
                 Text(
-                    text = "₩${String.format("%,.0f", holding.totalValue)}",
+                    text = String.format(Locale.getDefault(), "₩%,.0f", holding.totalValue),
                     color = Color.White,
                     fontWeight = FontWeight.Bold,
                     fontSize = 16.sp
                 )
                 Text(
-                    text = "${if (isPositive) "+" else ""}₩${String.format("%,.0f", holding.change)} (${String.format("%.2f", holding.changePercent)}%)",
+                    text = String.format(Locale.getDefault(), "%s₩%,.0f (%,.2f%%)", if (isPositive) "+" else "", holding.change, holding.changePercent),
                     color = if (isPositive) Color(0xFF4CAF50) else Color(0xFFF44336),
                     fontSize = 14.sp
                 )

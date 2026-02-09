@@ -11,7 +11,7 @@ import com.crypto.cryptoview.domain.model.gate.GateSpotTicker
 
 interface GateSpotRepository {
     suspend fun getSpotBalances(): Result<List<GateSpotBalance>>
-    suspend fun getSpotTickers(currencyPair: String): Result<List<GateSpotTicker>>
+    suspend fun getSpotTickers(currencyPairs: List<String>): Result<List<GateSpotTicker>>
 }
 
 interface GateFuturesRepository {

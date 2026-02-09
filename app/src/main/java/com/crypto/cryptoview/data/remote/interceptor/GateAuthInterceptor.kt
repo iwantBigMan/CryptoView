@@ -3,16 +3,20 @@ package com.crypto.cryptoview.data.remote.interceptor
 
 import com.crypto.cryptoview.util.authHelper.GateIOAuthHelper
 import com.crypto.cryptoview.util.sha512Hex
+import com.crypto.cryptoview.data.local.CredentialsProvider
 import okhttp3.Interceptor
 import okhttp3.Response
 
 class GateIOAuthInterceptor(
-    private val apiKey: String,
-    private val secretKey: String
+    private val credentialsProvider: CredentialsProvider
 ) : Interceptor {
 
     override fun intercept(chain: Interceptor.Chain): Response {
         val request = chain.request()
+
+        val creds = credentialsProvider.get()
+        val apiKey = creds.gateioApiKey
+        val secretKey = creds.gateioSecretKey
 
         val timestamp = (System.currentTimeMillis() / 1000).toString()
         val method = request.method
