@@ -1,95 +1,189 @@
 # CryptoView
 
-**간단소개**
+> 🪙 **멀티 거래소 암호화폐 자산 통합 관리 앱**
 
-CryptoView는 여러 거래소(예: Upbit, Binance)의 API를 연동해 개인 보유 자산을 한눈에 확인할 수 있는 모바일 앱(안드로이드)입니다. 사용자는 거래소별 자산 요약, 상위 보유 코인, 각 코인의 상세 포지션을 확인하고 알림을 설정할 수 있습니다. 오프라인 모드와 API 키 관리를 지원합니다.
-
----
-
-## 핵심 기능 (V1 — 필수)
-
-1. **로그인 / 연동 (ConnectExchanges)**
-   - 업비트, 바이낸스 등 거래소 API Key 입력 및 검증
-   - 거래소 선택 → API Key/Secret 입력 → 안전한 저장(DataStore)
-   - 키 상태: Idle / Validating / Error
-   - 오프라인 사용자 경험을 위한 "나중에 연결" 스킵 옵션
-
-2. **홈 대시보드 (Home)**
-   - 전체 자산 요약: 총 평가금액, 총 수익률, 오늘 변동
-   - 섹션: 거래소별 요약(원형 차트), 상위 보유코인 Top 5
-   - 화면 상태: Loading / Success / Error / Empty
-
-3. **보유 코인 리스트 (Holdings)**
-   - 코인별 심볼, 수량, 평균매수가(선택), 평가금액, 개별 수익률
-   - 정렬(평가금액/수익률), 검색, Pull-to-refresh
-   - 성능 고려: `LazyColumn(itemKey = symbol)` 사용
-
-4. **코인 상세 (CoinDetail)**
-   - 특정 코인의 합산 포지션(업비트 + 바이낸스 등)
-   - 탭 구성: 개요 / 체결·거래내역(선택)
-   - 거래소별 보유량·평단·평가, 일·주 단위 수익률
-   - 알림 생성: 목표가 도달, 특정 수익률 도달 알림 등
-
-5. **설정 (Settings)**
-   - 테마: 라이트 / 다크 / 시스템
-   - UI 커스텀: 포인트 컬러, 폰트 크기
-   - 백그라운드 동기화(WorkManager): 15m / 30m / 1h
-   - 통화(KRW / USDT) 소스 선택
-   - API 키 관리(추가/수정/삭제)
-   - 알림 권한 및 FCM 토큰 확인
-   - 디버그 메뉴: 마지막 동기화 시간, 로그 확인
+여러 거래소(Upbit, Gate.io 등)의 API를 연동해 개인 보유 자산을 한눈에 확인할 수 있는 안드로이드 앱입니다.  
+거래소별 자산 요약, 상위 보유 코인, 코인 상세 정보를 확인하고, USDT ↔ KRW 자동 환산을 지원합니다.
 
 ---
 
-## 아키텍처 & 기술 스택
+## 📱 스크린샷
 
-- **Clean Architecture** (Domain / Data / Presentation)
-- **DI:** Dagger Hilt
-- **네트워킹:** Retrofit + OkHttp
-- **저장소:** DataStore(추후 암호화 적용)
-- **UI:** Jetpack Compose
+| 홈 대시보드 | 보유 코인 목록 | 코인 상세 |
+|:---:|:---:|:---:|
+| 전체 자산 요약 | LazyColumn 기반 목록 | 거래소별 포지션 |
 
 ---
 
-## 보안 & 권장사항
+## ✨ 주요 기능
 
-- API Key/Secret은 Android Keystore 기반으로 **암호화 저장**
-- 민감 데이터 로그 노출 금지
-- HTTPS 통신만 사용
-- 자동 매매 기능은 없음 (View 전용 앱)
+### 1. 로그인 / 거래소 연동
+- 업비트(필수) + 해외 거래소(Gate.io) 동시 연동
+- API Key/Secret 입력 → 실시간 검증 → 암호화 저장 (DataStore에 AES/GCM으로 암호화 — Android Keystore 사용, `SecureStorage` 유틸리티 사용)
+- 연동 상태: Idle / Validating / Success / Error
+- 연동 실패 시 다이얼로그로 오류 안내
 
----
+### 2. 홈 대시보드
+- **전체 자산 요약**: 총 평가금액, 총 수익률, 변동금액
+- **거래소별 요약**: 도넛 차트로 시각화 (0원인 거래소 자동 제외)
+- **Top 5 보유코인**: 평가금액 상위 5개 코인 표시
 
-## 진행 상황 (Progress) - 현재 업비트만 연동, 게이트 아이오 연동 중
+### 3. 보유 코인 리스트 (Holdings)
+- 코인별 심볼, 수량, 평가금액, 수익률 표시
+- 정렬 (평가금액/수익률), 검색 기능
+- `LazyColumn`으로 성능 최적화
 
-### ✅ 홈 대시보드 (Home) — 완료
-- 전체 자산 요약, 거래소별 요약(원형 차트), Top 5 보유코인 UI 구현 완료
-- 화면 상태: Loading / Success / Error / Empty 모두 처리
+### 4. 코인 상세 (CoinDetail)
+- 특정 코인의 거래소별 합산 포지션
+- 거래소별 보유량·평균단가·평가금액 확인
 
-### 🚧 보유 자산 상세 (Holding Coin View) — 진행 중
-- 보유 코인 리스트를 LazyColumn 기반으로 구성
-- 코인별 자산 정보 아이템 UI 구현 완료
-
-### ✅ 업비트 연동 (Upbit Integration) — 완료
-- API Key 입력 → 검증 → 로컬 저장 흐름 구현
-- 업비트 잔고 및 체결 정보 조회 기능 완성
-- 키 상태 처리(Idle / Validating / Error) 반영
-- 기본 예외 처리 및 오류 UI 적용
-
-### ⏳ 게이트아이오 연동 — 진행 중
-- REST API 연동 흐름 설계 완료
-- 인증 및 시그니처 생성 구현 예정
-
-### ⏳ Holdings / CoinDetail — 일부 개발 완료
-- 리스트 기본 UI, 정렬/검색 적용
-- CoinDetail 설계 진행 중
-
-### 📝 Settings / 알림 / 백그라운드 동기화 — 설계 단계
+### 5. 설정
+- 테마 설정 (다크 모드 기본)
+- API 키 관리 (추가/수정/삭제)
 
 ---
 
-### 🔜 다음 작업 예정 
+## 🏗️ 아키텍처
 
-- Gate.io 잔고 / 시세 연동 (일부 적용 완료)
-- 해외 거래소 자산 USDT → KRW 환산 적용(일부 적용 완료)
-- 거래소 앱 딥링크 이동 기능 (자산 클릭 시 해당 거래소 앱으로 이동)
+```
+Clean Architecture + MVVM
+├── presentation/   # UI Layer (Compose, ViewModel)
+├── domain/         # Business Logic (UseCase, Repository Interface, Model)
+└── data/           # Data Layer (API, DTO, Repository Implementation)
+```
+
+### 주요 설계 패턴
+- **Factory Pattern**: 거래소별 Calculator 분기 (`BalanceCalculatorFactory`)
+- **Strategy Pattern**: 국내/해외 잔고 계산 로직 분리 (`UpbitBalanceCalculator`, `ForeignBalanceCalculator`)
+- **Repository Pattern**: 데이터 소스 추상화
+
+---
+
+## 🛠️ 기술 스택
+
+| 분류 | 기술 |
+|:---|:---|
+| **Language** | Kotlin |
+| **UI** | Jetpack Compose, Material3 |
+| **DI** | Dagger Hilt |
+| **Network** | Retrofit, OkHttp, Kotlinx Serialization |
+| **Storage** | DataStore (AES/GCM 암호화, Android Keystore 사용 via `SecureStorage`) |
+| **Database** | Room (예정) |
+| **Async** | Kotlin Coroutines, Flow |
+| **Auth** | JWT (업비트), HMAC-SHA512 (Gate.io) |
+| **Min SDK** | 23 (Android 6.0) |
+| **Target SDK** | 36 |
+
+---
+
+## 📁 프로젝트 구조
+
+```
+app/src/main/java/com/crypto/cryptoview/
+├── CryptoViewApplication.kt
+├── data/
+│   ├── local/
+│   │   ├── CredentialsManager.kt      # API 키 암호화 저장/조회
+│   │   ├── CredentialsProvider.kt     # 자격증명 제공 인터페이스
+│   │   └── SecureStorage.kt           # 암호화 스토리지
+│   ├── remote/
+│   │   ├── api/
+│   │   │   ├── UpbitApi.kt            # 업비트 REST API
+│   │   │   └── GateIOApi.kt           # Gate.io REST API
+│   │   ├── dto/                       # 데이터 전송 객체
+│   │   └── interceptor/               # 인증 인터셉터 (JWT, HMAC)
+│   └── repository/                    # Repository 구현체
+├── domain/
+│   ├── model/
+│   │   ├── ExchangeType.kt            # 거래소 타입 enum
+│   │   ├── HoldingData.kt             # 보유 자산 모델
+│   │   ├── AggregatedHolding.kt       # 심볼별 통합 자산
+│   │   └── gate/                      # Gate.io 도메인 모델
+│   ├── repository/                    # Repository 인터페이스
+│   ├── usecase/
+│   │   ├── upbit/                     # 업비트 UseCase
+│   │   ├── gate/                      # Gate.io UseCase
+│   │   ├── calculator/
+│   │   │   ├── BalanceCalculator.kt       # 계산기 인터페이스
+│   │   │   ├── BalanceCalculatorFactory.kt
+│   │   │   ├── UpbitBalanceCalculator.kt  # 업비트 잔고 계산
+│   │   │   ├── ForeignBalanceCalculator.kt # 해외 잔고 계산 (USDT→KRW)
+│   │   │   └── ExchangeRateProvider.kt    # 환율 제공자
+│   │   └── GetAllHoldingsUseCase.kt   # 통합 보유 자산 조회
+│   └── util/
+├── presentation/
+│   ├── login/                         # 로그인/연동 화면
+│   ├── main/                          # 메인 네비게이션
+│   └── component/
+│       ├── assetsOverview/            # 홈 대시보드
+│       ├── holdingCoinView/           # 코인 상세
+│       └── holdingColins/             # 보유 코인 목록
+├── di/                                # Hilt 모듈
+├── ui/                                # 테마, 컬러
+└── util/                              # 유틸리티
+```
+
+---
+
+## 🔐 보안
+
+- **API Key 암호화**: DataStore에 AES/GCM 방식으로 암호화하여 저장 (Android Keystore의 키로 암/복호화; 프로젝트 내 `SecureStorage` 사용)
+- **HTTPS 통신**: 모든 API 요청 암호화
+- **자동 매매 미지원**: View 전용 앱 (읽기만 가능)
+- **민감 정보 로그 제외**: 프로덕션 빌드에서 키 로깅 차단
+
+---
+
+## 📋 진행 상황
+
+### ✅ 완료
+
+| 기능 | 상태 | 설명 |
+|:---|:---:|:---|
+| 홈 대시보드 | ✅ | 전체 자산 요약, 도넛 차트, Top 5 Holdings |
+| 업비트 연동 | ✅ | API 연동, 잔고/시세 조회, JWT 인증 |
+| Gate.io 연동 | ✅ | 현물 잔고/시세 조회, HMAC 인증 |
+| USDT→KRW 환산 | ✅ | 업비트 USDT/KRW 시세 기준 자동 환산 |
+| 보유 코인 목록 | ✅ | LazyColumn, 정렬, 검색, 0원 필터링 |
+| 코인 상세 | ✅ | 거래소별 포지션 확인 |
+| 로그인/연동 UI | ✅ | 업비트(필수) + 해외 거래소 드롭다운 |
+| API 키 암호화 | ✅ | EncryptedSharedPreferences 적용 |
+| 심볼 정규화 | ✅ | 다중 거래소 동일 코인 통합 |
+
+### 🚧 진행 중 / 예정
+
+| 기능 | 상태 | 설명 |
+|:---|:---:|:---|
+| Gate.io 선물 | 🚧 | 선물 포지션 조회 구현 중 |
+| Settings | 📝 | 테마, 통화 설정 |
+| 알림 | 📝 | 목표가 도달, 수익률 알림 |
+| 백그라운드 동기화 | 📝 | WorkManager 기반 |
+| 거래소 딥링크 | 📝 | 자산 클릭 시 거래소 앱 이동 |
+
+---
+
+## 🚀 시작하기
+
+### 필수 조건
+- Android Studio Hedgehog 이상
+- JDK 17
+- Android SDK 36
+
+### 설치
+
+```bash
+git clone https://github.com/your-repo/cryptoview.git
+cd cryptoview
+```
+
+### 빌드
+
+```bash
+./gradlew assembleDebug
+```
+
+---
+
+## 📄 라이선스
+
+This project is for personal/educational use only.
