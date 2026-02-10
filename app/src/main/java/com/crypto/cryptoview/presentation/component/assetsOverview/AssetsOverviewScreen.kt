@@ -22,8 +22,9 @@ import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import java.util.Locale
 import com.crypto.cryptoview.R
+import com.crypto.cryptoview.domain.model.AggregatedHolding
 import com.crypto.cryptoview.domain.model.ExchangeData
-import com.crypto.cryptoview.domain.model.HoldingData  // 추가
+import com.crypto.cryptoview.domain.model.HoldingData
 import com.crypto.cryptoview.presentation.component.assetsOverview.chart.ChartData
 import com.crypto.cryptoview.presentation.component.assetsOverview.chart.DonutChart
 import kotlin.compareTo
@@ -68,7 +69,7 @@ fun AssetsOverviewScreen(
         }
         item {
             TopHoldingsCard(
-                holdings = uiState.topHoldings,
+                aggregatedHoldings = uiState.topAggregatedHoldings,
                 onViewAllClick = onNavigateToHoldings
             )
         }
@@ -262,9 +263,13 @@ private fun ExchangeAmount(
     }
 }
 
+/**
+ * Top 5 Holdings 카드
+ * 심볼 기준 통합된 데이터를 표시하며, 여러 거래소 보유 시 표시
+ */
 @Composable
 private fun TopHoldingsCard(
-    holdings: List<HoldingData> = emptyList(),
+    aggregatedHoldings: List<AggregatedHolding> = emptyList(),
     onViewAllClick: () -> Unit = {}
 ) {
     Card(
@@ -290,16 +295,121 @@ private fun TopHoldingsCard(
             }
             Spacer(modifier = Modifier.height(16.dp))
             Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                holdings.forEach { holding ->  // ← 필터링/정렬 제거 (ViewModel에서 처리됨)
-                    HoldingItem(
-                        symbol = holding.symbol,
+                aggregatedHoldings.forEach { holding ->
+                    AggregatedHoldingItem(
+                        symbol = holding.normalizedSymbol,
                         name = holding.name,
-                        price = String.format(Locale.getDefault(), "₩%,.0f", holding.totalValue),
-                        change = String.format(Locale.getDefault(), "%s₩%,.0f", if (holding.change >= 0) "+" else "", holding.change),
-                        changePercent = String.format(Locale.getDefault(), "%.2f%%", holding.changePercent),
-                        isPositive = holding.change >= 0
+                        totalValue = String.format(Locale.getDefault(), "₩%,.0f", holding.totalValue),
+                        change = String.format(Locale.getDefault(), "%s₩%,.0f", if (holding.totalChange >= 0) "+" else "", holding.totalChange),
+                        changePercent = String.format(Locale.getDefault(), "%.2f%%", holding.totalChangePercent),
+                        isPositive = holding.totalChange >= 0,
+                        exchangeCount = holding.holdings.size,
+                        exchanges = holding.exchanges
                     )
                 }
+            }
+        }
+    }
+}
+
+/**
+ * 통합된 홀딩 아이템
+ * 여러 거래소 보유 시 거래소 수 표시
+ */
+@Composable
+private fun AggregatedHoldingItem(
+    symbol: String,
+    name: String,
+    totalValue: String,
+    change: String,
+    changePercent: String,
+    isPositive: Boolean,
+    exchangeCount: Int,
+    exchanges: List<com.crypto.cryptoview.domain.model.ExchangeType>
+) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(12.dp),
+        colors = CardDefaults.cardColors(containerColor = Color(0xFF252837))
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                // 심볼 아이콘
+                Box(
+                    modifier = Modifier
+                        .size(40.dp)
+                        .background(Color(0xFF3949AB), CircleShape),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = symbol.take(2),
+                        color = Color.White,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+                Spacer(modifier = Modifier.width(12.dp))
+                Column {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Text(
+                            text = name,
+                            color = Color.White,
+                            fontWeight = FontWeight.Medium
+                        )
+                        // 여러 거래소 보유 시 표시
+                        if (exchangeCount > 1) {
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Box(
+                                modifier = Modifier
+                                    .background(Color(0xFF374151), RoundedCornerShape(4.dp))
+                                    .padding(horizontal = 6.dp, vertical = 2.dp)
+                            ) {
+                                Text(
+                                    text = "${exchangeCount}개 거래소",
+                                    color = Color.White.copy(alpha = 0.7f),
+                                    fontSize = 10.sp
+                                )
+                            }
+                        }
+                    }
+                    // 거래소 이름 표시 (색상 점으로)
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(4.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        exchanges.take(3).forEach { exchange ->
+                            Box(
+                                modifier = Modifier
+                                    .size(6.dp)
+                                    .background(exchange.color, CircleShape)
+                            )
+                        }
+                        if (exchanges.size > 3) {
+                            Text(
+                                text = "+${exchanges.size - 3}",
+                                color = Color.White.copy(alpha = 0.5f),
+                                fontSize = 10.sp
+                            )
+                        }
+                    }
+                }
+            }
+            Column(horizontalAlignment = Alignment.End) {
+                Text(
+                    text = totalValue,
+                    color = Color.White,
+                    fontWeight = FontWeight.Bold
+                )
+                Text(
+                    text = "$change ($changePercent)",
+                    color = if (isPositive) Color(0xFF4CAF50) else Color(0xFFF44336),
+                    fontSize = 12.sp
+                )
             }
         }
     }

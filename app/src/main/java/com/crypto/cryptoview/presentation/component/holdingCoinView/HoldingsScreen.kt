@@ -25,6 +25,7 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import com.crypto.cryptoview.domain.model.AggregatedHolding
 import com.crypto.cryptoview.domain.model.HoldingData
 import com.crypto.cryptoview.presentation.component.holdingCoinView.preview.SortType
 import com.crypto.cryptoview.ui.theme.TextPrimary
@@ -96,17 +97,17 @@ fun HoldingsScreen(
             modifier = Modifier.padding(bottom = 16.dp)
         )
 
-        // 보유 코인 목록
-        if (uiState.filteredHoldings.isEmpty()) {
+        // 보유 코인 목록 (심볼 기준 통합)
+        if (uiState.filteredAggregatedHoldings.isEmpty()) {
             EmptyHoldingsView()
         } else {
             LazyColumn(
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                items(uiState.filteredHoldings) { holding ->
-                    HoldingCard(
+                items(uiState.filteredAggregatedHoldings) { holding ->
+                    AggregatedHoldingCard(
                         holding = holding,
-                        onClick = { onHoldingClick(holding.symbol) }
+                        onClick = { onHoldingClick(holding.normalizedSymbol) }
                     )
                 }
             }
@@ -183,7 +184,129 @@ private fun SortFilterRow(
 }
 
 /**
- * 보유 코인 카드
+ * 통합 보유 코인 카드 (심볼 기준 통합)
+ * 여러 거래소 보유 시 거래소 정보 표시
+ */
+@Composable
+private fun AggregatedHoldingCard(
+    holding: AggregatedHolding,
+    onClick: () -> Unit = {}
+) {
+    val isPositive = holding.totalChange >= 0
+
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable { onClick() },
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(containerColor = Color(0xFF1A1D2E))
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            // 코인 정보 (왼쪽)
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                // 코인 아이콘
+                Box(
+                    modifier = Modifier
+                        .size(40.dp)
+                        .clip(CircleShape)
+                        .background(Color(0xFF5B7FFF), CircleShape),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = holding.normalizedSymbol.take(3),
+                        color = Color.White,
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 14.sp
+                    )
+                }
+
+                Spacer(modifier = Modifier.width(12.dp))
+
+                Column {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Text(
+                            text = holding.normalizedSymbol,
+                            color = Color.White,
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 16.sp
+                        )
+                        // 여러 거래소 보유 시 표시
+                        if (holding.holdings.size > 1) {
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Box(
+                                modifier = Modifier
+                                    .background(Color(0xFF374151), RoundedCornerShape(4.dp))
+                                    .padding(horizontal = 6.dp, vertical = 2.dp)
+                            ) {
+                                Text(
+                                    text = "${holding.holdings.size}개 거래소",
+                                    color = Color.White.copy(alpha = 0.7f),
+                                    fontSize = 10.sp
+                                )
+                            }
+                        }
+                    }
+                    // 총 보유량
+                    Text(
+                        text = String.format(Locale.getDefault(), "%.4f %s", holding.totalBalance, holding.normalizedSymbol),
+                        color = Color.White.copy(alpha = 0.6f),
+                        fontSize = 12.sp
+                    )
+                    // 거래소 색상 점
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(4.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        holding.exchanges.take(4).forEach { exchange ->
+                            Box(
+                                modifier = Modifier
+                                    .size(6.dp)
+                                    .background(exchange.color, CircleShape)
+                            )
+                        }
+                        if (holding.exchanges.size > 4) {
+                            Text(
+                                text = "+${holding.exchanges.size - 4}",
+                                color = Color.White.copy(alpha = 0.5f),
+                                fontSize = 10.sp
+                            )
+                        }
+                    }
+                }
+            }
+
+            // 가격 정보 (오른쪽)
+            Column(horizontalAlignment = Alignment.End) {
+                Text(
+                    text = String.format(Locale.getDefault(), "₩%,.0f", holding.totalValue),
+                    color = Color.White,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 16.sp
+                )
+                Text(
+                    text = String.format(
+                        Locale.getDefault(),
+                        "%s₩%,.0f (%,.2f%%)",
+                        if (isPositive) "+" else "",
+                        holding.totalChange,
+                        holding.totalChangePercent
+                    ),
+                    color = if (isPositive) Color(0xFF4CAF50) else Color(0xFFF44336),
+                    fontSize = 14.sp
+                )
+            }
+        }
+    }
+}
+
+/**
+ * 보유 코인 카드 (거래소별 개별 - 디테일용)
  */
 @Composable
 private fun HoldingCard(holding: HoldingData,
