@@ -92,6 +92,8 @@ fun LoginScreen(
                         modifier = Modifier.padding(vertical = 16.dp)
                     )
                 }
+
+                // 로그아웃 버튼 제거 (설정 페이지로 이동)
             }
 
             // 업비트 입력 카드 (항상 표시, 필수)

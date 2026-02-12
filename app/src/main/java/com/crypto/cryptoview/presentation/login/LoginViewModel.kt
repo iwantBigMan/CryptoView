@@ -3,9 +3,12 @@ package com.crypto.cryptoview.presentation.login
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.crypto.cryptoview.data.local.CredentialsManager
+import com.crypto.cryptoview.data.local.CredentialsProvider
 import com.crypto.cryptoview.domain.model.ExchangeType
 import com.crypto.cryptoview.domain.usecase.gate.GetGateSpotBalancesUseCase
 import com.crypto.cryptoview.domain.usecase.upbit.GetUpbitAccountBalancesUseCase
+import com.crypto.cryptoview.domain.usecase.auth.ValidateGateCredentialsUseCase
+import com.crypto.cryptoview.domain.usecase.auth.ValidateUpbitCredentialsUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -22,8 +25,9 @@ import javax.inject.Inject
 @HiltViewModel
 class LoginViewModel @Inject constructor(
     private val credentialsManager: CredentialsManager,
-    private val getUpbitAccountBalances: GetUpbitAccountBalancesUseCase,
-    private val getGateSpotBalances: GetGateSpotBalancesUseCase
+    private val credentialsProvider: CredentialsProvider,
+    private val validateUpbit: ValidateUpbitCredentialsUseCase,
+    private val validateGate: ValidateGateCredentialsUseCase
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(LoginUiState())
@@ -108,11 +112,24 @@ class LoginViewModel @Inject constructor(
             // 최신 상태로 로딩 표시를 설정합니다.
             _uiState.value = _uiState.value.copy(isLoading = true, error = null)
             try {
-                // 1) 현재 저장된 인증정보 백업
-                val backup = credentialsManager.credentials.first()
+                // 먼저 검증: 입력된 키로 API 호출을 시도하여 연동 성공 여부를 확인합니다.
+                // DataStore를 건드리지 않고 검증만 수행하여 실패 시 기존 저장된 키는 그대로 유지됩니다.
+                for (ex in toSave) {
+                    val input = _uiState.value.inputs[ex] ?: ExchangeInput()
+                    val valid = when (ex) {
+                        ExchangeType.UPBIT -> validateUpbit(input.apiKey, input.secretKey)
+                        ExchangeType.GATEIO -> validateGate(input.apiKey, input.secretKey)
+                        // TODO: 바이낸스/바이빗 검증 로직 추가 필요 시 여기에 구현
+                        else -> true
+                    }
 
-                // 2) 새 인증정보를 임시로 저장(모든 검증 대상에 대해 저장)
-                // 안전을 위해 전체 삭제 후 새로 저장합니다. 검증 실패 시 복원합니다.
+                    if (!valid) {
+                        _uiState.value = _uiState.value.copy(isLoading = false, error = "${ex.displayName} 연동 검증 실패. API Key/Secret을 확인하세요.")
+                        return@launch
+                    }
+                }
+
+                // 모든 검증 성공: 기존 저장된 인증정보를 제거하고 새로 저장합니다.
                 credentialsManager.clearAllCredentials()
                 val stateNow = _uiState.value
                 for (ex in toSave) {
@@ -125,43 +142,7 @@ class LoginViewModel @Inject constructor(
                     }
                 }
 
-                // 3) 검증: 저장한 키로 실제 API 호출을 시도하여 연동 성공 여부 확인
-                // 업비트/게이트는 검증 usecase가 있으므로 호출합니다. 실패 시 롤백합니다.
-                try {
-                    // 업비트 검증
-                    if (toSave.contains(ExchangeType.UPBIT)) {
-                        val upbitRes = getUpbitAccountBalances()
-                        if (upbitRes.isFailure) throw RuntimeException("업비트 연동 실패: ${upbitRes.exceptionOrNull()?.message}")
-                    }
-
-                    // 게이트 검증
-                    if (toSave.contains(ExchangeType.GATEIO)) {
-                        val gateRes = getGateSpotBalances()
-                        if (gateRes.isFailure) throw RuntimeException("Gate.io 연동 실패: ${gateRes.exceptionOrNull()?.message}")
-                    }
-                } catch (verificationEx: Throwable) {
-                    // 검증 실패 -> 백업으로 복원
-                    android.util.Log.e("LoginViewModel", "credential verification failed, restoring backup", verificationEx)
-                    credentialsManager.clearAllCredentials()
-                    // 복원: 백업에 포함된 필드만 복원
-                    if (backup.upbitApiKey.isNotBlank() || backup.upbitSecretKey.isNotBlank()) {
-                        credentialsManager.saveUpbitCredentials(backup.upbitApiKey, backup.upbitSecretKey)
-                    }
-                    if (backup.gateioApiKey.isNotBlank() || backup.gateioSecretKey.isNotBlank()) {
-                        credentialsManager.saveGateioCredentials(backup.gateioApiKey, backup.gateioSecretKey)
-                    }
-                    if (backup.binanceApiKey.isNotBlank() || backup.binanceSecretKey.isNotBlank()) {
-                        credentialsManager.saveBinanceCredentials(backup.binanceApiKey, backup.binanceSecretKey)
-                    }
-                    if (backup.bybitApiKey.isNotBlank() || backup.bybitSecretKey.isNotBlank()) {
-                        credentialsManager.saveBybitCredentials(backup.bybitApiKey, backup.bybitSecretKey)
-                    }
-
-                    _uiState.value = _uiState.value.copy(isLoading = false, error = verificationEx.message ?: "연동 검증 실패")
-                    return@launch
-                }
-
-                // 4) 모든 검증 성공: UI 상태 업데이트 및 선택 해제
+                // 모든 검증 및 저장 성공: UI 상태 업데이트 및 선택 해제
                 _uiState.value = _uiState.value.copy(isLoading = false, selectedExchanges = emptySet(), loginSuccess = true)
             } catch (e: Throwable) {
                 android.util.Log.e("LoginViewModel", "saveSelectedCredentials error", e)
@@ -189,6 +170,22 @@ class LoginViewModel @Inject constructor(
     // 모든 인증 정보를 삭제합니다.
     fun clearAllCredentials() {
         viewModelScope.launch { credentialsManager.clearAllCredentials() }
+    }
+
+    /**
+     * 완전 로그아웃: 저장소 + 메모리 캐시 모두 정리
+     */
+    fun logout() {
+        viewModelScope.launch {
+            // 1. DataStore에서 모든 인증 정보 삭제
+            credentialsManager.clearAllCredentials()
+            // 2. 메모리 캐시 초기화 (CredentialsProvider)
+            credentialsProvider.clear()
+            // 3. UI 상태 초기화 (입력 필드도 빈 값으로 강제 설정)
+            _uiState.value = LoginUiState(
+                inputs = ExchangeType.entries.associateWith { ExchangeInput() } // 빈 입력 필드 강제 설정
+            )
+        }
     }
 
     // 에러 메시지를 초기화합니다.

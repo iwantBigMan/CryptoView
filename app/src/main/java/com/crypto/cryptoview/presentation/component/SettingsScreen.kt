@@ -187,7 +187,7 @@ fun SettingsScreen(
             },
             text = {
                 Text(
-                    text = "모든 연동된 거래소 정보가 삭제됩니다.\n계속하시겠습니까?",
+                    text = "모든 연동된 거래소 정보가 삭제되고 앱이 종료됩니다.\n계속하시겠습니까?",
                     color = TextSecondary
                 )
             },
@@ -195,7 +195,7 @@ fun SettingsScreen(
                 TextButton(
                     onClick = {
                         scope.launch {
-                            viewModel.clearAllCredentials()
+                            viewModel.logout()
                             showLogoutDialog = false
                             onLogout()
                         }

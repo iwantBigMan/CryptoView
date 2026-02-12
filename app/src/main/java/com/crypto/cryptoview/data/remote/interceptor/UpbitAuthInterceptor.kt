@@ -16,6 +16,12 @@ class UpbitAuthInterceptor(
         val accessKey = creds.upbitApiKey
         val secretKey = creds.upbitSecretKey
 
+        // 키가 없거나 빈 값이면, 인증 헤더를 추가하지 않고 요청을 그대로 진행
+        // API는 401을 반환할 것이며, UseCase에서 처리됨
+        if (accessKey.isBlank() || secretKey.isBlank()) {
+            return chain.proceed(original)
+        }
+
         val queryString = original.url.query
         val authToken = UpbitAuthHelper.generateAuthToken(
             accessKey = accessKey,

@@ -1,9 +1,11 @@
 package com.crypto.cryptoview.di
 
+import com.crypto.cryptoview.data.repository.auth.AuthRepositoryImpl
 import com.crypto.cryptoview.data.repository.gateRepoImpl.GateSpotRepositoryImpl
 import com.crypto.cryptoview.data.repository.upbitRepoImpl.UbitMTickerRepositoryImpl
 import com.crypto.cryptoview.data.repository.upbitRepoImpl.UpbitTickerAllRepositoryimpl
 import com.crypto.cryptoview.data.repository.upbitRepoImpl.UpbitRepositoryImpl
+import com.crypto.cryptoview.domain.repository.AuthRepository
 import com.crypto.cryptoview.domain.repository.GateFuturesRepository
 import com.crypto.cryptoview.domain.repository.GateSpotRepository
 import com.crypto.cryptoview.domain.repository.UbbitMTickerRepository
@@ -47,4 +49,10 @@ abstract class RepositoryModule {
     abstract fun bindUpbitTickerAllRepository(
         impl: UpbitTickerAllRepositoryimpl
     ): UpbitTickerAllRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindAuthRepository(
+        impl: AuthRepositoryImpl
+    ): AuthRepository
 }

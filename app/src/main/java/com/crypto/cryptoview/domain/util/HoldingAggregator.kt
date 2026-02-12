@@ -89,7 +89,8 @@ object HoldingAggregator {
         holdings: List<HoldingData>,
         minValue: Double = 1.0
     ): List<AggregatedHolding> {
-        val filteredHoldings = holdings.filter { it.totalValue > minValue }
+        // 변경: 기존 > 를 >= 로 변경하여 정확히 1원인 자산도 포함
+        val filteredHoldings = holdings.filter { it.totalValue >= minValue }
         return aggregate(filteredHoldings)
     }
 }

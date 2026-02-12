@@ -18,6 +18,12 @@ class GateIOAuthInterceptor(
         val apiKey = creds.gateioApiKey
         val secretKey = creds.gateioSecretKey
 
+        // 키가 없거나 빈 값이면, 인증 헤더를 추가하지 않고 요청을 그대로 진행
+        // API는 401을 반환할 것이며, UseCase에서 처리됨
+        if (apiKey.isBlank() || secretKey.isBlank()) {
+            return chain.proceed(request)
+        }
+
         val timestamp = (System.currentTimeMillis() / 1000).toString()
         val method = request.method
         val path = request.url.encodedPath

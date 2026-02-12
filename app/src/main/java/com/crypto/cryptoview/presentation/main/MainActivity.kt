@@ -39,7 +39,7 @@ class MainActivity : ComponentActivity() {
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
-                    AppNavigation()
+                    AppNavigation(onLogout = { finishAffinity() })
                 }
             }
         }
@@ -47,7 +47,7 @@ class MainActivity : ComponentActivity() {
 }
 
 @Composable
-fun AppNavigation() {
+fun AppNavigation(onLogout: () -> Unit = {}) {
     val loginViewModel: LoginViewModel = hiltViewModel()
     val scope = rememberCoroutineScope()
     var isLoggedIn by remember { mutableStateOf<Boolean?>(null) }
@@ -82,7 +82,7 @@ fun AppNavigation() {
             MainScreen(
                 viewModel = viewModel,
                 holdingsViewModel = holdingCoinsViewModel,
-                onLogout = { isLoggedIn = false }
+                onLogout = onLogout
             )
         }
     }

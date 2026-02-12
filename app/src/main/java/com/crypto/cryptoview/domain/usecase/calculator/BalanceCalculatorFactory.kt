@@ -2,6 +2,7 @@ package com.crypto.cryptoview.domain.usecase.calculator
 
 import com.crypto.cryptoview.domain.model.ExchangeType
 import javax.inject.Inject
+import javax.inject.Provider
 import javax.inject.Singleton
 
 /**
@@ -12,7 +13,7 @@ import javax.inject.Singleton
 @Singleton
 class BalanceCalculatorFactory @Inject constructor(
     private val upbitCalculator: UpbitBalanceCalculator,
-    private val foreignCalculator: ForeignBalanceCalculator
+    private val foreignCalculatorProvider: Provider<ForeignBalanceCalculator>
 ) {
 
     /**
@@ -23,10 +24,11 @@ class BalanceCalculatorFactory @Inject constructor(
 
     /**
      * 해외 거래소 계산기 반환
+     * Provider를 사용해 매 호출마다 새 인스턴스를 생성하여 내부 상태 공유 문제를 방지함
      * @param exchangeType 거래소 타입 (BINANCE, BYBIT, GATEIO)
-     * @return 해외 거래소 잔고 계산기 (타입 설정됨)
+     * @return 해외 거래소 잔고 계산기 (exchangeType 설정된 새로운 인스턴스)
      */
     fun getForeignCalculator(exchangeType: ExchangeType): ForeignBalanceCalculator {
-        return foreignCalculator.apply { this.exchangeType = exchangeType }
+        return foreignCalculatorProvider.get().apply { this.exchangeType = exchangeType }
     }
 }

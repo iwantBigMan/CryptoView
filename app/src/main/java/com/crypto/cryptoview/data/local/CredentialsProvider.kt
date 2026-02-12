@@ -24,4 +24,11 @@ class CredentialsProvider(
     }
 
     fun get(): ExchangeCredentials = ref.get()
+
+    /**
+     * 메모리 캐시를 초기화합니다 (로그아웃 시 사용)
+     */
+    fun clear() {
+        ref.set(ExchangeCredentials())
+    }
 }

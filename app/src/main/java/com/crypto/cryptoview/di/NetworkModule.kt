@@ -143,6 +143,25 @@ object NetworkModule {
         return createApiService("https://api.upbit.com/", okHttpClient, json)
     }
 
+    // AuthUpbitApi 추가
+    @Provides
+    @Singleton
+    fun provideAuthUpbitApi(
+        json: Json
+    ): com.crypto.cryptoview.data.remote.api.AuthUpbitApi {
+        // auth용은 인터셉터 없는 클라이언트를 사용하므로 기본 OkHttpClient 생성
+        val client = OkHttpClient.Builder()
+            .connectTimeout(30, TimeUnit.SECONDS)
+            .readTimeout(30, TimeUnit.SECONDS)
+            .build()
+        return Retrofit.Builder()
+            .baseUrl("https://api.upbit.com/")
+            .client(client)
+            .addConverterFactory(json.asConverterFactory("application/json".toMediaType()))
+            .build()
+            .create(com.crypto.cryptoview.data.remote.api.AuthUpbitApi::class.java)
+    }
+
     // Gate.io
 
     @Provides
@@ -183,5 +202,22 @@ object NetworkModule {
             okHttpClient = okHttpClient,
             json = json
         )
+    }
+
+    @Provides
+    @Singleton
+    fun provideAuthGateApi(
+        json: Json
+    ): com.crypto.cryptoview.data.remote.api.AuthGateApi {
+        val client = OkHttpClient.Builder()
+            .connectTimeout(30, TimeUnit.SECONDS)
+            .readTimeout(30, TimeUnit.SECONDS)
+            .build()
+        return Retrofit.Builder()
+            .baseUrl("https://api.gateio.ws/")
+            .client(client)
+            .addConverterFactory(json.asConverterFactory("application/json".toMediaType()))
+            .build()
+            .create(com.crypto.cryptoview.data.remote.api.AuthGateApi::class.java)
     }
 }
