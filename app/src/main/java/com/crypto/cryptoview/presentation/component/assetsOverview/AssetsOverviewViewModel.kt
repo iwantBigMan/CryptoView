@@ -91,6 +91,12 @@ class AssetsOverviewViewModel @Inject constructor(
                 }
         }
     }
+    /**
+     * 자동 갱신 시작
+     * 모든 api 조회 실패시 설정 페이지로 이동
+     * 설정페이지에서 거래소 연동 재시도
+     */
+
 
 
     override fun onCleared() {

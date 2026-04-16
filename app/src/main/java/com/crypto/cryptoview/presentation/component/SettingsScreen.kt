@@ -4,19 +4,25 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ExitToApp
-import androidx.compose.material.icons.filled.ExitToApp
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Key
+import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import com.crypto.cryptoview.domain.model.ExchangeType
+import com.crypto.cryptoview.presentation.login.GoogleLoginViewModel
 import com.crypto.cryptoview.presentation.login.LoginViewModel
 import com.crypto.cryptoview.ui.theme.*
 import kotlinx.coroutines.launch
@@ -25,11 +31,16 @@ import kotlinx.coroutines.launch
 fun SettingsScreen(
     modifier: Modifier = Modifier,
     viewModel: LoginViewModel = hiltViewModel(),
-    onLogout: () -> Unit = {}
+    googleLoginViewModel: GoogleLoginViewModel = hiltViewModel(),
+    showExchangeSetup: Boolean = false,
+    onLogout: () -> Unit = {},
+    onExchangeLinked: () -> Unit = {}
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    val googleUiState by googleLoginViewModel.uiState.collectAsState()
     val scope = rememberCoroutineScope()
     var showLogoutDialog by remember { mutableStateOf(false) }
+    var showExchangeDialog by remember { mutableStateOf(showExchangeSetup) }
 
     Surface(
         modifier = modifier.fillMaxSize(),
@@ -52,10 +63,53 @@ fun SettingsScreen(
                 )
             }
 
+            // Google 계정 정보
+            item {
+                Text(
+                    text = "계정",
+                    color = TextSecondary,
+                    fontSize = 14.sp,
+                    modifier = Modifier.padding(bottom = 8.dp)
+                )
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(12.dp),
+                    colors = CardDefaults.cardColors(containerColor = CardBackground)
+                ) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(16.dp),
+                        horizontalArrangement = Arrangement.spacedBy(12.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Person,
+                            contentDescription = null,
+                            tint = AccentBlue,
+                            modifier = Modifier.size(40.dp)
+                        )
+                        Column {
+                            Text(
+                                text = googleUiState.userName ?: "사용자",
+                                color = Color.White,
+                                fontSize = 16.sp,
+                                fontWeight = FontWeight.Medium
+                            )
+                            Text(
+                                text = googleUiState.userEmail ?: "",
+                                color = TextSecondary,
+                                fontSize = 13.sp
+                            )
+                        }
+                    }
+                }
+            }
+
             // 연동된 계정 섹션
             item {
                 Text(
-                    text = "연동된 계정",
+                    text = "연동된 거래소",
                     color = TextSecondary,
                     fontSize = 14.sp,
                     modifier = Modifier.padding(bottom = 8.dp)
@@ -110,6 +164,38 @@ fun SettingsScreen(
                                 }
                             }
                         }
+                    }
+                }
+            }
+
+            // 거래소 연동 추가 버튼
+            item {
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable { showExchangeDialog = true },
+                    shape = RoundedCornerShape(12.dp),
+                    colors = CardDefaults.cardColors(containerColor = CardBackground)
+                ) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(16.dp),
+                        horizontalArrangement = Arrangement.spacedBy(12.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Add,
+                            contentDescription = "거래소 연동",
+                            tint = AccentBlue,
+                            modifier = Modifier.size(24.dp)
+                        )
+                        Text(
+                            text = "거래소 연동 추가",
+                            color = AccentBlue,
+                            fontSize = 16.sp,
+                            fontWeight = FontWeight.Medium
+                        )
                     }
                 }
             }
@@ -180,14 +266,11 @@ fun SettingsScreen(
         AlertDialog(
             onDismissRequest = { showLogoutDialog = false },
             title = {
-                Text(
-                    text = "로그아웃",
-                    color = Color.White
-                )
+                Text(text = "로그아웃", color = Color.White)
             },
             text = {
                 Text(
-                    text = "모든 연동된 거래소 정보가 삭제되고 앱이 종료됩니다.\n계속하시겠습니까?",
+                    text = "Google 계정에서 로그아웃하고\n모든 연동된 거래소 정보가 삭제됩니다.\n계속하시겠습니까?",
                     color = TextSecondary
                 )
             },
@@ -196,13 +279,12 @@ fun SettingsScreen(
                     onClick = {
                         scope.launch {
                             viewModel.logout()
+                            googleLoginViewModel.signOut()
                             showLogoutDialog = false
                             onLogout()
                         }
                     },
-                    colors = ButtonDefaults.textButtonColors(
-                        contentColor = ErrorColor
-                    )
+                    colors = ButtonDefaults.textButtonColors(contentColor = ErrorColor)
                 ) {
                     Text("로그아웃")
                 }
@@ -210,9 +292,7 @@ fun SettingsScreen(
             dismissButton = {
                 TextButton(
                     onClick = { showLogoutDialog = false },
-                    colors = ButtonDefaults.textButtonColors(
-                        contentColor = TextSecondary
-                    )
+                    colors = ButtonDefaults.textButtonColors(contentColor = TextSecondary)
                 ) {
                     Text("취소")
                 }
@@ -220,4 +300,150 @@ fun SettingsScreen(
             containerColor = CardBackground
         )
     }
+
+    // 거래소 연동 다이얼로그
+    if (showExchangeDialog) {
+        ExchangeSetupDialog(
+            isRequired = showExchangeSetup && uiState.savedCredentials.isEmpty(),
+            viewModel = viewModel,
+            onDismiss = {
+                if (!showExchangeSetup || uiState.savedCredentials.isNotEmpty()) {
+                    showExchangeDialog = false
+                }
+                // 필수 연동 상태에서는 닫기 불가
+            },
+            onSuccess = {
+                showExchangeDialog = false
+                onExchangeLinked()
+            }
+        )
+    }
+}
+
+/**
+ * 거래소 연동 다이얼로그
+ * 업비트 API Key/Secret 입력
+ */
+@Composable
+private fun ExchangeSetupDialog(
+    isRequired: Boolean,
+    viewModel: LoginViewModel,
+    onDismiss: () -> Unit,
+    onSuccess: () -> Unit
+) {
+    val uiState by viewModel.uiState.collectAsState()
+    var apiKey by remember { mutableStateOf("") }
+    var secretKey by remember { mutableStateOf("") }
+    var isLoading by remember { mutableStateOf(false) }
+    var errorMsg by remember { mutableStateOf<String?>(null) }
+
+    AlertDialog(
+        onDismissRequest = {
+            if (!isRequired) onDismiss()
+        },
+        title = {
+            Column {
+                Text(
+                    text = if (isRequired) "🔗 업비트 연동 (필수)" else "🔗 거래소 연동",
+                    color = Color.White,
+                    fontWeight = FontWeight.Bold
+                )
+                if (isRequired) {
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Text(
+                        text = "USDT/KRW 환율 조회를 위해 업비트 연동이 필요합니다",
+                        color = TextSecondary,
+                        fontSize = 12.sp
+                    )
+                }
+            }
+        },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                // API Key
+                OutlinedTextField(
+                    value = apiKey,
+                    onValueChange = { apiKey = it },
+                    label = { Text("API Key", color = TextSecondary) },
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedTextColor = Color.White,
+                        unfocusedTextColor = Color.White,
+                        focusedBorderColor = AccentBlue,
+                        unfocusedBorderColor = Color(0xFF2A2D3E),
+                        focusedContainerColor = Color(0xFF0F1720),
+                        unfocusedContainerColor = Color(0xFF0F1720)
+                    ),
+                    singleLine = true,
+                    keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next)
+                )
+
+                // Secret Key
+                OutlinedTextField(
+                    value = secretKey,
+                    onValueChange = { secretKey = it },
+                    label = { Text("Secret Key", color = TextSecondary) },
+                    modifier = Modifier.fillMaxWidth(),
+                    visualTransformation = PasswordVisualTransformation(),
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedTextColor = Color.White,
+                        unfocusedTextColor = Color.White,
+                        focusedBorderColor = AccentBlue,
+                        unfocusedBorderColor = Color(0xFF2A2D3E),
+                        focusedContainerColor = Color(0xFF0F1720),
+                        unfocusedContainerColor = Color(0xFF0F1720)
+                    ),
+                    singleLine = true,
+                    keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done)
+                )
+
+                // 에러 메시지
+                if (errorMsg != null) {
+                    Text(
+                        text = errorMsg ?: "",
+                        color = ErrorColor,
+                        fontSize = 12.sp
+                    )
+                }
+
+                // 안내
+                Text(
+                    text = "• 출금 권한은 체크하지 마세요\n• API Key는 기기에만 저장됩니다",
+                    color = TextTertiary,
+                    fontSize = 11.sp,
+                    lineHeight = 16.sp
+                )
+            }
+        },
+        confirmButton = {
+            TextButton(
+                onClick = {
+                    if (apiKey.isBlank() || secretKey.isBlank()) {
+                        errorMsg = "API Key와 Secret Key를 모두 입력하세요"
+                        return@TextButton
+                    }
+                    // ViewModel을 통해 업비트 키 저장
+                    viewModel.updateApiKey(ExchangeType.UPBIT, apiKey)
+                    viewModel.updateSecretKey(ExchangeType.UPBIT, secretKey)
+                    viewModel.saveSelectedCredentials()
+                    onSuccess()
+                },
+                enabled = !isLoading
+            ) {
+                if (isLoading) {
+                    CircularProgressIndicator(modifier = Modifier.size(16.dp), strokeWidth = 2.dp)
+                } else {
+                    Text("연동하기", color = AccentBlue, fontWeight = FontWeight.Bold)
+                }
+            }
+        },
+        dismissButton = {
+            if (!isRequired) {
+                TextButton(onClick = onDismiss) {
+                    Text("취소", color = TextSecondary)
+                }
+            }
+        },
+        containerColor = Color(0xFF1A1D2E)
+    )
 }

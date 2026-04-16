@@ -34,10 +34,13 @@ import com.crypto.cryptoview.ui.theme.CryptoViewTheme
 fun MainScreen(
     viewModel: AssetsOverviewViewModel,
     holdingsViewModel: HoldingCoinsViewModel,
-    onLogout: () -> Unit = {}
+    initialTab: Int = 0,
+    showExchangeSetup: Boolean = false,
+    onLogout: () -> Unit = {},
+    onExchangeLinked: () -> Unit = {}
 ) {
     val navController = rememberNavController()
-    var selectedTab by remember { mutableIntStateOf(0) }
+    var selectedTab by remember { mutableIntStateOf(initialTab) }
 
     NavHost(navController = navController, startDestination = "main") {
         composable("main") {
@@ -102,7 +105,9 @@ fun MainScreen(
                     )
                     2 -> SettingsScreen(
                         modifier = Modifier.padding(paddingValues),
-                        onLogout = onLogout
+                        onLogout = onLogout,
+                        showExchangeSetup = showExchangeSetup,
+                        onExchangeLinked = onExchangeLinked
                     )
                 }
             }

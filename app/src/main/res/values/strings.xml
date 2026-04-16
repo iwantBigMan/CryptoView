@@ -2,4 +2,6 @@
     <string name="app_name">CryptoView</string>
     <string name="total_value">자산</string>
     <string name="ROI">ROI</string>
+    <!-- Firebase Console > Authentication > Sign-in method > Google 활성화 후 Web Client ID 입력 -->
+    <string name="default_web_client_id">YOUR_WEB_CLIENT_ID_HERE</string>
 </resources>
