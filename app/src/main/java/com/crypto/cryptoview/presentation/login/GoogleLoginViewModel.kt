@@ -3,7 +3,9 @@ package com.crypto.cryptoview.presentation.login
 import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.crypto.cryptoview.data.auth.GoogleAuthService
+import com.crypto.cryptoview.domain.usecase.auth.GetCurrentGoogleUserUseCase
+import com.crypto.cryptoview.domain.usecase.auth.SignInWithGoogleUseCase
+import com.crypto.cryptoview.domain.usecase.auth.SignOutGoogleUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -25,29 +27,30 @@ data class GoogleLoginUiState(
 
 /**
  * Google 로그인 ViewModel
- * Firebase Auth + Credential Manager 기반
+ * Domain UseCase만 의존 (클린 아키텍처)
  */
 @HiltViewModel
 class GoogleLoginViewModel @Inject constructor(
-    private val googleAuthService: GoogleAuthService
+    private val signInWithGoogle: SignInWithGoogleUseCase,
+    private val signOutGoogle: SignOutGoogleUseCase,
+    private val getCurrentUser: GetCurrentGoogleUserUseCase
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(GoogleLoginUiState())
     val uiState: StateFlow<GoogleLoginUiState> = _uiState.asStateFlow()
 
     init {
-        // 앱 시작 시 이미 로그인된 상태인지 확인
         checkCurrentUser()
     }
 
     private fun checkCurrentUser() {
-        val userInfo = googleAuthService.getUserInfo()
-        if (userInfo != null) {
+        val user = getCurrentUser()
+        if (user != null) {
             _uiState.value = _uiState.value.copy(
                 isSignedIn = true,
-                userName = userInfo.displayName,
-                userEmail = userInfo.email,
-                userPhotoUrl = userInfo.photoUrl
+                userName = user.displayName,
+                userEmail = user.email,
+                userPhotoUrl = user.photoUrl
             )
         }
     }
@@ -60,14 +63,14 @@ class GoogleLoginViewModel @Inject constructor(
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(isLoading = true, error = null)
 
-            googleAuthService.signInWithGoogle(activityContext).fold(
+            signInWithGoogle.invoke(activityContext).fold(
                 onSuccess = { user ->
                     _uiState.value = _uiState.value.copy(
                         isLoading = false,
                         isSignedIn = true,
                         userName = user.displayName,
                         userEmail = user.email,
-                        userPhotoUrl = user.photoUrl?.toString()
+                        userPhotoUrl = user.photoUrl
                     )
                 },
                 onFailure = { e ->
@@ -80,21 +83,16 @@ class GoogleLoginViewModel @Inject constructor(
         }
     }
 
-    /**
-     * 로그아웃 (Firebase + Google)
-     */
     fun signOut() {
         viewModelScope.launch {
-            googleAuthService.signOut()
-            _uiState.value = GoogleLoginUiState() // 상태 초기화
+            signOutGoogle()
+            _uiState.value = GoogleLoginUiState()
         }
     }
 
-    /** Firebase 로그인 여부 (suspend 없이) */
-    fun isSignedIn(): Boolean = googleAuthService.isSignedIn
+    fun isSignedIn(): Boolean = getCurrentUser.isSignedIn()
 
     fun clearError() {
         _uiState.value = _uiState.value.copy(error = null)
     }
 }
-

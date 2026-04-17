@@ -4,8 +4,10 @@ import android.content.Context
 import androidx.credentials.CredentialManager
 import androidx.credentials.GetCredentialRequest
 import androidx.credentials.exceptions.GetCredentialCancellationException
+import androidx.credentials.exceptions.NoCredentialException
 import com.crypto.cryptoview.R
 import com.google.android.libraries.identity.googleid.GetGoogleIdOption
+import com.google.android.libraries.identity.googleid.GetSignInWithGoogleOption
 import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseUser
@@ -26,6 +28,7 @@ class GoogleAuthService @Inject constructor(
 ) {
     private val firebaseAuth: FirebaseAuth = FirebaseAuth.getInstance()
     private val credentialManager: CredentialManager = CredentialManager.create(context)
+    private val webClientId: String by lazy { context.getString(R.string.default_web_client_id) }
 
     /** 현재 로그인된 Firebase 유저 */
     val currentUser: FirebaseUser?
@@ -37,31 +40,21 @@ class GoogleAuthService @Inject constructor(
 
     /**
      * Google 로그인 실행
-     * @param activityContext Activity Context (Credential Manager UI 표시에 필요)
-     * @return 로그인된 FirebaseUser
+     * 1차: GetGoogleIdOption (원탭 로그인)
+     * 2차: GetSignInWithGoogleOption (Google 로그인 바텀시트 - fallback)
      */
     suspend fun signInWithGoogle(activityContext: Context): Result<FirebaseUser> {
         return try {
-            // 1. Google ID 옵션 생성
-            val googleIdOption = GetGoogleIdOption.Builder()
-                .setFilterByAuthorizedAccounts(false)
-                .setServerClientId(context.getString(R.string.default_web_client_id))
-                .setAutoSelectEnabled(true)
-                .build()
+            // 1차 시도: 원탭 로그인 (기기에 이미 Google 계정이 있는 경우)
+            val idToken = try {
+                getIdTokenWithGoogleId(activityContext)
+            } catch (e: NoCredentialException) {
+                // 2차 시도: Google Sign-In 바텀시트 (계정 선택 UI 직접 표시)
+                android.util.Log.d("GoogleAuthService", "원탭 로그인 실패, 바텀시트로 전환", e)
+                getIdTokenWithSignInButton(activityContext)
+            }
 
-            // 2. Credential 요청
-            val request = GetCredentialRequest.Builder()
-                .addCredentialOption(googleIdOption)
-                .build()
-
-            // 3. Credential Manager로 로그인 UI 표시
-            val result = credentialManager.getCredential(activityContext, request)
-
-            // 4. Google ID Token 추출
-            val googleIdTokenCredential = GoogleIdTokenCredential.createFrom(result.credential.data)
-            val idToken = googleIdTokenCredential.idToken
-
-            // 5. Firebase Auth에 토큰 전달
+            // Firebase Auth에 토큰 전달
             val firebaseCredential = GoogleAuthProvider.getCredential(idToken, null)
             val authResult = firebaseAuth.signInWithCredential(firebaseCredential).await()
 
@@ -80,24 +73,57 @@ class GoogleAuthService @Inject constructor(
     }
 
     /**
+     * 방법 1: GetGoogleIdOption - 원탭 로그인
+     * 기기에 Google 계정이 설정되어 있으면 바로 선택 가능
+     */
+    private suspend fun getIdTokenWithGoogleId(activityContext: Context): String {
+        val googleIdOption = GetGoogleIdOption.Builder()
+            .setFilterByAuthorizedAccounts(false)
+            .setServerClientId(webClientId)
+            .setAutoSelectEnabled(true)
+            .build()
+
+        val request = GetCredentialRequest.Builder()
+            .addCredentialOption(googleIdOption)
+            .build()
+
+        val result = credentialManager.getCredential(activityContext, request)
+        val credential = GoogleIdTokenCredential.createFrom(result.credential.data)
+        return credential.idToken
+    }
+
+    /**
+     * 방법 2: GetSignInWithGoogleOption - Google 로그인 바텀시트
+     * 원탭이 실패했을 때 fallback으로 사용
+     * 기기에 Google 계정이 없거나 Credential Manager가 계정을 못 찾을 때
+     */
+    private suspend fun getIdTokenWithSignInButton(activityContext: Context): String {
+        val signInOption = GetSignInWithGoogleOption.Builder(webClientId)
+            .build()
+
+        val request = GetCredentialRequest.Builder()
+            .addCredentialOption(signInOption)
+            .build()
+
+        val result = credentialManager.getCredential(activityContext, request)
+        val credential = GoogleIdTokenCredential.createFrom(result.credential.data)
+        return credential.idToken
+    }
+
+    /**
      * 로그아웃 (Firebase + Credential Manager 모두)
      */
     suspend fun signOut() {
         try {
-            // Credential Manager 세션 클리어
             credentialManager.clearCredentialState(
                 androidx.credentials.ClearCredentialStateRequest()
             )
         } catch (e: Exception) {
             android.util.Log.e("GoogleAuthService", "clearCredentialState error", e)
         }
-        // Firebase 로그아웃
         firebaseAuth.signOut()
     }
 
-    /**
-     * 현재 유저 정보
-     */
     data class UserInfo(
         val uid: String,
         val displayName: String?,
@@ -115,4 +141,3 @@ class GoogleAuthService @Inject constructor(
         )
     }
 }
-

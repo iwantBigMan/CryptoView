@@ -1,4 +1,4 @@
-package com.crypto.cryptoview.presentation.component
+package com.crypto.cryptoview.presentation.settings
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -23,14 +23,14 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.crypto.cryptoview.domain.model.ExchangeType
 import com.crypto.cryptoview.presentation.login.GoogleLoginViewModel
-import com.crypto.cryptoview.presentation.login.LoginViewModel
+import com.crypto.cryptoview.presentation.settings.ExchangeSettingsViewModel
 import com.crypto.cryptoview.ui.theme.*
 import kotlinx.coroutines.launch
 
 @Composable
 fun SettingsScreen(
     modifier: Modifier = Modifier,
-    viewModel: LoginViewModel = hiltViewModel(),
+    viewModel: ExchangeSettingsViewModel = hiltViewModel(),
     googleLoginViewModel: GoogleLoginViewModel = hiltViewModel(),
     showExchangeSetup: Boolean = false,
     onLogout: () -> Unit = {},
@@ -327,15 +327,30 @@ fun SettingsScreen(
 @Composable
 private fun ExchangeSetupDialog(
     isRequired: Boolean,
-    viewModel: LoginViewModel,
+    viewModel: ExchangeSettingsViewModel,
     onDismiss: () -> Unit,
     onSuccess: () -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsState()
     var apiKey by remember { mutableStateOf("") }
     var secretKey by remember { mutableStateOf("") }
-    var isLoading by remember { mutableStateOf(false) }
-    var errorMsg by remember { mutableStateOf<String?>(null) }
+    var localError by remember { mutableStateOf<String?>(null) }
+
+    // ViewModel의 검증 결과 관찰
+    LaunchedEffect(uiState.saveSuccess) {
+        if (uiState.saveSuccess) {
+            viewModel.clearSaveSuccess()
+            onSuccess()
+        }
+    }
+
+    // ViewModel 에러를 로컬 에러에 반영
+    LaunchedEffect(uiState.error) {
+        if (uiState.error != null) {
+            localError = uiState.error
+            viewModel.clearError()
+        }
+    }
 
     AlertDialog(
         onDismissRequest = {
@@ -363,7 +378,7 @@ private fun ExchangeSetupDialog(
                 // API Key
                 OutlinedTextField(
                     value = apiKey,
-                    onValueChange = { apiKey = it },
+                    onValueChange = { apiKey = it; localError = null },
                     label = { Text("API Key", color = TextSecondary) },
                     modifier = Modifier.fillMaxWidth(),
                     colors = OutlinedTextFieldDefaults.colors(
@@ -375,13 +390,14 @@ private fun ExchangeSetupDialog(
                         unfocusedContainerColor = Color(0xFF0F1720)
                     ),
                     singleLine = true,
+                    enabled = !uiState.isLoading,
                     keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next)
                 )
 
                 // Secret Key
                 OutlinedTextField(
                     value = secretKey,
-                    onValueChange = { secretKey = it },
+                    onValueChange = { secretKey = it; localError = null },
                     label = { Text("Secret Key", color = TextSecondary) },
                     modifier = Modifier.fillMaxWidth(),
                     visualTransformation = PasswordVisualTransformation(),
@@ -394,13 +410,14 @@ private fun ExchangeSetupDialog(
                         unfocusedContainerColor = Color(0xFF0F1720)
                     ),
                     singleLine = true,
+                    enabled = !uiState.isLoading,
                     keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done)
                 )
 
                 // 에러 메시지
-                if (errorMsg != null) {
+                if (localError != null) {
                     Text(
-                        text = errorMsg ?: "",
+                        text = localError ?: "",
                         color = ErrorColor,
                         fontSize = 12.sp
                     )
@@ -419,19 +436,27 @@ private fun ExchangeSetupDialog(
             TextButton(
                 onClick = {
                     if (apiKey.isBlank() || secretKey.isBlank()) {
-                        errorMsg = "API Key와 Secret Key를 모두 입력하세요"
+                        localError = "API Key와 Secret Key를 모두 입력하세요"
                         return@TextButton
                     }
-                    // ViewModel을 통해 업비트 키 저장
+                    localError = null
+                    // ViewModel에 키 설정 후 비동기 검증+저장 시작
                     viewModel.updateApiKey(ExchangeType.UPBIT, apiKey)
                     viewModel.updateSecretKey(ExchangeType.UPBIT, secretKey)
                     viewModel.saveSelectedCredentials()
-                    onSuccess()
+                    // onSuccess()는 여기서 호출하지 않음!
+                    // LaunchedEffect(uiState.saveSuccess)에서 검증 성공 시에만 호출됨
                 },
-                enabled = !isLoading
+                enabled = !uiState.isLoading
             ) {
-                if (isLoading) {
-                    CircularProgressIndicator(modifier = Modifier.size(16.dp), strokeWidth = 2.dp)
+                if (uiState.isLoading) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(16.dp),
+                        strokeWidth = 2.dp,
+                        color = AccentBlue
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text("검증 중...", color = TextSecondary)
                 } else {
                     Text("연동하기", color = AccentBlue, fontWeight = FontWeight.Bold)
                 }
@@ -439,7 +464,10 @@ private fun ExchangeSetupDialog(
         },
         dismissButton = {
             if (!isRequired) {
-                TextButton(onClick = onDismiss) {
+                TextButton(
+                    onClick = onDismiss,
+                    enabled = !uiState.isLoading
+                ) {
                     Text("취소", color = TextSecondary)
                 }
             }

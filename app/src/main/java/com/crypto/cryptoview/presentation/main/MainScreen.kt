@@ -22,7 +22,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-import com.crypto.cryptoview.presentation.component.SettingsScreen
+import com.crypto.cryptoview.presentation.settings.SettingsScreen
 import com.crypto.cryptoview.presentation.component.assetsOverview.AssetsOverviewScreen
 import com.crypto.cryptoview.presentation.component.assetsOverview.AssetsOverviewViewModel
 import com.crypto.cryptoview.presentation.component.holdingCoinView.HoldingCoinsViewModel
