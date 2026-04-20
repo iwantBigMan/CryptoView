@@ -4,13 +4,10 @@ import com.crypto.cryptoview.data.remote.dto.upbit.ValidateUpbitResponse
 import com.crypto.cryptoview.domain.repository.AuthRepository
 import javax.inject.Inject
 
-/**
- * 백엔드를 통한 업비트 API Key/Secret 검증+저장 UseCase
- */
-class ValidateUpbitCredentialsUseCase @Inject constructor(
-    private val authRepository: AuthRepository
-) {
+class ValidateAndSaveUpbitCredentialsUseCase @Inject constructor(
+    private val authRepository: AuthRepository)
+ {
     suspend operator fun invoke(accessKey: String, secretKey: String): ValidateUpbitResponse {
-        return authRepository.validateUpbit(accessKey, secretKey)
+        return authRepository.validateAndSaveUpbit(accessKey, secretKey)
     }
 }

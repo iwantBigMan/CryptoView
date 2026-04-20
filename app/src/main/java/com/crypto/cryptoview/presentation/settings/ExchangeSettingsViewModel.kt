@@ -5,7 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.crypto.cryptoview.data.local.CredentialsManager
 import com.crypto.cryptoview.data.local.CredentialsProvider
 import com.crypto.cryptoview.domain.model.ExchangeType
-import com.crypto.cryptoview.domain.usecase.auth.ValidateGateCredentialsUseCase
+import com.crypto.cryptoview.domain.usecase.auth.ValidateAndSaveUpbitCredentialsUseCase
 import com.crypto.cryptoview.domain.usecase.auth.ValidateUpbitCredentialsUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -18,15 +18,14 @@ import javax.inject.Inject
 
 /**
  * 거래소 연동 설정 ViewModel
- * 거래소별 API Key 관리 (다중 연동 지원)
- * 설정 페이지에서 사용
+ * 백엔드를 통한 키 검증 + 로컬 기기 저장
  */
 @HiltViewModel
 class ExchangeSettingsViewModel @Inject constructor(
     private val credentialsManager: CredentialsManager,
     private val credentialsProvider: CredentialsProvider,
     private val validateUpbit: ValidateUpbitCredentialsUseCase,
-    private val validateGate: ValidateGateCredentialsUseCase
+    private val validateAndSaveUpbitCredentialsUseCase: ValidateAndSaveUpbitCredentialsUseCase
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(ExchangeSettingsUiState())
@@ -85,7 +84,7 @@ class ExchangeSettingsViewModel @Inject constructor(
         _uiState.value = _uiState.value.copy(inputs = current)
     }
 
-    /** 선택된 거래소들의 인증 정보를 일괄 저장 */
+    /** 선택된 거래소들의 인증 정보를 백엔드 검증 후 로컬 저장 */
     fun saveSelectedCredentials() {
         val currentState = _uiState.value
         val toSave = currentState.selectedExchanges.toMutableSet().apply { add(ExchangeType.UPBIT) }
@@ -105,21 +104,25 @@ class ExchangeSettingsViewModel @Inject constructor(
                 // 검증: 입력된 키로 API 호출하여 연동 성공 여부 확인
                 for (ex in toSave) {
                     val input = _uiState.value.inputs[ex] ?: ExchangeInput()
-                    val valid = when (ex) {
-                        ExchangeType.UPBIT -> validateUpbit(input.apiKey, input.secretKey)
-                        ExchangeType.GATEIO -> validateGate(input.apiKey, input.secretKey)
-                        else -> true
-                    }
-                    if (!valid) {
-                        _uiState.value = _uiState.value.copy(
-                            isLoading = false,
-                            error = "${ex.displayName} 연동 검증 실패. API Key/Secret을 확인하세요."
-                        )
-                        return@launch
+                    when (ex) {
+                        ExchangeType.UPBIT -> {
+                            // 백엔드에 Firebase 토큰 + 업비트 키 전송하여 검증
+                            val response = validateUpbit(input.apiKey, input.secretKey)
+                            if (!response.valid) {
+                                _uiState.value = _uiState.value.copy(
+                                    isLoading = false,
+                                    error = response.message
+                                )
+                                return@launch
+                            }
+                        }
+                        else -> {
+                            // 다른 거래소는 추후 백엔드 구현 시 추가
+                        }
                     }
                 }
 
-                // 모든 검증 성공 → 저장
+                // 백엔드 검증 성공 → 로컬 기기에도 저장
                 credentialsManager.clearAllCredentials()
                 val stateNow = _uiState.value
                 for (ex in toSave) {
@@ -135,7 +138,10 @@ class ExchangeSettingsViewModel @Inject constructor(
                 _uiState.value = _uiState.value.copy(isLoading = false, selectedExchanges = emptySet(), saveSuccess = true)
             } catch (e: Throwable) {
                 android.util.Log.e("ExchangeSettingsVM", "saveSelectedCredentials error", e)
-                _uiState.value = _uiState.value.copy(isLoading = false, error = "저장 실패: ${e.message ?: e::class.simpleName}")
+                _uiState.value = _uiState.value.copy(
+                    isLoading = false,
+                    error = "검증 실패: ${e.message ?: e::class.simpleName}"
+                )
             }
         }
     }
@@ -180,4 +186,3 @@ class ExchangeSettingsViewModel @Inject constructor(
         return credentialsManager.credentials.first().hasRequiredCredentials()
     }
 }
-

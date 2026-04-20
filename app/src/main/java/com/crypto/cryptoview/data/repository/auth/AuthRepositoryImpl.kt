@@ -1,59 +1,36 @@
 package com.crypto.cryptoview.data.repository.auth
 
-import com.crypto.cryptoview.data.remote.api.AuthGateApi
-import com.crypto.cryptoview.data.remote.api.AuthUpbitApi
+import com.crypto.cryptoview.data.remote.api.ValidateUpbitApi
+import com.crypto.cryptoview.data.remote.dto.upbit.ValidateUpbitRequest
+import com.crypto.cryptoview.data.remote.dto.upbit.ValidateUpbitResponse
 import com.crypto.cryptoview.domain.repository.AuthRepository
-import com.crypto.cryptoview.util.authHelper.GateIOAuthHelper
-import com.crypto.cryptoview.util.authHelper.UpbitAuthHelper
-import com.crypto.cryptoview.util.sha512Hex
+import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.tasks.await
 import kotlinx.coroutines.withContext
 import javax.inject.Inject
 import javax.inject.Singleton
 
 @Singleton
 class AuthRepositoryImpl @Inject constructor(
-    private val authUpbitApi: AuthUpbitApi,
-    private val authGateApi: AuthGateApi
+    private val validateUpbitApi: ValidateUpbitApi
 ) : AuthRepository {
 
-    override suspend fun validateUpbit(apiKey: String, secretKey: String): Boolean {
+    override suspend fun validateAndSaveUpbit(
+        accessKey: String,
+        secretKey: String
+    ): ValidateUpbitResponse {
         return withContext(Dispatchers.IO) {
-            try {
-                val token = UpbitAuthHelper.generateAuthToken(apiKey, secretKey, null)
-                val resp = authUpbitApi.getAccounts(token)
-                // 성공적으로 응답이 왔으면 true
-                resp.isNotEmpty() || true
-            } catch (t: Throwable) {
-                android.util.Log.e("AuthRepository", "validateUpbit error", t)
-                false
-            }
-        }
-    }
+            val firebaseUser = FirebaseAuth.getInstance().currentUser
+                ?: throw IllegalStateException("로그인이 필요합니다")
 
-    override suspend fun validateGate(apiKey: String, secretKey: String): Boolean {
-        return withContext(Dispatchers.IO) {
-            try {
-                val timestamp = (System.currentTimeMillis() / 1000).toString()
-                val bodyHash = sha512Hex("")
-                val signString = buildString {
-                    append("GET")
-                    append("\n")
-                    append("/api/v4/spot/accounts")
-                    append("\n")
-                    append("")
-                    append("\n")
-                    append(bodyHash)
-                    append("\n")
-                    append(timestamp)
-                }
-                val sign = GateIOAuthHelper.generateSignature(secretKey, signString)
-                val resp = authGateApi.getSpotAccounts(apiKey, timestamp, sign)
-                resp.isNotEmpty() || true
-            } catch (t: Throwable) {
-                android.util.Log.e("AuthRepository", "validateGate error", t)
-                false
-            }
+            val idToken = firebaseUser.getIdToken(false).await().token
+                ?: throw IllegalStateException("Firebase 토큰 획득 실패")
+
+            validateUpbitApi.validateCredentials(
+                token = "Bearer $idToken",
+                request = ValidateUpbitRequest(accessKey, secretKey)
+            )
         }
     }
 }

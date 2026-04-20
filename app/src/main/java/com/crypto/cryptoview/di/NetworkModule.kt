@@ -143,23 +143,43 @@ object NetworkModule {
         return createApiService("https://api.upbit.com/", okHttpClient, json)
     }
 
-    // AuthUpbitApi 추가
+    // 백엔드 업비트 검증 API
     @Provides
     @Singleton
-    fun provideAuthUpbitApi(
+    fun provideValidateUpbitApi(
+        loggingInterceptor: HttpLoggingInterceptor,
         json: Json
-    ): com.crypto.cryptoview.data.remote.api.AuthUpbitApi {
-        // auth용은 인터셉터 없는 클라이언트를 사용하므로 기본 OkHttpClient 생성
+    ): com.crypto.cryptoview.data.remote.api.ValidateUpbitApi {
         val client = OkHttpClient.Builder()
+            .addInterceptor(loggingInterceptor)
             .connectTimeout(30, TimeUnit.SECONDS)
             .readTimeout(30, TimeUnit.SECONDS)
             .build()
         return Retrofit.Builder()
-            .baseUrl("https://api.upbit.com/")
+            .baseUrl("https://cryptoview-api-620339426938.us-central1.run.app/")
             .client(client)
             .addConverterFactory(json.asConverterFactory("application/json".toMediaType()))
             .build()
-            .create(com.crypto.cryptoview.data.remote.api.AuthUpbitApi::class.java)
+            .create(com.crypto.cryptoview.data.remote.api.ValidateUpbitApi::class.java)
+    }
+
+    @Provides
+    @Singleton
+    fun provideValidateAndSaveUpbitApi(
+        loggingInterceptor: HttpLoggingInterceptor,
+        json: Json
+    ): com.crypto.cryptoview.data.remote.api.validateAndSaveUpbit {
+        val client = OkHttpClient.Builder()
+            .addInterceptor(loggingInterceptor)
+            .connectTimeout(30, TimeUnit.SECONDS)
+            .readTimeout(30, TimeUnit.SECONDS)
+            .build()
+        return Retrofit.Builder()
+            .baseUrl("https://cryptoview-api-620339426938.us-central1.run.app/")
+            .client(client)
+            .addConverterFactory(json.asConverterFactory("application/json".toMediaType()))
+            .build()
+            .create(com.crypto.cryptoview.data.remote.api.validateAndSaveUpbit::class.java)
     }
 
     // Gate.io
@@ -204,20 +224,4 @@ object NetworkModule {
         )
     }
 
-    @Provides
-    @Singleton
-    fun provideAuthGateApi(
-        json: Json
-    ): com.crypto.cryptoview.data.remote.api.AuthGateApi {
-        val client = OkHttpClient.Builder()
-            .connectTimeout(30, TimeUnit.SECONDS)
-            .readTimeout(30, TimeUnit.SECONDS)
-            .build()
-        return Retrofit.Builder()
-            .baseUrl("https://api.gateio.ws/")
-            .client(client)
-            .addConverterFactory(json.asConverterFactory("application/json".toMediaType()))
-            .build()
-            .create(com.crypto.cryptoview.data.remote.api.AuthGateApi::class.java)
-    }
 }

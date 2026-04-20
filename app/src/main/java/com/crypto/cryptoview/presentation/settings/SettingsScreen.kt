@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.text.selection.DisableSelection
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ExitToApp
 import androidx.compose.material.icons.filled.Add
@@ -395,24 +396,27 @@ private fun ExchangeSetupDialog(
                 )
 
                 // Secret Key
-                OutlinedTextField(
-                    value = secretKey,
-                    onValueChange = { secretKey = it; localError = null },
-                    label = { Text("Secret Key", color = TextSecondary) },
-                    modifier = Modifier.fillMaxWidth(),
-                    visualTransformation = PasswordVisualTransformation(),
-                    colors = OutlinedTextFieldDefaults.colors(
-                        focusedTextColor = Color.White,
-                        unfocusedTextColor = Color.White,
-                        focusedBorderColor = AccentBlue,
-                        unfocusedBorderColor = Color(0xFF2A2D3E),
-                        focusedContainerColor = Color(0xFF0F1720),
-                        unfocusedContainerColor = Color(0xFF0F1720)
-                    ),
-                    singleLine = true,
-                    enabled = !uiState.isLoading,
-                    keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done)
-                )
+                // secretKey는 민감 정보이므로 입력 시 선택/복사 방지
+                DisableSelection {
+                    OutlinedTextField(
+                        value = secretKey,
+                        onValueChange = { secretKey = it; localError = null },
+                        label = { Text("Secret Key", color = TextSecondary) },
+                        modifier = Modifier.fillMaxWidth(),
+                        visualTransformation = PasswordVisualTransformation(),
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedTextColor = Color.White,
+                            unfocusedTextColor = Color.White,
+                            focusedBorderColor = AccentBlue,
+                            unfocusedBorderColor = Color(0xFF2A2D3E),
+                            focusedContainerColor = Color(0xFF0F1720),
+                            unfocusedContainerColor = Color(0xFF0F1720)
+                        ),
+                        singleLine = true,
+                        enabled = !uiState.isLoading,
+                        keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done)
+                    )
+                }
 
                 // 에러 메시지
                 if (localError != null) {
@@ -444,7 +448,6 @@ private fun ExchangeSetupDialog(
                     viewModel.updateApiKey(ExchangeType.UPBIT, apiKey)
                     viewModel.updateSecretKey(ExchangeType.UPBIT, secretKey)
                     viewModel.saveSelectedCredentials()
-                    // onSuccess()는 여기서 호출하지 않음!
                     // LaunchedEffect(uiState.saveSuccess)에서 검증 성공 시에만 호출됨
                 },
                 enabled = !uiState.isLoading
