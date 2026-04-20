@@ -1,6 +1,6 @@
 package com.crypto.cryptoview.data.repository.auth
 
-import com.crypto.cryptoview.data.remote.api.ValidateUpbitApi
+import com.crypto.cryptoview.data.remote.api.ValidateAndSaveUpbit
 import com.crypto.cryptoview.data.remote.dto.upbit.ValidateUpbitRequest
 import com.crypto.cryptoview.data.remote.dto.upbit.ValidateUpbitResponse
 import com.crypto.cryptoview.domain.repository.AuthRepository
@@ -13,7 +13,7 @@ import javax.inject.Singleton
 
 @Singleton
 class AuthRepositoryImpl @Inject constructor(
-    private val validateUpbitApi: ValidateUpbitApi
+    private val validateAndSaveUpbit: ValidateAndSaveUpbit
 ) : AuthRepository {
 
     override suspend fun validateAndSaveUpbit(
@@ -27,7 +27,7 @@ class AuthRepositoryImpl @Inject constructor(
             val idToken = firebaseUser.getIdToken(false).await().token
                 ?: throw IllegalStateException("Firebase 토큰 획득 실패")
 
-            validateUpbitApi.validateCredentials(
+            validateAndSaveUpbit.validateAndSaveCredentials(
                 token = "Bearer $idToken",
                 request = ValidateUpbitRequest(accessKey, secretKey)
             )

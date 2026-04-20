@@ -6,7 +6,6 @@ import com.crypto.cryptoview.data.local.CredentialsManager
 import com.crypto.cryptoview.data.local.CredentialsProvider
 import com.crypto.cryptoview.domain.model.ExchangeType
 import com.crypto.cryptoview.domain.usecase.auth.ValidateAndSaveUpbitCredentialsUseCase
-import com.crypto.cryptoview.domain.usecase.auth.ValidateUpbitCredentialsUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -24,8 +23,7 @@ import javax.inject.Inject
 class ExchangeSettingsViewModel @Inject constructor(
     private val credentialsManager: CredentialsManager,
     private val credentialsProvider: CredentialsProvider,
-    private val validateUpbit: ValidateUpbitCredentialsUseCase,
-    private val validateAndSaveUpbitCredentialsUseCase: ValidateAndSaveUpbitCredentialsUseCase
+    private val saveUpbit: ValidateAndSaveUpbitCredentialsUseCase
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(ExchangeSettingsUiState())
@@ -106,12 +104,12 @@ class ExchangeSettingsViewModel @Inject constructor(
                     val input = _uiState.value.inputs[ex] ?: ExchangeInput()
                     when (ex) {
                         ExchangeType.UPBIT -> {
-                            // 백엔드에 Firebase 토큰 + 업비트 키 전송하여 검증
-                            val response = validateUpbit(input.apiKey, input.secretKey)
-                            if (!response.valid) {
+                            // 검증 성공 → 백엔드에 저장
+                            val saveResponse = saveUpbit(input.apiKey, input.secretKey)
+                            if (saveResponse.saved != true) {
                                 _uiState.value = _uiState.value.copy(
                                     isLoading = false,
-                                    error = response.message
+                                    error = saveResponse.message
                                 )
                                 return@launch
                             }
@@ -122,18 +120,6 @@ class ExchangeSettingsViewModel @Inject constructor(
                     }
                 }
 
-                // 백엔드 검증 성공 → 로컬 기기에도 저장
-                credentialsManager.clearAllCredentials()
-                val stateNow = _uiState.value
-                for (ex in toSave) {
-                    val input = stateNow.inputs[ex] ?: ExchangeInput()
-                    when (ex) {
-                        ExchangeType.UPBIT -> credentialsManager.saveUpbitCredentials(input.apiKey, input.secretKey)
-                        ExchangeType.GATEIO -> credentialsManager.saveGateioCredentials(input.apiKey, input.secretKey)
-                        ExchangeType.BINANCE -> credentialsManager.saveBinanceCredentials(input.apiKey, input.secretKey)
-                        ExchangeType.BYBIT -> credentialsManager.saveBybitCredentials(input.apiKey, input.secretKey)
-                    }
-                }
 
                 _uiState.value = _uiState.value.copy(isLoading = false, selectedExchanges = emptySet(), saveSuccess = true)
             } catch (e: Throwable) {

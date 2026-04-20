@@ -9,15 +9,7 @@ import retrofit2.http.POST
 /**
  * 백엔드 서버를 통한 업비트 키 검증 API
  */
-interface ValidateUpbitApi {
-    @POST("/upbit/validate")
-    suspend fun validateCredentials(
-        @Header("Authorization") token: String,
-        @Body request: ValidateUpbitRequest
-    ): ValidateUpbitResponse
-}
-
-interface validateAndSaveUpbit {
+interface ValidateAndSaveUpbit {
     @POST("/api/exchange/upbit/validate-and-save")
     suspend fun validateAndSaveCredentials(
         @Header("Authorization") token: String,

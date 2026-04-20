@@ -9,5 +9,4 @@ interface AuthRepository {
     /** 백엔드에 업비트 키 검증+저장 요청 (Firebase 토큰 자동 첨부) */
     suspend fun validateAndSaveUpbit(accessKey: String, secretKey: String): ValidateUpbitResponse
 
-    suspend fun validateUpbit(accessKey: String, secretKey: String): ValidateUpbitResponse
 }

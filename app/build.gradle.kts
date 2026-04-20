@@ -65,7 +65,7 @@ android {
 
     buildFeatures {
         compose = true
-        buildConfig = true
+        buildConfig  = true
     }
 
     packaging {

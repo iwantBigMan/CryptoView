@@ -146,29 +146,10 @@ object NetworkModule {
     // 백엔드 업비트 검증 API
     @Provides
     @Singleton
-    fun provideValidateUpbitApi(
-        loggingInterceptor: HttpLoggingInterceptor,
-        json: Json
-    ): com.crypto.cryptoview.data.remote.api.ValidateUpbitApi {
-        val client = OkHttpClient.Builder()
-            .addInterceptor(loggingInterceptor)
-            .connectTimeout(30, TimeUnit.SECONDS)
-            .readTimeout(30, TimeUnit.SECONDS)
-            .build()
-        return Retrofit.Builder()
-            .baseUrl("https://cryptoview-api-620339426938.us-central1.run.app/")
-            .client(client)
-            .addConverterFactory(json.asConverterFactory("application/json".toMediaType()))
-            .build()
-            .create(com.crypto.cryptoview.data.remote.api.ValidateUpbitApi::class.java)
-    }
-
-    @Provides
-    @Singleton
     fun provideValidateAndSaveUpbitApi(
         loggingInterceptor: HttpLoggingInterceptor,
         json: Json
-    ): com.crypto.cryptoview.data.remote.api.validateAndSaveUpbit {
+    ): com.crypto.cryptoview.data.remote.api.ValidateAndSaveUpbit {
         val client = OkHttpClient.Builder()
             .addInterceptor(loggingInterceptor)
             .connectTimeout(30, TimeUnit.SECONDS)
@@ -179,7 +160,7 @@ object NetworkModule {
             .client(client)
             .addConverterFactory(json.asConverterFactory("application/json".toMediaType()))
             .build()
-            .create(com.crypto.cryptoview.data.remote.api.validateAndSaveUpbit::class.java)
+            .create(com.crypto.cryptoview.data.remote.api.ValidateAndSaveUpbit::class.java)
     }
 
     // Gate.io
