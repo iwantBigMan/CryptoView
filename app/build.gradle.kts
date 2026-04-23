@@ -153,11 +153,13 @@ dependencies {
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.junit.ktx)
     androidTestImplementation(libs.androidx.espresso.core)
-    androidTestImplementation(libs.kotlinx.coroutines.test) // 중요!
+    androidTestImplementation(libs.kotlinx.coroutines.test)
     androidTestImplementation(libs.retrofit)
+    androidTestImplementation(libs.retrofit.converter.kotlinx.serialization)
     androidTestImplementation(libs.okhttp)
     androidTestImplementation(libs.okhttp.logging.interceptor)
     androidTestImplementation(libs.kotlinx.serialization.json)
+    androidTestImplementation(libs.kotlinx.coroutines.play.services)
 
     // Debug
     debugImplementation(libs.androidx.compose.ui.tooling)

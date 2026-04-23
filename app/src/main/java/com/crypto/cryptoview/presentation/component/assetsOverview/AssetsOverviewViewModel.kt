@@ -45,7 +45,7 @@ class AssetsOverviewViewModel @Inject constructor(
         autoRefreshJob = viewModelScope.launch {
             while (isActive && isAutoRefreshEnabled) {
                 loadAssets()
-                delay(1000)
+                delay(10000)
             }
         }
     }

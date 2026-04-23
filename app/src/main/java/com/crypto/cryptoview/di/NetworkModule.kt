@@ -1,6 +1,7 @@
 package com.crypto.cryptoview.di
 
 import com.crypto.cryptoview.BuildConfig
+import com.crypto.cryptoview.data.auth.FirebaseTokenProviderImpl
 import com.crypto.cryptoview.data.local.CredentialsManager
 import com.crypto.cryptoview.data.local.CredentialsProvider
 import com.crypto.cryptoview.data.remote.api.GateFuturesApi
@@ -8,6 +9,8 @@ import com.crypto.cryptoview.data.remote.api.GateSpotApi
 import com.crypto.cryptoview.data.remote.api.UpbitApi
 import com.crypto.cryptoview.data.remote.api.UpbitMarketApi
 import com.crypto.cryptoview.data.remote.api.UpbitTickerAllApi
+import com.crypto.cryptoview.data.remote.interceptor.AccountResponseLoggingInterceptor
+import com.crypto.cryptoview.data.remote.interceptor.FirebaseAuthInterceptor
 import com.crypto.cryptoview.data.remote.interceptor.GateIOAuthInterceptor
 import com.crypto.cryptoview.data.remote.interceptor.UpbitAuthInterceptor
 import dagger.Module
@@ -110,10 +113,13 @@ object NetworkModule {
         loggingInterceptor: HttpLoggingInterceptor,
         credentialsProvider: CredentialsProvider
     ): OkHttpClient {
-        return createOkHttpClient(
-            loggingInterceptor,
-            UpbitAuthInterceptor(credentialsProvider)
-        )
+        return OkHttpClient.Builder()
+            .addInterceptor(loggingInterceptor)
+            .addInterceptor(UpbitAuthInterceptor(credentialsProvider))
+            .addInterceptor(AccountResponseLoggingInterceptor())
+            .connectTimeout(30, TimeUnit.SECONDS)
+            .readTimeout(30, TimeUnit.SECONDS)
+            .build()
     }
 
     @Provides
@@ -143,24 +149,50 @@ object NetworkModule {
         return createApiService("https://api.upbit.com/", okHttpClient, json)
     }
 
-    // 백엔드 업비트 검증 API
+    // 백엔드 공용 OkHttpClient (Firebase 토큰 자동 주입)
     @Provides
     @Singleton
-    fun provideValidateAndSaveUpbitApi(
+    fun provideBackendOkHttpClient(
         loggingInterceptor: HttpLoggingInterceptor,
-        json: Json
-    ): com.crypto.cryptoview.data.remote.api.ValidateAndSaveUpbit {
-        val client = OkHttpClient.Builder()
+        tokenProvider: FirebaseTokenProviderImpl
+    ): OkHttpClient {
+        return OkHttpClient.Builder()
             .addInterceptor(loggingInterceptor)
+            .addInterceptor(FirebaseAuthInterceptor(tokenProvider))
+            .addInterceptor(AccountResponseLoggingInterceptor())
             .connectTimeout(30, TimeUnit.SECONDS)
             .readTimeout(30, TimeUnit.SECONDS)
             .build()
+    }
+
+    // 백엔드 Retrofit 인스턴스
+    private fun createBackendRetrofit(client: OkHttpClient, json: Json): Retrofit {
         return Retrofit.Builder()
             .baseUrl("https://cryptoview-api-620339426938.us-central1.run.app/")
             .client(client)
             .addConverterFactory(json.asConverterFactory("application/json".toMediaType()))
             .build()
+    }
+
+    // 백엔드 업비트 검증 API
+    @Provides
+    @Singleton
+    fun provideValidateAndSaveUpbitApi(
+        client: OkHttpClient,
+        json: Json
+    ): com.crypto.cryptoview.data.remote.api.ValidateAndSaveUpbit {
+        return createBackendRetrofit(client, json)
             .create(com.crypto.cryptoview.data.remote.api.ValidateAndSaveUpbit::class.java)
+    }
+
+    @Provides
+    @Singleton
+    fun provideFetchUpbitAssetsApi(
+        client: OkHttpClient,
+        json: Json
+    ): com.crypto.cryptoview.data.remote.api.FetchUpbitAssets {
+        return createBackendRetrofit(client, json)
+            .create(com.crypto.cryptoview.data.remote.api.FetchUpbitAssets::class.java)
     }
 
     // Gate.io

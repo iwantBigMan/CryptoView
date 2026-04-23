@@ -2,7 +2,6 @@ package com.crypto.cryptoview.domain.usecase.upbit
 
 import com.crypto.cryptoview.domain.model.UpbitAccountBalance
 import com.crypto.cryptoview.domain.repository.UpbitAssetRepository
-
 import javax.inject.Inject
 
 class GetUpbitAccountBalancesUseCase @Inject constructor(
@@ -12,4 +11,3 @@ class GetUpbitAccountBalancesUseCase @Inject constructor(
         return repository.getAccountBalances()
     }
 }
-

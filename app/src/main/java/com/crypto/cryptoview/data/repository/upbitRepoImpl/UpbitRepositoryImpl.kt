@@ -1,17 +1,16 @@
 package com.crypto.cryptoview.data.repository.upbitRepoImpl
 
-import com.crypto.cryptoview.data.remote.api.UpbitApi
+import com.crypto.cryptoview.data.remote.api.FetchUpbitAssets
 import com.crypto.cryptoview.domain.model.UpbitAccountBalance
 import com.crypto.cryptoview.domain.repository.UpbitAssetRepository
-import jakarta.inject.Inject
-import jakarta.inject.Singleton
-
+import javax.inject.Inject
+import javax.inject.Singleton
 
 @Singleton
 class UpbitRepositoryImpl @Inject constructor(
-    private val api: UpbitApi
+    private val api: FetchUpbitAssets
 ) : UpbitAssetRepository {
     override suspend fun getAccountBalances(): Result<List<UpbitAccountBalance>> = runCatching {
-        api.getUpbitAccountBalances().map { dto -> dto.toDomain() }
+        api.fetchAssets().map { it.toDomain() }
     }
 }

@@ -4,9 +4,7 @@ import com.crypto.cryptoview.data.remote.api.ValidateAndSaveUpbit
 import com.crypto.cryptoview.data.remote.dto.upbit.ValidateUpbitRequest
 import com.crypto.cryptoview.data.remote.dto.upbit.ValidateUpbitResponse
 import com.crypto.cryptoview.domain.repository.AuthRepository
-import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.tasks.await
 import kotlinx.coroutines.withContext
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -21,14 +19,8 @@ class AuthRepositoryImpl @Inject constructor(
         secretKey: String
     ): ValidateUpbitResponse {
         return withContext(Dispatchers.IO) {
-            val firebaseUser = FirebaseAuth.getInstance().currentUser
-                ?: throw IllegalStateException("로그인이 필요합니다")
-
-            val idToken = firebaseUser.getIdToken(false).await().token
-                ?: throw IllegalStateException("Firebase 토큰 획득 실패")
-
+            // Authorization 헤더는 FirebaseAuthInterceptor 가 자동 주입
             validateAndSaveUpbit.validateAndSaveCredentials(
-                token = "Bearer $idToken",
                 request = ValidateUpbitRequest(accessKey, secretKey)
             )
         }
