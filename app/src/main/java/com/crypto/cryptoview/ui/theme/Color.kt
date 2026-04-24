@@ -62,3 +62,72 @@ val AccentBlue = Color(0xFF5B7FFF)
 val ErrorColor = Color(0xFFEF4444)
 val PositiveColor = Color(0xFF25D366)
 val NegativeColor = Color(0xFFEF5350)
+
+// ============================
+// 테마 팔레트 (다크 / 라이트)
+// ============================
+
+data class AppColors(
+    // 배경
+    val backgroundPrimary: Color,
+    val backgroundSecondary: Color,
+    val cardBackground: Color,
+    val surfaceVariant: Color,
+
+    // 텍스트
+    val textPrimary: Color,
+    val textSecondary: Color,
+    val textTertiary: Color,
+
+    // 액션
+    val accentBlue: Color,
+
+    // 상태
+    val positive: Color,
+    val negative: Color,
+    val error: Color,
+
+    // 입력/검색
+    val searchBarBg: Color,
+    val chipSelected: Color,
+    val chipUnselected: Color,
+
+    // 테마 여부
+    val isDark: Boolean
+)
+
+val DarkAppColors = AppColors(
+    backgroundPrimary  = Color(0xFF071029),
+    backgroundSecondary = Color(0xFF0A0E27),
+    cardBackground     = Color(0xFF0F1720),
+    surfaceVariant     = Color(0xFF1A1D2E),
+    textPrimary        = Color(0xFFFFFFFF),
+    textSecondary      = Color(0xFF9CA3AF),
+    textTertiary       = Color(0xFF6B7280),
+    accentBlue         = Color(0xFF5B7FFF),
+    positive           = Color(0xFF25D366),
+    negative           = Color(0xFFEF5350),
+    error              = Color(0xFFEF4444),
+    searchBarBg        = Color(0xFF1E2340),
+    chipSelected       = Color(0xFF3B82F6),
+    chipUnselected     = Color(0xFF374151),
+    isDark             = true
+)
+
+val LightAppColors = AppColors(
+    backgroundPrimary  = Color(0xFFF0F4FF),
+    backgroundSecondary = Color(0xFFE8EDF8),
+    cardBackground     = Color(0xFFFFFFFF),
+    surfaceVariant     = Color(0xFFEAEFF8),
+    textPrimary        = Color(0xFF0D1117),
+    textSecondary      = Color(0xFF4B5563),
+    textTertiary       = Color(0xFF9CA3AF),
+    accentBlue         = Color(0xFF3B6FFF),
+    positive           = Color(0xFF16A34A),
+    negative           = Color(0xFFDC2626),
+    error              = Color(0xFFDC2626),
+    searchBarBg        = Color(0xFFDDE3F0),
+    chipSelected       = Color(0xFF3B82F6),
+    chipUnselected     = Color(0xFFD1D5DB),
+    isDark             = false
+)

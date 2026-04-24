@@ -23,7 +23,7 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.crypto.cryptoview.domain.model.CurrencyUnit
 import com.crypto.cryptoview.domain.model.ExchangeHoldingDetail
 import com.crypto.cryptoview.domain.model.ExchangeType
-import com.crypto.cryptoview.ui.theme.*
+import com.crypto.cryptoview.ui.theme.LocalAppColors
 
 /**
  * 보유 상세 화면
@@ -36,6 +36,7 @@ fun HoldingDetailScreen(
     viewModel: HoldingDetailViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    val colors = LocalAppColors.current
 
     // 심볼이 변경되면 ViewModel에 설정
     androidx.compose.runtime.LaunchedEffect(symbol) {
@@ -47,7 +48,7 @@ fun HoldingDetailScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(BackgroundPrimary)
+            .background(colors.backgroundPrimary)
             .systemBarsPadding()
     ) {
         // 상단 헤더
@@ -63,7 +64,7 @@ fun HoldingDetailScreen(
                     modifier = Modifier.fillMaxSize(),
                     contentAlignment = Alignment.Center
                 ) {
-                    CircularProgressIndicator(color = AccentBlue)
+                    CircularProgressIndicator(color = colors.accentBlue)
                 }
             }
             uiState.error != null -> {
@@ -73,7 +74,7 @@ fun HoldingDetailScreen(
                 ) {
                     Text(
                         text = uiState.error ?: "오류가 발생했습니다",
-                        color = ErrorColor
+                        color = colors.error
                     )
                 }
             }
@@ -84,7 +85,7 @@ fun HoldingDetailScreen(
                 ) {
                     Text(
                         text = "보유 정보가 없습니다",
-                        color = TextSecondary
+                        color = colors.textSecondary
                     )
                 }
             }
@@ -103,6 +104,7 @@ private fun HoldingDetailHeader(
     symbol: String,
     onBack: () -> Unit
 ) {
+    val colors = LocalAppColors.current
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -113,13 +115,13 @@ private fun HoldingDetailHeader(
             Icon(
                 imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                 contentDescription = "Back",
-                tint = Color.White
+                tint = colors.textPrimary
             )
         }
         Spacer(modifier = Modifier.width(8.dp))
         Text(
             text = symbol,
-            color = Color.White,
+            color = colors.textPrimary,
             fontSize = 20.sp,
             fontWeight = FontWeight.Bold
         )
@@ -131,6 +133,7 @@ private fun HoldingDetailHeader(
  */
 @Composable
 private fun HoldingDetailContent(uiState: HoldingDetailUiState) {
+    val colors = LocalAppColors.current
     LazyColumn(
         modifier = Modifier
             .fillMaxSize()
@@ -142,7 +145,7 @@ private fun HoldingDetailContent(uiState: HoldingDetailUiState) {
         item {
             Text(
                 text = "거래소별 보유 현황",
-                color = TextSecondary,
+                color = colors.textSecondary,
                 fontSize = 14.sp,
                 modifier = Modifier.padding(vertical = 8.dp)
             )
@@ -163,10 +166,11 @@ fun ExchangeHoldingCard(
     holding: ExchangeHoldingDetail,
     modifier: Modifier = Modifier
 ) {
+    val colors = LocalAppColors.current
     Card(
         modifier = modifier.fillMaxWidth(),
         shape = RoundedCornerShape(12.dp),
-        colors = CardDefaults.cardColors(containerColor = CardBackground)
+        colors = CardDefaults.cardColors(containerColor = colors.cardBackground)
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
             // 거래소 이름 + 화폐 태그
@@ -177,7 +181,7 @@ fun ExchangeHoldingCard(
             ) {
                 Text(
                     text = holding.exchange.displayName,
-                    color = Color.White,
+                    color = colors.textPrimary,
                     fontSize = 16.sp,
                     fontWeight = FontWeight.Bold
                 )
@@ -191,6 +195,7 @@ fun ExchangeHoldingCard(
                 InfoColumn(
                     label = "수량",
                     value = formatQuantity(holding.quantity),
+                    valueColor = colors.accentBlue,
                     modifier = Modifier.weight(1f)
                 )
                 InfoColumn(
@@ -198,6 +203,7 @@ fun ExchangeHoldingCard(
                     value = holding.avgBuyPrice?.let {
                         formatPrice(it, holding.currencyUnit)
                     } ?: "-",
+                    valueColor = colors.accentBlue,
                     modifier = Modifier.weight(1f)
                 )
             }
@@ -209,19 +215,19 @@ fun ExchangeHoldingCard(
                 InfoColumn(
                     label = "현재가",
                     value = formatPrice(holding.currentPrice, holding.currencyUnit),
-                    valueColor = Color.White,
+                    valueColor = colors.textPrimary,
                     modifier = Modifier.weight(1f)
                 )
                 InfoColumn(
                     label = "평가 금액 (KRW)",
                     value = "₩${formatNumber(holding.valueKrw)}",
-                    valueColor = Color.White,
+                    valueColor = colors.textPrimary,
                     modifier = Modifier.weight(1f)
                 )
             }
 
             Spacer(modifier = Modifier.height(12.dp))
-            HorizontalDivider(color = Color(0xFF22303C))
+            HorizontalDivider(color = colors.surfaceVariant)
             Spacer(modifier = Modifier.height(12.dp))
 
             // 손익
@@ -235,8 +241,9 @@ fun ExchangeHoldingCard(
  */
 @Composable
 private fun CurrencyTag(currencyUnit: CurrencyUnit) {
+    // 화폐 태그는 고정 색상 사용 (의미론적 색상)
     val (backgroundColor, textColor) = when (currencyUnit) {
-        CurrencyUnit.KRW -> Color(0xFF1A3A4A) to Color(0xFFBFD6E9)
+        CurrencyUnit.KRW  -> Color(0xFF1A3A4A) to Color(0xFFBFD6E9)
         CurrencyUnit.USDT -> Color(0xFF3A4A1A) to Color(0xFFD6E9BF)
     }
 
@@ -262,18 +269,16 @@ private fun InfoColumn(
     label: String,
     value: String,
     modifier: Modifier = Modifier,
-    valueColor: Color = Color(0xFFBBDFFF)
+    valueColor: Color = Color.Unspecified
 ) {
+    val colors = LocalAppColors.current
+    val effectiveValueColor = if (valueColor == Color.Unspecified) colors.accentBlue else valueColor
     Column(modifier = modifier) {
-        Text(
-            text = label,
-            color = TextSecondary,
-            fontSize = 12.sp
-        )
+        Text(text = label, color = colors.textSecondary, fontSize = 12.sp)
         Spacer(modifier = Modifier.height(4.dp))
         Text(
             text = value,
-            color = valueColor,
+            color = effectiveValueColor,
             fontSize = 14.sp,
             fontWeight = FontWeight.SemiBold
         )
@@ -285,20 +290,17 @@ private fun InfoColumn(
  */
 @Composable
 private fun ProfitLossRow(holding: ExchangeHoldingDetail) {
+    val colors = LocalAppColors.current
     Row(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Text(
-            text = "손익",
-            color = TextSecondary,
-            fontSize = 12.sp
-        )
+        Text(text = "손익", color = colors.textSecondary, fontSize = 12.sp)
 
         if (holding.profitLoss != null && holding.profitLossPercent != null) {
             val isPositive = holding.profitLoss >= 0
-            val color = if (isPositive) PositiveColor else NegativeColor
+            val color = if (isPositive) colors.positive else colors.negative
             val sign = if (isPositive) "+" else ""
 
             Text(
@@ -308,11 +310,7 @@ private fun ProfitLossRow(holding: ExchangeHoldingDetail) {
                 fontWeight = FontWeight.Bold
             )
         } else {
-            Text(
-                text = "평단 정보 없음",
-                color = TextTertiary,
-                fontSize = 12.sp
-            )
+            Text(text = "평단 정보 없음", color = colors.textTertiary, fontSize = 12.sp)
         }
     }
 }
@@ -320,14 +318,12 @@ private fun ProfitLossRow(holding: ExchangeHoldingDetail) {
 // 포맷 유틸 함수들
 private fun formatPrice(value: Double, unit: CurrencyUnit): String {
     return when (unit) {
-        CurrencyUnit.KRW -> "₩${formatNumber(value)}"
+        CurrencyUnit.KRW  -> "₩${formatNumber(value)}"
         CurrencyUnit.USDT -> "$${formatNumber(value)}"
     }
 }
 
-private fun formatNumber(value: Double): String {
-    return String.format("%,.0f", value)
-}
+private fun formatNumber(value: Double): String = String.format("%,.0f", value)
 
 private fun formatQuantity(quantity: Double): String {
     return if (quantity % 1.0 == 0.0) {
@@ -414,4 +410,3 @@ private fun PreviewHoldingDetailContent() {
         )
     )
 }
-

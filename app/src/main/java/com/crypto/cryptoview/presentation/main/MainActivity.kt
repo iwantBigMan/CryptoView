@@ -2,6 +2,7 @@ package com.crypto.cryptoview.presentation.main
 
 import android.os.Bundle
 import androidx.activity.ComponentActivity
+import androidx.activity.SystemBarStyle
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.layout.fillMaxSize
@@ -15,6 +16,10 @@ import com.crypto.cryptoview.presentation.component.assetsOverview.AssetsOvervie
 import com.crypto.cryptoview.presentation.component.holdingCoinView.HoldingCoinsViewModel
 import com.crypto.cryptoview.presentation.login.LoginScreen
 import com.crypto.cryptoview.presentation.login.GoogleLoginViewModel
+import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.runtime.collectAsState
+import com.crypto.cryptoview.domain.model.AppTheme
+import com.crypto.cryptoview.presentation.main.ThemeViewModel
 import com.crypto.cryptoview.presentation.settings.ExchangeSettingsViewModel
 import com.crypto.cryptoview.ui.theme.CryptoViewTheme
 import dagger.hilt.android.AndroidEntryPoint
@@ -27,13 +32,31 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
 
         WindowCompat.setDecorFitsSystemWindows(window, false)
-        WindowCompat.getInsetsController(window, window.decorView).apply {
-            isAppearanceLightStatusBars = false
-        }
-
         enableEdgeToEdge()
         setContent {
-            CryptoViewTheme {
+            val themeViewModel: ThemeViewModel = hiltViewModel()
+            val theme by themeViewModel.currentTheme.collectAsState()
+            val isDark = when (theme) {
+                AppTheme.DARK   -> true
+                AppTheme.LIGHT  -> false
+                AppTheme.SYSTEM -> isSystemInDarkTheme()
+            }
+
+            // 다크모드: 상태바 아이콘 흰색 / 라이트모드: 상태바 아이콘 검정
+            SideEffect {
+                enableEdgeToEdge(
+                    statusBarStyle = if (isDark) {
+                        SystemBarStyle.dark(android.graphics.Color.TRANSPARENT)
+                    } else {
+                        SystemBarStyle.light(
+                            android.graphics.Color.TRANSPARENT,
+                            android.graphics.Color.TRANSPARENT
+                        )
+                    }
+                )
+            }
+
+            CryptoViewTheme(darkTheme = isDark) {
                 Surface(
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
