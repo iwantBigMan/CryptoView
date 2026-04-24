@@ -5,6 +5,8 @@ import androidx.lifecycle.viewModelScope
 import com.crypto.cryptoview.data.local.CredentialsManager
 import com.crypto.cryptoview.data.local.CredentialsProvider
 import com.crypto.cryptoview.domain.model.ExchangeType
+import com.crypto.cryptoview.domain.repository.GoogleAuthRepository
+import com.crypto.cryptoview.domain.usecase.auth.DeleteExchangeCredentialUseCase
 import com.crypto.cryptoview.domain.usecase.auth.ValidateAndSaveUpbitCredentialsUseCase
 import com.crypto.cryptoview.domain.usecase.upbit.GetUpbitAccountBalancesUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -17,14 +19,16 @@ import javax.inject.Inject
 
 /**
  * 거래소 연동 설정 ViewModel
- * 백엔드를 통한 키 검증 + 로컬 기기 저장
+ * 백엔드를 통한 키 검증 + 로컬 기기 저장 + 전체 로그아웃 처리
  */
 @HiltViewModel
 class ExchangeSettingsViewModel @Inject constructor(
     private val credentialsManager: CredentialsManager,
     private val credentialsProvider: CredentialsProvider,
     private val saveUpbit: ValidateAndSaveUpbitCredentialsUseCase,
-    private val getUpbitAccountBalances: GetUpbitAccountBalancesUseCase
+    private val getUpbitAccountBalances: GetUpbitAccountBalancesUseCase,
+    private val deleteExchangeCredential: DeleteExchangeCredentialUseCase,
+    private val googleAuthRepository: GoogleAuthRepository
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(ExchangeSettingsUiState())
@@ -146,29 +150,74 @@ class ExchangeSettingsViewModel @Inject constructor(
     /** 특정 거래소 인증 정보 삭제 */
     fun deleteCredentials(exchange: ExchangeType) {
         viewModelScope.launch {
+            _uiState.value = _uiState.value.copy(isLoading = true)
             try {
                 when (exchange) {
-                    ExchangeType.UPBIT -> credentialsManager.clearUpbitCredentials()
+                    ExchangeType.UPBIT -> {
+                        val response = deleteExchangeCredential(ExchangeType.UPBIT)
+                        android.util.Log.d("ExchangeSettingsVM", "거래소 연동 해제: ${response.deleted} ${response.message}")
+                        if (!response.deleted) throw Exception("삭제 실패: ${response.message}")
+                    }
                     ExchangeType.GATEIO -> credentialsManager.clearGateioCredentials()
                     else -> {}
                 }
+                loadSavedCredentials()  // UI 상태 즉시 갱신
             } catch (t: Throwable) {
                 android.util.Log.e("ExchangeSettingsVM", "deleteCredentials error", t)
-                _uiState.value = _uiState.value.copy(error = "삭제 중 오류가 발생했습니다")
+                _uiState.value = _uiState.value.copy(
+                    isLoading = false,
+                    error = "삭제 중 오류가 발생했습니다"
+                )
             }
         }
     }
 
-    /** 완전 로그아웃: 저장소 + 메모리 캐시 모두 정리 */
-    fun logout() {
-        viewModelScope.launch {
-            credentialsManager.clearAllCredentials()
-            credentialsProvider.clear()
-            _uiState.value = ExchangeSettingsUiState(
-                inputs = ExchangeType.entries.associateWith { ExchangeInput() }
-            )
-        }
-    }
+     /** 완전 로그아웃: 백엔드 키 삭제 + Google 로그아웃 + 로컬 저장소 + 메모리 캐시 모두 정리 */
+     suspend fun logout() {
+         // 1단계: 백엔드 키 삭제
+         try {
+             val response = deleteExchangeCredential(ExchangeType.UPBIT)
+             android.util.Log.d("ExchangeSettingsVM", "로그아웃 키 삭제: ${response.deleted} ${response.message}")
+             if (!response.deleted) {
+                 throw Exception("백엔드 키 삭제 실패: ${response.message}")
+             }
+         } catch (t: Throwable) {
+             android.util.Log.w("ExchangeSettingsVM", "백엔드 키 삭제 실패", t)
+             // 계속 진행하지만 경고만 남김
+         }
+
+         // 2단계: Google 로그아웃 (GoogleAuthRepository 직접 호출)
+         try {
+             android.util.Log.d("ExchangeSettingsVM", "Google 로그아웃 시작...")
+             googleAuthRepository.signOut()
+
+             // 명시적인 로그인 상태 확인
+             val isStillSignedIn = googleAuthRepository.isSignedIn
+             android.util.Log.d("ExchangeSettingsVM", "Google 로그아웃 완료 - isSignedIn: $isStillSignedIn")
+
+             if (isStillSignedIn) {
+                 android.util.Log.w("ExchangeSettingsVM", "⚠︎ Google이 여전히 로그인 상태 - 강제 재시도")
+                 googleAuthRepository.signOut()
+                 android.util.Log.d("ExchangeSettingsVM", "Google 강제 로그아웃 재시도 완료 - isSignedIn: ${googleAuthRepository.isSignedIn}")
+             }
+         } catch (t: Throwable) {
+             android.util.Log.e("ExchangeSettingsVM", "Google 로그아웃 실패", t)
+             throw Exception("Google 로그아웃 실패: ${t.message}", t)
+         }
+
+         // 3단계: 로컬 저장소 정리 (로그아웃이 성공한 경우에만 실행)
+         try {
+             credentialsManager.clearAllCredentials()
+             credentialsProvider.clear()
+             _uiState.value = ExchangeSettingsUiState(
+                 inputs = ExchangeType.entries.associateWith { ExchangeInput() }
+             )
+             android.util.Log.d("ExchangeSettingsVM", "로컬 저장소 초기화 완료")
+         } catch (t: Throwable) {
+             android.util.Log.e("ExchangeSettingsVM", "로컬 저장소 초기화 실패", t)
+             // 로컬 저장소 초기화는 실패해도 무시
+         }
+     }
 
     fun clearError() {
         _uiState.value = _uiState.value.copy(error = null)

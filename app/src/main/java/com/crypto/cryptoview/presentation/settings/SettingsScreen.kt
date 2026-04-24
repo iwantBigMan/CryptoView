@@ -46,7 +46,7 @@ fun SettingsScreen(
     var showLogoutDialog by remember { mutableStateOf(false) }
     var showExchangeDialog by remember { mutableStateOf(showExchangeSetup) }
 
-    val colors = LocalAppColors.current  // 테마 색상
+    val colors = LocalAppColors.current
 
     Surface(
         modifier = modifier.fillMaxSize(),
@@ -311,10 +311,17 @@ fun SettingsScreen(
                 TextButton(
                     onClick = {
                         scope.launch {
-                            viewModel.logout()
-                            googleLoginViewModel.signOut()
-                            showLogoutDialog = false
-                            onLogout()
+                            try {
+                                // 모든 로그아웃 (백엔드 + Google + 로컬) 한 곳에서 관리
+                                viewModel.logout()
+
+                                showLogoutDialog = false
+                                onLogout()  // MainActivity: finishAffinity + killProcess
+                            } catch (e: Exception) {
+                                android.util.Log.e("SettingsScreen", "로그아웃 중 오류", e)
+                                showLogoutDialog = false
+                                onLogout()  // 오류 발생해도 앱 종료
+                            }
                         }
                     },
                     colors = ButtonDefaults.textButtonColors(contentColor = colors.error)
@@ -455,14 +462,6 @@ private fun ExchangeSetupDialog(
                         fontSize = 12.sp
                     )
                 }
-
-                // 안내
-                Text(
-                    text = "• 출금 권한은 체크하지 마세요\n• API Key는 기기에만 저장됩니다",
-                    color = colors.textTertiary,
-                    fontSize = 11.sp,
-                    lineHeight = 16.sp
-                )
             }
         },
         confirmButton = {

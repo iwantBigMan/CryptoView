@@ -1,6 +1,7 @@
 package com.crypto.cryptoview.di
 
 import com.crypto.cryptoview.BuildConfig
+import com.crypto.cryptoview.data.auth.FirebaseTokenProvider
 import com.crypto.cryptoview.data.auth.FirebaseTokenProviderImpl
 import com.crypto.cryptoview.data.local.CredentialsManager
 import com.crypto.cryptoview.data.local.CredentialsProvider
@@ -63,6 +64,12 @@ object NetworkModule {
     fun provideJson(): Json = Json {
         ignoreUnknownKeys = true
         coerceInputValues = true
+    }
+
+    @Provides
+    @Singleton
+    fun provideFirebaseTokenProvider(): FirebaseTokenProvider {
+        return FirebaseTokenProviderImpl()
     }
 
     @Provides
@@ -184,6 +191,16 @@ object NetworkModule {
     ): com.crypto.cryptoview.data.remote.api.FetchUpbitAssets {
         return createBackendRetrofit(client, json)
             .create(com.crypto.cryptoview.data.remote.api.FetchUpbitAssets::class.java)
+    }
+
+    @Provides
+    @Singleton
+    fun provideDeleteUpbitCredentialsApi(
+        client: OkHttpClient,
+        json: Json
+    ): com.crypto.cryptoview.data.remote.api.DeleteUpbitCredentials {
+        return createBackendRetrofit(client, json)
+            .create(com.crypto.cryptoview.data.remote.api.DeleteUpbitCredentials::class.java)
     }
 
     // Gate.io

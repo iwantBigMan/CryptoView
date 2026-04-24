@@ -13,7 +13,9 @@ import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseUser
 import com.google.firebase.auth.GoogleAuthProvider
 import dagger.hilt.android.qualifiers.ApplicationContext
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.tasks.await
+import kotlinx.coroutines.withContext
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -110,19 +112,58 @@ class GoogleAuthService @Inject constructor(
         return credential.idToken
     }
 
-    /**
-     * 로그아웃 (Firebase + Credential Manager 모두)
-     */
-    suspend fun signOut() {
-        try {
-            credentialManager.clearCredentialState(
-                androidx.credentials.ClearCredentialStateRequest()
-            )
-        } catch (e: Exception) {
-            android.util.Log.e("GoogleAuthService", "clearCredentialState error", e)
-        }
-        firebaseAuth.signOut()
-    }
+      /**
+       * 로그아웃 (Firebase + Credential Manager 모두)
+       * 모든 저장된 Google 인증 정보를 완전히 제거 (SharedPreferences 캐시 포함)
+       */
+      suspend fun signOut() {
+         android.util.Log.d("GoogleAuthService", "🔴 로그아웃 시작...")
+
+         // 0단계: 현재 상태 로깅
+         android.util.Log.d("GoogleAuthService", "로그아웃 전 - isSignedIn: $isSignedIn, currentUser: ${firebaseAuth.currentUser?.uid}")
+
+         // 1단계: Firebase Authentication 세션 종료 (먼저 실행)
+         try {
+             withContext(Dispatchers.IO) {
+                 firebaseAuth.signOut()
+             }
+             android.util.Log.d("GoogleAuthService", "✅ Firebase 로그아웃 완료")
+         } catch (e: Exception) {
+             android.util.Log.e("GoogleAuthService", "Firebase signOut 실패", e)
+             throw e
+         }
+
+         // 2단계: Credential Manager에서 저장된 모든 자격증 제거
+         try {
+             credentialManager.clearCredentialState(
+                 androidx.credentials.ClearCredentialStateRequest()
+             )
+             android.util.Log.d("GoogleAuthService", "✅ Credential Manager 상태 초기화 완료")
+         } catch (e: Exception) {
+             android.util.Log.w("GoogleAuthService", "⚠︎ Credential Manager 초기화 실패", e)
+         }
+
+         // 3단계: SharedPreferences 캐시 제거 (Google 토큰 캐시)
+         try {
+             val sharedPref = context.getSharedPreferences("com.google.android.gms.auth", Context.MODE_PRIVATE)
+             sharedPref.edit().clear().apply()
+             android.util.Log.d("GoogleAuthService", "✅ SharedPreferences 캐시 제거")
+         } catch (e: Exception) {
+             android.util.Log.w("GoogleAuthService", "⚠︎ SharedPreferences 제거 실패", e)
+         }
+
+         // 4단계: 로그아웃 상태 최종 검증
+         android.util.Log.d("GoogleAuthService", "🔴 로그아웃 완료 검증")
+         android.util.Log.d("GoogleAuthService", "로그아웃 후 - isSignedIn: $isSignedIn, currentUser: ${firebaseAuth.currentUser?.uid}")
+
+         if (isSignedIn) {
+             android.util.Log.e("GoogleAuthService", "❌ ERROR: 로그아웃 후에도 여전히 로그인됨! 강제 재시도...")
+             withContext(Dispatchers.IO) {
+                 firebaseAuth.signOut()
+             }
+             android.util.Log.d("GoogleAuthService", "❌ 강제 로그아웃 시도 후 - isSignedIn: $isSignedIn")
+         }
+      }
 
     data class UserInfo(
         val uid: String,

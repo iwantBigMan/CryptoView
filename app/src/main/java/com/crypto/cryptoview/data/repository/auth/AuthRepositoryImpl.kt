@@ -1,6 +1,9 @@
 package com.crypto.cryptoview.data.repository.auth
 
+import com.crypto.cryptoview.data.auth.FirebaseTokenProvider
+import com.crypto.cryptoview.data.remote.api.DeleteUpbitCredentials
 import com.crypto.cryptoview.data.remote.api.ValidateAndSaveUpbit
+import com.crypto.cryptoview.data.remote.dto.upbit.DeleteUpbitCredentialResponse
 import com.crypto.cryptoview.data.remote.dto.upbit.ValidateUpbitRequest
 import com.crypto.cryptoview.data.remote.dto.upbit.ValidateUpbitResponse
 import com.crypto.cryptoview.domain.repository.AuthRepository
@@ -11,7 +14,9 @@ import javax.inject.Singleton
 
 @Singleton
 class AuthRepositoryImpl @Inject constructor(
-    private val validateAndSaveUpbit: ValidateAndSaveUpbit
+    private val validateAndSaveUpbit: ValidateAndSaveUpbit,
+    private val deleteUpbitCredentials: DeleteUpbitCredentials,
+    private val tokenProvider: FirebaseTokenProvider
 ) : AuthRepository {
 
     override suspend fun validateAndSaveUpbit(
@@ -19,10 +24,16 @@ class AuthRepositoryImpl @Inject constructor(
         secretKey: String
     ): ValidateUpbitResponse {
         return withContext(Dispatchers.IO) {
-            // Authorization 헤더는 FirebaseAuthInterceptor 가 자동 주입
             validateAndSaveUpbit.validateAndSaveCredentials(
                 request = ValidateUpbitRequest(accessKey, secretKey)
             )
+        }
+    }
+
+    override suspend fun deleteUpbitCredential(): DeleteUpbitCredentialResponse {
+        return withContext(Dispatchers.IO) {
+            val token = tokenProvider.getIdToken() ?: throw Exception("Firebase 토큰 없음")
+            deleteUpbitCredentials.deleteUpbitCredential("Bearer $token")
         }
     }
 }
