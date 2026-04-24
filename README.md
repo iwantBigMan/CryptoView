@@ -169,6 +169,9 @@ app/src/main/java/com/crypto/cryptoview/
 
 ---
 
+- Gate.io 잔고 / 시세 연동 (일부 적용 완료)
+- 해외 거래소 자산 USDT → KRW 환산 적용(일부 적용 완료)
+- 거래소 앱 딥링크 이동 기능 (자산 클릭 시 해당 거래소 앱으로 이동)
 
 ## 📄 라이선스
 
