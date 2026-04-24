@@ -1,12 +1,24 @@
 package com.crypto.cryptoview.di
 
 import com.crypto.cryptoview.BuildConfig
-import com.crypto.cryptoview.data.remote.api.UpbitApi
+import com.crypto.cryptoview.data.auth.FirebaseTokenProviderImpl
+import com.crypto.cryptoview.data.local.CredentialsManager
+import com.crypto.cryptoview.data.local.CredentialsProvider
+import com.crypto.cryptoview.data.remote.api.GateFuturesApi
+import com.crypto.cryptoview.data.remote.api.GateSpotApi
+import com.crypto.cryptoview.data.remote.api.UpbitMarketApi
+import com.crypto.cryptoview.data.remote.api.UpbitTickerAllApi
+import com.crypto.cryptoview.data.remote.interceptor.AccountResponseLoggingInterceptor
+import com.crypto.cryptoview.data.remote.interceptor.FirebaseAuthInterceptor
+import com.crypto.cryptoview.data.remote.interceptor.GateIOAuthInterceptor
 import com.crypto.cryptoview.data.remote.interceptor.UpbitAuthInterceptor
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.serialization.json.Json
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
@@ -37,6 +49,14 @@ annotation class GateIoClient
 @Module
 @InstallIn(SingletonComponent::class)
 object NetworkModule {
+
+    @Provides
+    @Singleton
+    fun provideCredentialsProvider(credentialsManager: CredentialsManager): CredentialsProvider {
+        // create a background scope to observe DataStore and keep latest credentials in memory
+        val scope = CoroutineScope(Dispatchers.Default + SupervisorJob())
+        return CredentialsProvider(credentialsManager, scope)
+    }
 
     @Provides
     @Singleton
@@ -89,32 +109,123 @@ object NetworkModule {
     @Singleton
     @UpbitClient
     fun provideUpbitOkHttpClient(
-        loggingInterceptor: HttpLoggingInterceptor
+        loggingInterceptor: HttpLoggingInterceptor,
+        credentialsProvider: CredentialsProvider
     ): OkHttpClient {
-        return createOkHttpClient(
-            loggingInterceptor,
-            UpbitAuthInterceptor(
-                accessKey = BuildConfig.UPBIT_ACCESS_KEY,
-                secretKey = BuildConfig.UPBIT_SECRET_KEY
-            )
-        )
+        return OkHttpClient.Builder()
+            .addInterceptor(loggingInterceptor)
+            .addInterceptor(UpbitAuthInterceptor(credentialsProvider))
+            .addInterceptor(AccountResponseLoggingInterceptor())
+            .connectTimeout(30, TimeUnit.SECONDS)
+            .readTimeout(30, TimeUnit.SECONDS)
+            .build()
     }
 
-    @Provides
-    @Singleton
-    fun provideUpbitApi(
-        @UpbitClient okHttpClient: OkHttpClient,
-        json: Json
-    ): UpbitApi {
-        return createApiService("https://api.upbit.com/", okHttpClient, json)
-    }
 
     @Provides
     @Singleton
     fun provideUpbitMarketApi(
         @UpbitClient okHttpClient: OkHttpClient,
         json: Json
-    ): com.crypto.cryptoview.data.remote.api.UpbitMarketApi {
+    ): UpbitMarketApi {
         return createApiService("https://api.upbit.com/", okHttpClient, json)
     }
+
+    @Provides
+    @Singleton
+    fun provideUpbitTickerAllApi(
+        @UpbitClient okHttpClient: OkHttpClient,
+        json: Json
+    ): UpbitTickerAllApi {
+        return createApiService("https://api.upbit.com/", okHttpClient, json)
+    }
+
+    // 백엔드 공용 OkHttpClient (Firebase 토큰 자동 주입)
+    @Provides
+    @Singleton
+    fun provideBackendOkHttpClient(
+        loggingInterceptor: HttpLoggingInterceptor,
+        tokenProvider: FirebaseTokenProviderImpl
+    ): OkHttpClient {
+        return OkHttpClient.Builder()
+            .addInterceptor(loggingInterceptor)
+            .addInterceptor(FirebaseAuthInterceptor(tokenProvider))
+            .addInterceptor(AccountResponseLoggingInterceptor())
+            .connectTimeout(30, TimeUnit.SECONDS)
+            .readTimeout(30, TimeUnit.SECONDS)
+            .build()
+    }
+
+    // 백엔드 Retrofit 인스턴스
+    private fun createBackendRetrofit(client: OkHttpClient, json: Json): Retrofit {
+        return Retrofit.Builder()
+            .baseUrl("https://cryptoview-api-620339426938.us-central1.run.app/")
+            .client(client)
+            .addConverterFactory(json.asConverterFactory("application/json".toMediaType()))
+            .build()
+    }
+
+    // 백엔드 업비트 검증 API
+    @Provides
+    @Singleton
+    fun provideValidateAndSaveUpbitApi(
+        client: OkHttpClient,
+        json: Json
+    ): com.crypto.cryptoview.data.remote.api.ValidateAndSaveUpbit {
+        return createBackendRetrofit(client, json)
+            .create(com.crypto.cryptoview.data.remote.api.ValidateAndSaveUpbit::class.java)
+    }
+
+    @Provides
+    @Singleton
+    fun provideFetchUpbitAssetsApi(
+        client: OkHttpClient,
+        json: Json
+    ): com.crypto.cryptoview.data.remote.api.FetchUpbitAssets {
+        return createBackendRetrofit(client, json)
+            .create(com.crypto.cryptoview.data.remote.api.FetchUpbitAssets::class.java)
+    }
+
+    // Gate.io
+
+    @Provides
+    @Singleton
+    @GateIoClient
+    fun provideGateIoOkHttpClient(
+        loggingInterceptor: HttpLoggingInterceptor,
+        credentialsProvider: CredentialsProvider
+    ): OkHttpClient {
+        return createOkHttpClient(
+            loggingInterceptor,
+            GateIOAuthInterceptor(credentialsProvider)
+        )
+    }
+
+
+    @Provides
+    @Singleton
+    fun provideGateSpotApi(
+        @GateIoClient okHttpClient: OkHttpClient,
+        json: Json
+    ): GateSpotApi {
+        return createApiService(
+            baseUrl = BuildConfig.GATE_BASE_URL,
+            okHttpClient = okHttpClient,
+            json = json
+        )
+    }
+
+    @Provides
+    @Singleton
+    fun provideGateFuturesApi(
+        @GateIoClient okHttpClient: OkHttpClient,
+        json: Json
+    ): GateFuturesApi {
+        return createApiService(
+            baseUrl = BuildConfig.GATE_BASE_URL,
+            okHttpClient = okHttpClient,
+            json = json
+        )
+    }
+
 }

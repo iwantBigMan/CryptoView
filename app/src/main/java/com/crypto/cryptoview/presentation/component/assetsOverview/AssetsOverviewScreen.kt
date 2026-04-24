@@ -12,52 +12,42 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import java.util.Locale
+import com.crypto.cryptoview.R
+import com.crypto.cryptoview.domain.model.AggregatedHolding
+import com.crypto.cryptoview.domain.model.ExchangeData
+import com.crypto.cryptoview.domain.model.HoldingData
 import com.crypto.cryptoview.presentation.component.assetsOverview.chart.ChartData
 import com.crypto.cryptoview.presentation.component.assetsOverview.chart.DonutChart
-import com.crypto.cryptoview.presentation.main.ExchangeData
-import com.crypto.cryptoview.presentation.main.ExchangeType
-import com.crypto.cryptoview.presentation.main.HoldingData
-import com.crypto.cryptoview.presentation.main.MainUiState
-import com.crypto.cryptoview.ui.theme.CryptoViewTheme
 import kotlin.compareTo
 
 @Composable
 fun AssetsOverviewScreen(
     modifier: Modifier = Modifier,
-    viewModel: AssetsOverviewViewModel,
+    viewModel: AssetsOverviewViewModel = hiltViewModel(),
     onNavigateToHoldings: () -> Unit = {}
 ) {
     val uiState = viewModel.uiState.collectAsState().value
     val lifecycleOwner = LocalLifecycleOwner.current
 
-
     DisposableEffect(lifecycleOwner) {
         val observer = LifecycleEventObserver { _, event ->
             when (event) {
-                Lifecycle.Event.ON_START -> {
-                    viewModel.startAutoRefresh()
-                }
-
-                Lifecycle.Event.ON_STOP -> {
-                    viewModel.stopAutoRefresh()
-                }
-
+                Lifecycle.Event.ON_START -> viewModel.startAutoRefresh()
+                Lifecycle.Event.ON_STOP -> viewModel.stopAutoRefresh()
                 else -> {}
             }
         }
-
         lifecycleOwner.lifecycle.addObserver(observer)
-
-        onDispose {
-            lifecycleOwner.lifecycle.removeObserver(observer)
-        }
+        onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
     }
 
     LazyColumn(
@@ -79,12 +69,13 @@ fun AssetsOverviewScreen(
         }
         item {
             TopHoldingsCard(
-                holdings = uiState.topHoldings,
+                aggregatedHoldings = uiState.topAggregatedHoldings,
                 onViewAllClick = onNavigateToHoldings
             )
         }
     }
 }
+
 @Composable
 private fun TotalBalanceCard(
     totalValue: Double,
@@ -98,20 +89,16 @@ private fun TotalBalanceCard(
         shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(containerColor = Color(0xFF3949AB))
     ) {
-        Column(
-            modifier = Modifier.padding(20.dp)
-        ) {
+        Column(modifier = Modifier.padding(20.dp)) {
             Text(
-                text = "Total Value",
+                text = stringResource(R.string.total_value),
                 color = Color.White.copy(alpha = 0.7f),
                 fontSize = 14.sp
             )
             Spacer(modifier = Modifier.height(8.dp))
-            Row(
-                verticalAlignment = Alignment.Bottom
-            ) {
+            Row(verticalAlignment = Alignment.Bottom) {
                 Text(
-                    text = "₩${String.format("%,.0f", totalValue)}",
+                    text = String.format(Locale.getDefault(), "₩%,.0f", totalValue),
                     color = Color.White,
                     fontSize = 32.sp,
                     fontWeight = FontWeight.Bold
@@ -123,12 +110,12 @@ private fun TotalBalanceCard(
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 Text(
-                    text = "${if (isPositive) "+" else ""}₩${String.format("%,.0f", totalChange)}",
+                    text = String.format(Locale.getDefault(), "%s₩%,.0f", if (isPositive) "+" else "", totalChange),
                     color = if (isPositive) Color(0xFF4CAF50) else Color(0xFFF44336),
                     fontSize = 18.sp
                 )
                 Text(
-                    text = "(${String.format("%.2f", totalChangeRate)}%)",
+                    text = String.format(Locale.getDefault(), "(%.2f%%)", totalChangeRate),
                     color = if (isPositive) Color(0xFF4CAF50) else Color(0xFFF44336),
                     fontSize = 18.sp
                 )
@@ -141,7 +128,6 @@ private fun TotalBalanceCard(
 private fun ExchangeBreakdownCard(
     exchanges: List<ExchangeData> = emptyList()
 ) {
-
     val sortedExchanges = exchanges.sortedByDescending { it.totalValue }
 
     Card(
@@ -149,9 +135,7 @@ private fun ExchangeBreakdownCard(
         shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(containerColor = Color(0xFF1A1D2E))
     ) {
-        Column(
-            modifier = Modifier.padding(20.dp)
-        ) {
+        Column(modifier = Modifier.padding(20.dp)) {
             Text(
                 text = "Exchange Breakdown",
                 style = MaterialTheme.typography.titleMedium,
@@ -169,23 +153,21 @@ private fun ExchangeBreakdownCard(
                     .padding(bottom = 16.dp)
                     .align(Alignment.CenterHorizontally)
             ) {
-               DonutChart(
-                   data = exchanges.map { exchange ->
-                       ChartData(
-                           exchange.type.displayName,
-                           exchange.totalValue,
-                           exchange.type.color
-                       )
-                   }.filter { it.value > 0 },
-                   modifier = Modifier.fillMaxWidth()
-               )
+                DonutChart(
+                    data = exchanges.map { exchange ->
+                        ChartData(
+                            exchange.exchange.displayName,  // type -> exchangeType
+                            exchange.totalValue,
+                            exchange.exchange.color  // type -> exchangeType
+                        )
+                    }.filter { it.value > 0 },
+                    modifier = Modifier.fillMaxWidth()
+                )
             }
 
             Spacer(modifier = Modifier.height(20.dp))
 
-            Column(
-                verticalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
+            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 exchanges.chunked(2).forEach { row ->
                     Row(
                         modifier = Modifier.fillMaxWidth(),
@@ -193,42 +175,40 @@ private fun ExchangeBreakdownCard(
                     ) {
                         row.forEach { exchange ->
                             ExchangeItem(
-                                name = exchange.type.displayName,
-                                color = exchange.type.color
+                                name = exchange.exchange.displayName,  // type -> exchangeType
+                                color = exchange.exchange.color  // type -> exchangeType
                             )
                         }
                     }
-                    Spacer(modifier = Modifier.height(16.dp))
+                }
 
-                    /* 거래소 별 금액 표시
-                    * 양쪽으로 정렬 2개 이후 줄바꿈
-                    * */
-                 // 거래소 별 금액 표시 (값이 0보다 큰 것만)
-                    val visibleExchanges = sortedExchanges.filter { it.totalValue > 0 }
+                Spacer(modifier = Modifier.height(16.dp))
 
-                    visibleExchanges.chunked(2).forEach { rowItems ->
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(16.dp, 0.dp),
-                            horizontalArrangement = if (rowItems.size == 1) {
-                                Arrangement.Center
-                            } else {
-                                Arrangement.SpaceBetween
-                            }
-                        ) {
-                            rowItems.forEach { exchange ->
-                                ExchangeAmount(
-                                    name = exchange.type.displayName,
-                                    amount = "${String.format("%,.0f", exchange.totalValue)}",
-                                    color = exchange.type.color,
-                                    modifier = Modifier.weight(1f)
-                                )
-                            }
+                // 거래소 별 금액 표시 (값이 0보다 큰 것만)
+                val visibleExchanges = sortedExchanges.filter { it.totalValue > 0 }
+
+                visibleExchanges.chunked(2).forEach { rowItems ->
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(16.dp, 0.dp),
+                        horizontalArrangement = if (rowItems.size == 1) {
+                            Arrangement.Center
+                        } else {
+                            Arrangement.SpaceBetween
                         }
-                        if (rowItems != visibleExchanges.chunked(2).last()) {
-                            Spacer(modifier = Modifier.height(8.dp))
+                    ) {
+                        rowItems.forEach { exchange ->
+                            ExchangeAmount(
+                                name = exchange.exchange.displayName,
+                                amount = String.format(Locale.getDefault(), "₩%,.0f", exchange.totalValue),
+                                color = exchange.exchange.color,  // type -> exchangeType
+                                modifier = Modifier.weight(1f)
+                            )
                         }
+                    }
+                    if (rowItems != visibleExchanges.chunked(2).last()) {
+                        Spacer(modifier = Modifier.height(8.dp))
                     }
                 }
             }
@@ -238,9 +218,7 @@ private fun ExchangeBreakdownCard(
 
 @Composable
 private fun ExchangeItem(name: String, color: Color) {
-    Column(
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
+    Column(horizontalAlignment = Alignment.CenterHorizontally) {
         Box(
             modifier = Modifier
                 .size(12.dp)
@@ -284,9 +262,14 @@ private fun ExchangeAmount(
         )
     }
 }
+
+/**
+ * Top 5 Holdings 카드
+ * 심볼 기준 통합된 데이터를 표시하며, 여러 거래소 보유 시 표시
+ */
 @Composable
 private fun TopHoldingsCard(
-    holdings: List<HoldingData> = emptyList(),
+    aggregatedHoldings: List<AggregatedHolding> = emptyList(),
     onViewAllClick: () -> Unit = {}
 ) {
     Card(
@@ -294,9 +277,7 @@ private fun TopHoldingsCard(
         shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(containerColor = Color(0xFF1A1D2E))
     ) {
-        Column(
-            modifier = Modifier.padding(20.dp)
-        ) {
+        Column(modifier = Modifier.padding(20.dp)) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -309,26 +290,126 @@ private fun TopHoldingsCard(
                     fontWeight = FontWeight.Bold
                 )
                 TextButton(onClick = onViewAllClick) {
-                    Text(
-                        text = "View All →",
-                        color = Color(0xFF5B7FFF)
-                    )
+                    Text(text = "View All →", color = Color(0xFF5B7FFF))
                 }
             }
             Spacer(modifier = Modifier.height(16.dp))
-            Column(
-                verticalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-                holdings.sortedByDescending { it.totalValue }.take(5).forEach { holding ->
-                    HoldingItem(
-                        symbol = holding.symbol,
+            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                aggregatedHoldings.forEach { holding ->
+                    AggregatedHoldingItem(
+                        symbol = holding.normalizedSymbol,
                         name = holding.name,
-                        price = "₩${String.format("%,.0f", holding.totalValue)}",
-                        change = "${if (holding.change >= 0) "+" else ""}₩${String.format("%,.0f", holding.change)}",
-                        changePercent = "${String.format("%.2f", holding.changePercent)}%",
-                        isPositive = holding.change >= 0
+                        totalValue = String.format(Locale.getDefault(), "₩%,.0f", holding.totalValue),
+                        change = String.format(Locale.getDefault(), "%s₩%,.0f", if (holding.totalChange >= 0) "+" else "", holding.totalChange),
+                        changePercent = String.format(Locale.getDefault(), "%.2f%%", holding.totalChangePercent),
+                        isPositive = holding.totalChange >= 0,
+                        exchangeCount = holding.holdings.size,
+                        exchanges = holding.exchanges
                     )
                 }
+            }
+        }
+    }
+}
+
+/**
+ * 통합된 홀딩 아이템
+ * 여러 거래소 보유 시 거래소 수 표시
+ */
+@Composable
+private fun AggregatedHoldingItem(
+    symbol: String,
+    name: String,
+    totalValue: String,
+    change: String,
+    changePercent: String,
+    isPositive: Boolean,
+    exchangeCount: Int,
+    exchanges: List<com.crypto.cryptoview.domain.model.ExchangeType>
+) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(12.dp),
+        colors = CardDefaults.cardColors(containerColor = Color(0xFF252837))
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                // 심볼 아이콘
+                Box(
+                    modifier = Modifier
+                        .size(40.dp)
+                        .background(Color(0xFF3949AB), CircleShape),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = symbol.take(2),
+                        color = Color.White,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+                Spacer(modifier = Modifier.width(12.dp))
+                Column {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Text(
+                            text = name,
+                            color = Color.White,
+                            fontWeight = FontWeight.Medium
+                        )
+                        // 여러 거래소 보유 시 표시
+                        if (exchangeCount > 1) {
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Box(
+                                modifier = Modifier
+                                    .background(Color(0xFF374151), RoundedCornerShape(4.dp))
+                                    .padding(horizontal = 6.dp, vertical = 2.dp)
+                            ) {
+                                Text(
+                                    text = "${exchangeCount}개 거래소",
+                                    color = Color.White.copy(alpha = 0.7f),
+                                    fontSize = 10.sp
+                                )
+                            }
+                        }
+                    }
+                    // 거래소 이름 표시 (색상 점으로)
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(4.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        exchanges.take(3).forEach { exchange ->
+                            Box(
+                                modifier = Modifier
+                                    .size(6.dp)
+                                    .background(exchange.color, CircleShape)
+                            )
+                        }
+                        if (exchanges.size > 3) {
+                            Text(
+                                text = "+${exchanges.size - 3}",
+                                color = Color.White.copy(alpha = 0.5f),
+                                fontSize = 10.sp
+                            )
+                        }
+                    }
+                }
+            }
+            Column(horizontalAlignment = Alignment.End) {
+                Text(
+                    text = totalValue,
+                    color = Color.White,
+                    fontWeight = FontWeight.Bold
+                )
+                Text(
+                    text = "$change ($changePercent)",
+                    color = if (isPositive) Color(0xFF4CAF50) else Color(0xFFF44336),
+                    fontSize = 12.sp
+                )
             }
         }
     }
@@ -355,9 +436,7 @@ private fun HoldingItem(
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically
-            ) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
                 Box(
                     modifier = Modifier
                         .size(40.dp)
@@ -372,26 +451,12 @@ private fun HoldingItem(
                 }
                 Spacer(modifier = Modifier.width(12.dp))
                 Column {
-                    Text(
-                        text = symbol,
-                        color = Color.White,
-                        fontWeight = FontWeight.Bold
-                    )
-                    Text(
-                        text = name,
-                        color = Color.White.copy(alpha = 0.7f),
-                        fontSize = 12.sp
-                    )
+                    Text(text = symbol, color = Color.White, fontWeight = FontWeight.Bold)
+                    Text(text = name, color = Color.White.copy(alpha = 0.7f), fontSize = 12.sp)
                 }
             }
-            Column(
-                horizontalAlignment = Alignment.End
-            ) {
-                Text(
-                    text = price,
-                    color = Color.White,
-                    fontWeight = FontWeight.Bold
-                )
+            Column(horizontalAlignment = Alignment.End) {
+                Text(text = price, color = Color.White, fontWeight = FontWeight.Bold)
                 Text(
                     text = change,
                     color = if (isPositive) Color(0xFF4CAF50) else Color(0xFFF44336),

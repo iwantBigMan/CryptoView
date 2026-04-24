@@ -32,3 +32,33 @@ val NeutralGray = Color(0xFF6B7280)
 val TextPrimary = Color(0xFFFFFFFF)
 val TextSecondary = Color(0xFF9CA3AF)
 val TextTertiary = Color(0xFF6B7280)
+
+// Kimchi Premium (김프) Colors
+val KimchiPremiumBg = Color(0xFF22C55E)  // 초록색 배경
+val KimchiPremiumText = Color(0xFFFFFFFF)  // 흰색 텍스트
+
+// Coin Symbol Background Colors
+val BTCOrange = Color(0xFFF7931A)
+val ETHPurple = Color(0xFF627EEA)
+val SOLPurple = Color(0xFF9945FF)
+val AVAXRed = Color(0xFFE84142)
+
+// Search Bar
+val SearchBarBg = Color(0xFF1E2340)
+val SearchBarText = Color(0xFF6B7280)
+
+// Filter Chip Colors
+val ChipSelectedBg = Color(0xFF3B82F6)
+val ChipUnselectedBg = Color(0xFF374151)
+
+// Value Colors (원화 표시)
+val ValuePrimary = Color(0xFFFFFFFF)
+val ValuePositive = Color(0xFF34D399)  // 연한 초록 (+₩3,846,300)
+
+// Screen Colors (Login/Common)
+val BackgroundPrimary = Color(0xFF071029)
+val CardBackground = Color(0xFF0F1720)
+val AccentBlue = Color(0xFF5B7FFF)
+val ErrorColor = Color(0xFFEF4444)
+val PositiveColor = Color(0xFF25D366)
+val NegativeColor = Color(0xFFEF5350)

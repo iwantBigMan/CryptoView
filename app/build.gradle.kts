@@ -7,6 +7,7 @@ plugins {
     alias(libs.plugins.kotlin.serialization)
     alias(libs.plugins.hilt)
     alias(libs.plugins.ksp)
+    alias(libs.plugins.googleServices)
 }
 
 android {
@@ -32,15 +33,12 @@ android {
 
         buildConfigField(
             "String",
-            "UPBIT_ACCESS_KEY",
-            "\"${properties.getProperty("upbit.access.key", "")}\""  // 키 이름으로 수정
-        )
-        buildConfigField(
-            "String",
-            "UPBIT_SECRET_KEY",
-            "\"${properties.getProperty("upbit.secret.key", "")}\""
+            "GATE_BASE_URL",
+            "\"https://api.gateio.ws/api/v4/\""
         )
     }
+
+
 
     buildTypes {
         release {
@@ -57,13 +55,17 @@ android {
         targetCompatibility = JavaVersion.VERSION_17
     }
 
-    kotlinOptions {
-        jvmTarget = "17"
+    kotlin {
+        compilerOptions {
+            jvmTarget = org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17
+        }
     }
+
+
 
     buildFeatures {
         compose = true
-        buildConfig = true
+        buildConfig  = true
     }
 
     packaging {
@@ -101,6 +103,8 @@ dependencies {
     implementation(libs.retrofit.converter.kotlinx.serialization)
     implementation(libs.okhttp)
     implementation(libs.okhttp.logging.interceptor)
+    implementation(libs.gson)
+    implementation(libs.retrofit.converter.gson)
 
     // Kotlinx Serialization
     implementation(libs.kotlinx.serialization.json)
@@ -109,6 +113,9 @@ dependencies {
     implementation(libs.androidx.room.runtime)
     implementation(libs.androidx.room.ktx)
     implementation(libs.androidx.junit.ktx)
+    implementation(libs.androidx.compose.foundation.layout)
+    implementation(libs.androidx.compose.foundation)
+    implementation(libs.androidx.compose.remote.creation.core)
     ksp(libs.androidx.room.compiler)
 
     // Hilt
@@ -123,6 +130,20 @@ dependencies {
     // JWT
     implementation(libs.java.jwt)
 
+    // Firebase
+    implementation(platform(libs.firebase.bom))
+    implementation(libs.firebase.analytics)
+    implementation(libs.firebase.storage)
+    implementation(libs.firebase.firestore)
+    implementation(libs.firebase.auth)
+    implementation(libs.firebase.messaging)
+
+    // Google Sign-In (Credential Manager)
+    implementation(libs.androidx.credentials)
+    implementation(libs.androidx.credentials.play.services.auth)
+    implementation(libs.googleid)
+
+
     // Unit Test
     testImplementation(libs.junit)
     testImplementation(libs.mockk)
@@ -132,11 +153,13 @@ dependencies {
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.junit.ktx)
     androidTestImplementation(libs.androidx.espresso.core)
-    androidTestImplementation(libs.kotlinx.coroutines.test) // 중요!
+    androidTestImplementation(libs.kotlinx.coroutines.test)
     androidTestImplementation(libs.retrofit)
+    androidTestImplementation(libs.retrofit.converter.kotlinx.serialization)
     androidTestImplementation(libs.okhttp)
     androidTestImplementation(libs.okhttp.logging.interceptor)
     androidTestImplementation(libs.kotlinx.serialization.json)
+    androidTestImplementation(libs.kotlinx.coroutines.play.services)
 
     // Debug
     debugImplementation(libs.androidx.compose.ui.tooling)
