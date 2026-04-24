@@ -175,4 +175,4 @@ app/src/main/java/com/crypto/cryptoview/
 
 ## 📄 라이선스
 
-This project is for personal/educational use only.
+This project is licensed under the [MIT License](LICENSE).
