@@ -6,11 +6,11 @@ import com.crypto.cryptoview.data.local.CredentialsManager
 import com.crypto.cryptoview.data.local.CredentialsProvider
 import com.crypto.cryptoview.domain.model.ExchangeType
 import com.crypto.cryptoview.domain.usecase.auth.ValidateAndSaveUpbitCredentialsUseCase
+import com.crypto.cryptoview.domain.usecase.upbit.GetUpbitAccountBalancesUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -23,7 +23,8 @@ import javax.inject.Inject
 class ExchangeSettingsViewModel @Inject constructor(
     private val credentialsManager: CredentialsManager,
     private val credentialsProvider: CredentialsProvider,
-    private val saveUpbit: ValidateAndSaveUpbitCredentialsUseCase
+    private val saveUpbit: ValidateAndSaveUpbitCredentialsUseCase,
+    private val getUpbitAccountBalances: GetUpbitAccountBalancesUseCase
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(ExchangeSettingsUiState())
@@ -35,26 +36,35 @@ class ExchangeSettingsViewModel @Inject constructor(
 
     private fun loadSavedCredentials() {
         viewModelScope.launch {
+            _uiState.value = _uiState.value.copy(isLoading = true)
             try {
-                credentialsManager.credentials.collectLatest { credentials ->
-                    val savedExchanges = mutableListOf<ExchangeType>()
-                    if (credentials.hasUpbitCredentials()) savedExchanges.add(ExchangeType.UPBIT)
-                    if (credentials.hasGateioCredentials()) savedExchanges.add(ExchangeType.GATEIO)
-                    if (credentials.hasBinanceCredentials()) savedExchanges.add(ExchangeType.BINANCE)
-                    if (credentials.hasBybitCredentials()) savedExchanges.add(ExchangeType.BYBIT)
+                val savedExchanges = mutableListOf<ExchangeType>()
 
-                    val inputs = ExchangeType.entries.associateWith { ex ->
-                        _uiState.value.inputs[ex] ?: ExchangeInput()
-                    }
+                // 백엔드 API 호출 성공 여부로 업비트 연동 상태 판단
+                getUpbitAccountBalances()
+                    .onSuccess { savedExchanges.add(ExchangeType.UPBIT) }
+                    .onFailure { android.util.Log.d("ExchangeSettingsVM", "업비트 미연동: ${it.message}") }
 
-                    _uiState.value = _uiState.value.copy(
-                        savedCredentials = savedExchanges,
-                        inputs = inputs
-                    )
+                // Gate.io는 로컬 키 존재 여부로 판단
+                credentialsManager.credentials.first().let { creds ->
+                    if (creds.hasGateioCredentials()) savedExchanges.add(ExchangeType.GATEIO)
                 }
+
+                val inputs = ExchangeType.entries.associateWith { ex ->
+                    _uiState.value.inputs[ex] ?: ExchangeInput()
+                }
+
+                _uiState.value = _uiState.value.copy(
+                    savedCredentials = savedExchanges,
+                    inputs = inputs,
+                    isLoading = false
+                )
             } catch (t: Throwable) {
                 android.util.Log.e("ExchangeSettingsVM", "loadSavedCredentials error", t)
-                _uiState.value = _uiState.value.copy(error = "인증 정보 로드 중 오류가 발생했습니다")
+                _uiState.value = _uiState.value.copy(
+                    isLoading = false,
+                    error = "연동 상태 확인 중 오류가 발생했습니다"
+                )
             }
         }
     }
@@ -122,6 +132,7 @@ class ExchangeSettingsViewModel @Inject constructor(
 
 
                 _uiState.value = _uiState.value.copy(isLoading = false, selectedExchanges = emptySet(), saveSuccess = true)
+                loadSavedCredentials() // 연동 성공 후 상태 즉시 갱신
             } catch (e: Throwable) {
                 android.util.Log.e("ExchangeSettingsVM", "saveSelectedCredentials error", e)
                 _uiState.value = _uiState.value.copy(
@@ -167,8 +178,8 @@ class ExchangeSettingsViewModel @Inject constructor(
         _uiState.value = _uiState.value.copy(saveSuccess = false)
     }
 
-    /** 저장된 인증 정보 존재 여부 확인 */
+    /** 연동된 거래소 존재 여부 확인 — 백엔드 API 호출로 판단 */
     suspend fun hasAnyCredentials(): Boolean {
-        return credentialsManager.credentials.first().hasRequiredCredentials()
+        return getUpbitAccountBalances().isSuccess
     }
 }

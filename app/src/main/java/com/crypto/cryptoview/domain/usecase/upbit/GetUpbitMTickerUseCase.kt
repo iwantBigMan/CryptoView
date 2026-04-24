@@ -7,8 +7,8 @@ import javax.inject.Inject
 class GetUpbitMTickerUseCase @Inject constructor(
     private val repository: UbbitMTickerRepository
 ) {
-    suspend operator fun invoke() : Result<List<UpbitMarketTicker>>{
-        return repository.getMarketTickers()
+    suspend operator fun invoke(currencies: List<String>): Result<List<UpbitMarketTicker>> {
+        return repository.getMarketTickers(currencies)
     }
 
 }

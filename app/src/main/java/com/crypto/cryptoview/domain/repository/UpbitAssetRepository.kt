@@ -9,7 +9,7 @@ interface UpbitAssetRepository {
 }
 
 interface UbbitMTickerRepository{
-    suspend fun getMarketTickers(): Result<List<UpbitMarketTicker>>
+    suspend fun getMarketTickers(currencies: List<String>): Result<List<UpbitMarketTicker>>
 }
 
 interface UpbitTickerAllRepository{

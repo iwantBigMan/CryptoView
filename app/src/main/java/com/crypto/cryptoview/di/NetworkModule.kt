@@ -6,7 +6,6 @@ import com.crypto.cryptoview.data.local.CredentialsManager
 import com.crypto.cryptoview.data.local.CredentialsProvider
 import com.crypto.cryptoview.data.remote.api.GateFuturesApi
 import com.crypto.cryptoview.data.remote.api.GateSpotApi
-import com.crypto.cryptoview.data.remote.api.UpbitApi
 import com.crypto.cryptoview.data.remote.api.UpbitMarketApi
 import com.crypto.cryptoview.data.remote.api.UpbitTickerAllApi
 import com.crypto.cryptoview.data.remote.interceptor.AccountResponseLoggingInterceptor
@@ -122,14 +121,6 @@ object NetworkModule {
             .build()
     }
 
-    @Provides
-    @Singleton
-    fun provideUpbitApi(
-        @UpbitClient okHttpClient: OkHttpClient,
-        json: Json
-    ): UpbitApi {
-        return createApiService("https://api.upbit.com/", okHttpClient, json)
-    }
 
     @Provides
     @Singleton

@@ -40,7 +40,9 @@ class GetAllHoldingsUseCase @Inject constructor(
     suspend operator fun invoke(minValue: Double = 1.0): Result<HoldingsResult> = runCatching {
         // 1. 모든 거래소 데이터 병렬 로드
         val upbitBalances = getUpbitAccountBalance().getOrElse { emptyList() }
-        val upbitTickers = getUpbitMarketTicker().getOrElse { emptyList() }
+        // 잔고의 currency 목록을 티커 조회에 전달 (직접 Upbit API 재호출 방지)
+        val upbitCurrencies = upbitBalances.map { it.currency }
+        val upbitTickers = getUpbitMarketTicker(upbitCurrencies).getOrElse { emptyList() }
         val upbitTickerAll = getUpbitTickerAll().getOrElse { emptyList() }
         val gateBalances = getGateSpotBalances().getOrElse { emptyList() }
         val gateTickers = getGateSpotTickers().getOrElse { emptyList() }

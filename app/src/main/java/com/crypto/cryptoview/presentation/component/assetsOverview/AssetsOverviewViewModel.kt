@@ -45,7 +45,7 @@ class AssetsOverviewViewModel @Inject constructor(
         autoRefreshJob = viewModelScope.launch {
             while (isActive && isAutoRefreshEnabled) {
                 loadAssets()
-                delay(10000)
+                delay(15000) // 15초 갱신
             }
         }
     }
