@@ -22,9 +22,10 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import com.crypto.cryptoview.domain.model.AppTheme
 import com.crypto.cryptoview.domain.model.ExchangeType
 import com.crypto.cryptoview.presentation.login.GoogleLoginViewModel
-import com.crypto.cryptoview.presentation.settings.ExchangeSettingsViewModel
+import com.crypto.cryptoview.presentation.main.ThemeViewModel
 import com.crypto.cryptoview.ui.theme.*
 import kotlinx.coroutines.launch
 
@@ -33,19 +34,23 @@ fun SettingsScreen(
     modifier: Modifier = Modifier,
     viewModel: ExchangeSettingsViewModel = hiltViewModel(),
     googleLoginViewModel: GoogleLoginViewModel = hiltViewModel(),
+    themeViewModel: ThemeViewModel = hiltViewModel(),
     showExchangeSetup: Boolean = false,
     onLogout: () -> Unit = {},
     onExchangeLinked: () -> Unit = {}
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val googleUiState by googleLoginViewModel.uiState.collectAsState()
+    val currentTheme by themeViewModel.currentTheme.collectAsState()
     val scope = rememberCoroutineScope()
     var showLogoutDialog by remember { mutableStateOf(false) }
     var showExchangeDialog by remember { mutableStateOf(showExchangeSetup) }
 
+    val colors = LocalAppColors.current
+
     Surface(
         modifier = modifier.fillMaxSize(),
-        color = BackgroundPrimary
+        color = colors.backgroundPrimary
     ) {
         LazyColumn(
             modifier = Modifier
@@ -57,7 +62,7 @@ fun SettingsScreen(
             item {
                 Text(
                     text = "설정",
-                    color = Color.White,
+                    color = colors.textPrimary,
                     fontSize = 24.sp,
                     fontWeight = FontWeight.Bold,
                     modifier = Modifier.padding(vertical = 16.dp)
@@ -68,14 +73,14 @@ fun SettingsScreen(
             item {
                 Text(
                     text = "계정",
-                    color = TextSecondary,
+                    color = colors.textSecondary,
                     fontSize = 14.sp,
                     modifier = Modifier.padding(bottom = 8.dp)
                 )
                 Card(
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(12.dp),
-                    colors = CardDefaults.cardColors(containerColor = CardBackground)
+                    colors = CardDefaults.cardColors(containerColor = colors.cardBackground)
                 ) {
                     Row(
                         modifier = Modifier
@@ -87,31 +92,30 @@ fun SettingsScreen(
                         Icon(
                             imageVector = Icons.Default.Person,
                             contentDescription = null,
-                            tint = AccentBlue,
+                            tint = colors.accentBlue,
                             modifier = Modifier.size(40.dp)
                         )
                         Column {
                             Text(
                                 text = googleUiState.userName ?: "사용자",
-                                color = Color.White,
+                                color = colors.textPrimary,
                                 fontSize = 16.sp,
                                 fontWeight = FontWeight.Medium
                             )
                             Text(
                                 text = googleUiState.userEmail ?: "",
-                                color = TextSecondary,
+                                color = colors.textSecondary,
                                 fontSize = 13.sp
                             )
                         }
                     }
                 }
             }
-
-            // 연동된 계정 섹션
+            // 연동된 거래소 섹션
             item {
                 Text(
                     text = "연동된 거래소",
-                    color = TextSecondary,
+                    color = colors.textSecondary,
                     fontSize = 14.sp,
                     modifier = Modifier.padding(bottom = 8.dp)
                 )
@@ -122,7 +126,7 @@ fun SettingsScreen(
                 Card(
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(12.dp),
-                    colors = CardDefaults.cardColors(containerColor = CardBackground)
+                    colors = CardDefaults.cardColors(containerColor = colors.cardBackground)
                 ) {
                     Column(
                         modifier = Modifier.padding(16.dp),
@@ -131,7 +135,7 @@ fun SettingsScreen(
                         if (uiState.savedCredentials.isEmpty()) {
                             Text(
                                 text = "연동된 거래소가 없습니다",
-                                color = TextSecondary,
+                                color = colors.textSecondary,
                                 fontSize = 14.sp
                             )
                         } else {
@@ -148,18 +152,18 @@ fun SettingsScreen(
                                         Icon(
                                             imageVector = Icons.Default.Key,
                                             contentDescription = null,
-                                            tint = AccentBlue,
+                                            tint = colors.accentBlue,
                                             modifier = Modifier.size(20.dp)
                                         )
                                         Text(
                                             text = exchange.displayName,
-                                            color = Color.White,
+                                            color = colors.textPrimary,
                                             fontSize = 16.sp
                                         )
                                     }
                                     Text(
                                         text = "연동됨",
-                                        color = PositiveColor,
+                                        color = colors.positive,
                                         fontSize = 12.sp
                                     )
                                 }
@@ -176,7 +180,7 @@ fun SettingsScreen(
                         .fillMaxWidth()
                         .clickable { showExchangeDialog = true },
                     shape = RoundedCornerShape(12.dp),
-                    colors = CardDefaults.cardColors(containerColor = CardBackground)
+                    colors = CardDefaults.cardColors(containerColor = colors.cardBackground)
                 ) {
                     Row(
                         modifier = Modifier
@@ -188,12 +192,12 @@ fun SettingsScreen(
                         Icon(
                             imageVector = Icons.Default.Add,
                             contentDescription = "거래소 연동",
-                            tint = AccentBlue,
+                            tint = colors.accentBlue,
                             modifier = Modifier.size(24.dp)
                         )
                         Text(
                             text = "거래소 연동 추가",
-                            color = AccentBlue,
+                            color = colors.accentBlue,
                             fontSize = 16.sp,
                             fontWeight = FontWeight.Medium
                         )
@@ -201,18 +205,58 @@ fun SettingsScreen(
                 }
             }
 
-            // 로그아웃 버튼
+            item { Spacer(modifier = Modifier.height(16.dp)) }
+            // 테마 설정
             item {
-                Spacer(modifier = Modifier.height(16.dp))
+                Text(
+                    text = "테마",
+                    color = colors.textSecondary,
+                    fontSize = 14.sp,
+                    modifier = Modifier.padding(bottom = 8.dp)
+                )
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(12.dp),
+                    colors = CardDefaults.cardColors(containerColor = colors.cardBackground)
+                ) {
+                    Column(modifier = Modifier.padding(4.dp)) {
+                        listOf(
+                            AppTheme.DARK   to "다크 모드",
+                            AppTheme.LIGHT  to "라이트 모드"
+                        ).forEach { (theme, label) ->
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clickable { themeViewModel.setTheme(theme) }
+                                    .padding(horizontal = 12.dp, vertical = 4.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.SpaceBetween
+                            ) {
+                                Text(text = label, color = colors.textPrimary, fontSize = 15.sp)
+                                RadioButton(
+                                    selected = currentTheme == theme,
+                                    onClick = { themeViewModel.setTheme(theme) },
+                                    colors = RadioButtonDefaults.colors(
+                                        selectedColor = colors.accentBlue,
+                                        unselectedColor = colors.textSecondary
+                                    )
+                                )
+                            }
+                        }
+                    }
+                }
             }
 
+
+
+            // 로그아웃 버튼
             item {
                 Card(
                     modifier = Modifier
                         .fillMaxWidth()
                         .clickable { showLogoutDialog = true },
                     shape = RoundedCornerShape(12.dp),
-                    colors = CardDefaults.cardColors(containerColor = CardBackground)
+                    colors = CardDefaults.cardColors(containerColor = colors.cardBackground)
                 ) {
                     Row(
                         modifier = Modifier
@@ -224,12 +268,12 @@ fun SettingsScreen(
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ExitToApp,
                             contentDescription = "로그아웃",
-                            tint = ErrorColor,
+                            tint = colors.error,
                             modifier = Modifier.size(24.dp)
                         )
                         Text(
                             text = "로그아웃",
-                            color = ErrorColor,
+                            color = colors.error,
                             fontSize = 16.sp,
                             fontWeight = FontWeight.Medium
                         )
@@ -237,26 +281,16 @@ fun SettingsScreen(
                 }
             }
 
-            // 앱 정보
-            item {
-                Spacer(modifier = Modifier.height(32.dp))
-            }
+            item { Spacer(modifier = Modifier.height(32.dp)) }
 
+            // 앱 정보
             item {
                 Column(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    Text(
-                        text = "CryptoView",
-                        color = TextSecondary,
-                        fontSize = 12.sp
-                    )
-                    Text(
-                        text = "Version 1.0.0",
-                        color = TextTertiary,
-                        fontSize = 10.sp
-                    )
+                    Text(text = "CryptoView", color = colors.textSecondary, fontSize = 12.sp)
+                    Text(text = "Version 1.0.0", color = colors.textTertiary, fontSize = 10.sp)
                 }
             }
         }
@@ -266,39 +300,40 @@ fun SettingsScreen(
     if (showLogoutDialog) {
         AlertDialog(
             onDismissRequest = { showLogoutDialog = false },
-            title = {
-                Text(text = "로그아웃", color = Color.White)
-            },
+            title = { Text(text = "로그아웃", color = colors.textPrimary) },
             text = {
                 Text(
                     text = "Google 계정에서 로그아웃하고\n모든 연동된 거래소 정보가 삭제됩니다.\n계속하시겠습니까?",
-                    color = TextSecondary
+                    color = colors.textSecondary
                 )
             },
             confirmButton = {
                 TextButton(
                     onClick = {
                         scope.launch {
-                            viewModel.logout()
-                            googleLoginViewModel.signOut()
-                            showLogoutDialog = false
-                            onLogout()
+                            try {
+                                // 모든 로그아웃 (백엔드 + Google + 로컬) 한 곳에서 관리
+                                viewModel.logout()
+
+                                showLogoutDialog = false
+                                onLogout()  // MainActivity: finishAffinity + killProcess
+                            } catch (e: Exception) {
+                                android.util.Log.e("SettingsScreen", "로그아웃 중 오류", e)
+                                showLogoutDialog = false
+                                onLogout()  // 오류 발생해도 앱 종료
+                            }
                         }
                     },
-                    colors = ButtonDefaults.textButtonColors(contentColor = ErrorColor)
-                ) {
-                    Text("로그아웃")
-                }
+                    colors = ButtonDefaults.textButtonColors(contentColor = colors.error)
+                ) { Text("로그아웃") }
             },
             dismissButton = {
                 TextButton(
                     onClick = { showLogoutDialog = false },
-                    colors = ButtonDefaults.textButtonColors(contentColor = TextSecondary)
-                ) {
-                    Text("취소")
-                }
+                    colors = ButtonDefaults.textButtonColors(contentColor = colors.textSecondary)
+                ) { Text("취소") }
             },
-            containerColor = CardBackground
+            containerColor = colors.cardBackground
         )
     }
 
@@ -311,7 +346,6 @@ fun SettingsScreen(
                 if (!showExchangeSetup || uiState.savedCredentials.isNotEmpty()) {
                     showExchangeDialog = false
                 }
-                // 필수 연동 상태에서는 닫기 불가
             },
             onSuccess = {
                 showExchangeDialog = false
@@ -353,6 +387,8 @@ private fun ExchangeSetupDialog(
         }
     }
 
+    val colors = LocalAppColors.current  // 테마 색상
+
     AlertDialog(
         onDismissRequest = {
             if (!isRequired) onDismiss()
@@ -368,7 +404,7 @@ private fun ExchangeSetupDialog(
                     Spacer(modifier = Modifier.height(4.dp))
                     Text(
                         text = "USDT/KRW 환율 조회를 위해 업비트 연동이 필요합니다",
-                        color = TextSecondary,
+                        color = colors.textSecondary,
                         fontSize = 12.sp
                     )
                 }
@@ -380,12 +416,12 @@ private fun ExchangeSetupDialog(
                 OutlinedTextField(
                     value = apiKey,
                     onValueChange = { apiKey = it; localError = null },
-                    label = { Text("API Key", color = TextSecondary) },
+                    label = { Text("API Key", color = colors.textSecondary) },
                     modifier = Modifier.fillMaxWidth(),
                     colors = OutlinedTextFieldDefaults.colors(
                         focusedTextColor = Color.White,
                         unfocusedTextColor = Color.White,
-                        focusedBorderColor = AccentBlue,
+                        focusedBorderColor = colors.accentBlue,
                         unfocusedBorderColor = Color(0xFF2A2D3E),
                         focusedContainerColor = Color(0xFF0F1720),
                         unfocusedContainerColor = Color(0xFF0F1720)
@@ -401,13 +437,13 @@ private fun ExchangeSetupDialog(
                     OutlinedTextField(
                         value = secretKey,
                         onValueChange = { secretKey = it; localError = null },
-                        label = { Text("Secret Key", color = TextSecondary) },
+                        label = { Text("Secret Key", color = colors.textSecondary) },
                         modifier = Modifier.fillMaxWidth(),
                         visualTransformation = PasswordVisualTransformation(),
                         colors = OutlinedTextFieldDefaults.colors(
                             focusedTextColor = Color.White,
                             unfocusedTextColor = Color.White,
-                            focusedBorderColor = AccentBlue,
+                            focusedBorderColor = colors.accentBlue,
                             unfocusedBorderColor = Color(0xFF2A2D3E),
                             focusedContainerColor = Color(0xFF0F1720),
                             unfocusedContainerColor = Color(0xFF0F1720)
@@ -422,18 +458,10 @@ private fun ExchangeSetupDialog(
                 if (localError != null) {
                     Text(
                         text = localError ?: "",
-                        color = ErrorColor,
+                        color = colors.error,
                         fontSize = 12.sp
                     )
                 }
-
-                // 안내
-                Text(
-                    text = "• 출금 권한은 체크하지 마세요\n• API Key는 기기에만 저장됩니다",
-                    color = TextTertiary,
-                    fontSize = 11.sp,
-                    lineHeight = 16.sp
-                )
             }
         },
         confirmButton = {
@@ -456,12 +484,12 @@ private fun ExchangeSetupDialog(
                     CircularProgressIndicator(
                         modifier = Modifier.size(16.dp),
                         strokeWidth = 2.dp,
-                        color = AccentBlue
+                        color = colors.accentBlue
                     )
                     Spacer(modifier = Modifier.width(8.dp))
-                    Text("검증 중...", color = TextSecondary)
+                    Text("검증 중...", color = colors.textSecondary)
                 } else {
-                    Text("연동하기", color = AccentBlue, fontWeight = FontWeight.Bold)
+                    Text("연동하기", color = colors.accentBlue, fontWeight = FontWeight.Bold)
                 }
             }
         },
@@ -471,7 +499,7 @@ private fun ExchangeSetupDialog(
                     onClick = onDismiss,
                     enabled = !uiState.isLoading
                 ) {
-                    Text("취소", color = TextSecondary)
+                    Text("취소", color = colors.textSecondary)
                 }
             }
         },

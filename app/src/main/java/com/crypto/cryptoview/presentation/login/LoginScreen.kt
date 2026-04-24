@@ -4,7 +4,6 @@ import androidx.activity.ComponentActivity
 import androidx.activity.SystemBarStyle
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
@@ -21,7 +20,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.crypto.cryptoview.R
-import com.crypto.cryptoview.ui.theme.*
+import com.crypto.cryptoview.ui.theme.LocalAppColors
 
 /**
  * 로그인 화면 (Google 로그인 전용)
@@ -35,6 +34,7 @@ fun LoginScreen(
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val context = LocalContext.current
+    val colors = LocalAppColors.current
 
     // 상태바 아이콘 흰색 (어두운 배경용)
     SideEffect {
@@ -56,9 +56,9 @@ fun LoginScreen(
             .background(
                 Brush.verticalGradient(
                     colors = listOf(
-                        Color(0xFF0A0E27),
-                        Color(0xFF071029),
-                        Color(0xFF0D1B3E)
+                        colors.backgroundSecondary,
+                        colors.backgroundPrimary,
+                        colors.backgroundSecondary
                     )
                 )
             )
@@ -80,7 +80,7 @@ fun LoginScreen(
             // 앱 이름
             Text(
                 text = "CryptoView",
-                color = Color.White,
+                color = colors.textPrimary,
                 fontSize = 36.sp,
                 fontWeight = FontWeight.Bold
             )
@@ -90,7 +90,7 @@ fun LoginScreen(
             // 부제목
             Text(
                 text = "내 코인 자산을 한눈에",
-                color = TextSecondary,
+                color = colors.textSecondary,
                 fontSize = 16.sp
             )
 
@@ -101,10 +101,10 @@ fun LoginScreen(
                 verticalArrangement = Arrangement.spacedBy(14.dp),
                 modifier = Modifier.fillMaxWidth()
             ) {
-                FeatureRow("📈", "실시간 자산 현황 조회(krw <-> usdt)")
-                FeatureRow("🔗", "현재 업비트 · Gate.io 거래소 연동 가능")
-                FeatureRow("🔒", "API 키 암호화 후 기기 저장")
-                FeatureRow("☁️", "현재 Google 계정으로만 간편 로그인 가능")
+                FeatureRow(emoji = "📈", text = "실시간 자산 현황 조회(krw <-> usdt)")
+                FeatureRow(emoji = "🔗", text = "현재 업비트 · Gate.io 거래소 연동 가능")
+                FeatureRow(emoji = "🔒", text = "API 키는 서버에 안전하게 보관")
+                FeatureRow(emoji = "☁️", text = "현재 Google 계정으로만 간편 로그인 가능")
             }
 
             Spacer(modifier = Modifier.weight(1f))
@@ -163,7 +163,7 @@ fun LoginScreen(
             // 하단 안내
             Text(
                 text = "로그인 후 설정에서 거래소를 연동할 수 있습니다\nAPI 키는 서버에 저장되지 않습니다",
-                color = TextTertiary,
+                color = colors.textTertiary,
                 fontSize = 12.sp,
                 textAlign = TextAlign.Center,
                 lineHeight = 18.sp
@@ -179,18 +179,19 @@ fun LoginScreen(
             onDismissRequest = { viewModel.clearError() },
             confirmButton = {
                 TextButton(onClick = { viewModel.clearError() }) {
-                    Text("확인")
+                    Text("확인", color = colors.accentBlue)
                 }
             },
-            title = { Text("로그인 실패", color = Color.White) },
-            text = { Text(uiState.error ?: "", color = TextSecondary) },
-            containerColor = CardBackground
+            title = { Text("로그인 실패", color = colors.textPrimary) },
+            text = { Text(uiState.error ?: "", color = colors.textSecondary) },
+            containerColor = colors.cardBackground
         )
     }
 }
 
 @Composable
 private fun FeatureRow(emoji: String, text: String) {
+    val colors = LocalAppColors.current
     Row(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(14.dp)
@@ -198,7 +199,7 @@ private fun FeatureRow(emoji: String, text: String) {
         Text(text = emoji, fontSize = 22.sp)
         Text(
             text = text,
-            color = Color.White.copy(alpha = 0.85f),
+            color = colors.textPrimary.copy(alpha = 0.85f),
             fontSize = 15.sp
         )
     }

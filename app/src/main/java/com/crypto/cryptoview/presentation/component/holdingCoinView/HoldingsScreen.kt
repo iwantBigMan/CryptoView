@@ -28,8 +28,7 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.crypto.cryptoview.domain.model.AggregatedHolding
 import com.crypto.cryptoview.domain.model.HoldingData
 import com.crypto.cryptoview.presentation.component.holdingCoinView.preview.SortType
-import com.crypto.cryptoview.ui.theme.TextPrimary
-import com.crypto.cryptoview.ui.theme.TextSecondary
+import com.crypto.cryptoview.ui.theme.LocalAppColors
 
 /**
  * 보유 코인 화면
@@ -44,6 +43,7 @@ fun HoldingsScreen(
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val lifecycleOwner = LocalLifecycleOwner.current
+    val colors = LocalAppColors.current
 
     DisposableEffect(lifecycleOwner) {
         val observer = LifecycleEventObserver { _, event ->
@@ -60,7 +60,7 @@ fun HoldingsScreen(
     Column(
         modifier = modifier
             .fillMaxSize()
-            .background(Color(0xFF0F1117))
+            .background(colors.backgroundPrimary)
             .padding(16.dp)
     ) {
         // 헤더
@@ -71,13 +71,13 @@ fun HoldingsScreen(
         ) {
             Text(
                 text = "My Holdings",
-                color = TextPrimary,
+                color = colors.textPrimary,
                 fontSize = 24.sp
             )
             Icon(
                 imageVector = Icons.Default.Refresh,
                 contentDescription = "Refresh",
-                tint = TextSecondary
+                tint = colors.textSecondary
             )
         }
 
@@ -124,19 +124,20 @@ private fun SearchBar(
     onQueryChange: (String) -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val colors = LocalAppColors.current
     OutlinedTextField(
         value = query,
         onValueChange = onQueryChange,
-        placeholder = { Text("Search coins...", color = Color.Gray) },
+        placeholder = { Text("Search coins...", color = colors.textTertiary) },
         leadingIcon = {
-            Icon(Icons.Default.Search, contentDescription = null, tint = Color.Gray)
+            Icon(Icons.Default.Search, contentDescription = null, tint = colors.textTertiary)
         },
         colors = OutlinedTextFieldDefaults.colors(
-            focusedTextColor = Color.White,
-            unfocusedTextColor = Color.White,
-            focusedContainerColor = Color(0xFF1A1D2E),
-            unfocusedContainerColor = Color(0xFF1A1D2E),
-            focusedBorderColor = Color(0xFF5B7FFF),
+            focusedTextColor = colors.textPrimary,
+            unfocusedTextColor = colors.textPrimary,
+            focusedContainerColor = colors.surfaceVariant,
+            unfocusedContainerColor = colors.surfaceVariant,
+            focusedBorderColor = colors.accentBlue,
             unfocusedBorderColor = Color.Transparent
         ),
         shape = RoundedCornerShape(12.dp),
@@ -154,6 +155,7 @@ private fun SortFilterRow(
     onSortChange: (SortType) -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val colors = LocalAppColors.current
     LazyRow(
         modifier = modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.spacedBy(8.dp)
@@ -165,7 +167,7 @@ private fun SortFilterRow(
                 label = {
                     Text(
                         text = when (sortType) {
-                            SortType.VALUE -> "Value"
+                            SortType.VALUE  -> "Value"
                             SortType.PROFIT -> "Profit"
                             SortType.SYMBOL -> "Symbol"
                         },
@@ -173,10 +175,10 @@ private fun SortFilterRow(
                     )
                 },
                 colors = FilterChipDefaults.filterChipColors(
-                    selectedContainerColor = Color(0xFF5B7FFF),
-                    selectedLabelColor = Color.White,
-                    containerColor = Color(0xFF252837),
-                    labelColor = Color.White.copy(alpha = 0.7f)
+                    selectedContainerColor = colors.chipSelected,
+                    selectedLabelColor = colors.textPrimary,
+                    containerColor = colors.chipUnselected,
+                    labelColor = colors.textSecondary
                 )
             )
         }
@@ -193,13 +195,14 @@ private fun AggregatedHoldingCard(
     onClick: () -> Unit = {}
 ) {
     val isPositive = holding.totalChange >= 0
+    val colors = LocalAppColors.current
 
     Card(
         modifier = Modifier
             .fillMaxWidth()
             .clickable { onClick() },
         shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(containerColor = Color(0xFF1A1D2E))
+        colors = CardDefaults.cardColors(containerColor = colors.surfaceVariant)
     ) {
         Row(
             modifier = Modifier
@@ -215,12 +218,12 @@ private fun AggregatedHoldingCard(
                     modifier = Modifier
                         .size(40.dp)
                         .clip(CircleShape)
-                        .background(Color(0xFF5B7FFF), CircleShape),
+                        .background(colors.accentBlue.copy(alpha = 0.3f), CircleShape),
                     contentAlignment = Alignment.Center
                 ) {
                     Text(
                         text = holding.normalizedSymbol.take(3),
-                        color = Color.White,
+                        color = colors.accentBlue,
                         fontWeight = FontWeight.Bold,
                         fontSize = 14.sp
                     )
@@ -232,7 +235,7 @@ private fun AggregatedHoldingCard(
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Text(
                             text = holding.normalizedSymbol,
-                            color = Color.White,
+                            color = colors.textPrimary,
                             fontWeight = FontWeight.Bold,
                             fontSize = 16.sp
                         )
@@ -241,12 +244,12 @@ private fun AggregatedHoldingCard(
                             Spacer(modifier = Modifier.width(8.dp))
                             Box(
                                 modifier = Modifier
-                                    .background(Color(0xFF374151), RoundedCornerShape(4.dp))
+                                    .background(colors.chipUnselected, RoundedCornerShape(4.dp))
                                     .padding(horizontal = 6.dp, vertical = 2.dp)
                             ) {
                                 Text(
                                     text = "${holding.holdings.size}개 거래소",
-                                    color = Color.White.copy(alpha = 0.7f),
+                                    color = colors.textSecondary,
                                     fontSize = 10.sp
                                 )
                             }
@@ -255,7 +258,7 @@ private fun AggregatedHoldingCard(
                     // 총 보유량
                     Text(
                         text = String.format(Locale.getDefault(), "%.4f %s", holding.totalBalance, holding.normalizedSymbol),
-                        color = Color.White.copy(alpha = 0.6f),
+                        color = colors.textSecondary,
                         fontSize = 12.sp
                     )
                     // 거래소 색상 점
@@ -273,7 +276,7 @@ private fun AggregatedHoldingCard(
                         if (holding.exchanges.size > 4) {
                             Text(
                                 text = "+${holding.exchanges.size - 4}",
-                                color = Color.White.copy(alpha = 0.5f),
+                                color = colors.textTertiary,
                                 fontSize = 10.sp
                             )
                         }
@@ -285,7 +288,7 @@ private fun AggregatedHoldingCard(
             Column(horizontalAlignment = Alignment.End) {
                 Text(
                     text = String.format(Locale.getDefault(), "₩%,.0f", holding.totalValue),
-                    color = Color.White,
+                    color = colors.textPrimary,
                     fontWeight = FontWeight.Bold,
                     fontSize = 16.sp
                 )
@@ -297,7 +300,7 @@ private fun AggregatedHoldingCard(
                         holding.totalChange,
                         holding.totalChangePercent
                     ),
-                    color = if (isPositive) Color(0xFF4CAF50) else Color(0xFFF44336),
+                    color = if (isPositive) colors.positive else colors.negative,
                     fontSize = 14.sp
                 )
             }
@@ -309,16 +312,16 @@ private fun AggregatedHoldingCard(
  * 보유 코인 카드 (거래소별 개별 - 디테일용)
  */
 @Composable
-private fun HoldingCard(holding: HoldingData,
-                        onClick: () -> Unit = {}) {
+private fun HoldingCard(holding: HoldingData, onClick: () -> Unit = {}) {
     val isPositive = holding.change >= 0
+    val colors = LocalAppColors.current
 
     Card(
         modifier = Modifier
             .fillMaxWidth()
             .clickable { onClick() },
         shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(containerColor = Color(0xFF1A1D2E))
+        colors = CardDefaults.cardColors(containerColor = colors.surfaceVariant)
     ) {
         Row(
             modifier = Modifier
@@ -334,12 +337,12 @@ private fun HoldingCard(holding: HoldingData,
                     modifier = Modifier
                         .size(40.dp)
                         .clip(CircleShape)
-                        .background(Color(0xFF5B7FFF), CircleShape),
+                        .background(colors.accentBlue.copy(alpha = 0.3f), CircleShape),
                     contentAlignment = Alignment.Center
                 ) {
                     Text(
                         text = holding.symbol.take(3),
-                        color = Color.White,
+                        color = colors.accentBlue,
                         fontWeight = FontWeight.Bold,
                         fontSize = 14.sp
                     )
@@ -350,31 +353,29 @@ private fun HoldingCard(holding: HoldingData,
                 Column {
                     Text(
                         text = holding.symbol,
-                        color = Color.White,
+                        color = colors.textPrimary,
                         fontWeight = FontWeight.Bold,
                         fontSize = 16.sp
                     )
                     Text(
                         text = String.format(Locale.getDefault(), "%.2f %s", holding.balance, holding.symbol),
-                        color = Color.White.copy(alpha = 0.6f),
+                        color = colors.textSecondary,
                         fontSize = 12.sp
                     )
                 }
             }
 
-
-
             // 가격 정보 (오른쪽)
             Column(horizontalAlignment = Alignment.End) {
                 Text(
                     text = String.format(Locale.getDefault(), "₩%,.0f", holding.totalValue),
-                    color = Color.White,
+                    color = colors.textPrimary,
                     fontWeight = FontWeight.Bold,
                     fontSize = 16.sp
                 )
                 Text(
                     text = String.format(Locale.getDefault(), "%s₩%,.0f (%,.2f%%)", if (isPositive) "+" else "", holding.change, holding.changePercent),
-                    color = if (isPositive) Color(0xFF4CAF50) else Color(0xFFF44336),
+                    color = if (isPositive) colors.positive else colors.negative,
                     fontSize = 14.sp
                 )
             }
@@ -387,6 +388,7 @@ private fun HoldingCard(holding: HoldingData,
  */
 @Composable
 private fun EmptyHoldingsView() {
+    val colors = LocalAppColors.current
     Box(
         modifier = Modifier.fillMaxSize(),
         contentAlignment = Alignment.Center
@@ -394,13 +396,13 @@ private fun EmptyHoldingsView() {
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
             Text(
                 text = "No holdings found",
-                color = Color.White.copy(alpha = 0.6f),
+                color = colors.textSecondary,
                 fontSize = 18.sp
             )
             Spacer(modifier = Modifier.height(8.dp))
             Text(
                 text = "Connect your exchange to see holdings",
-                color = Color.White.copy(alpha = 0.4f),
+                color = colors.textTertiary,
                 fontSize = 14.sp
             )
         }

@@ -1,10 +1,14 @@
 package com.crypto.cryptoview.data.remote.api
 
+import com.crypto.cryptoview.data.remote.dto.upbit.DeleteUpbitCredentialResponse
 import com.crypto.cryptoview.data.remote.dto.upbit.UpbitAccountBalanceDto
 import com.crypto.cryptoview.data.remote.dto.upbit.ValidateUpbitRequest
 import com.crypto.cryptoview.data.remote.dto.upbit.ValidateUpbitResponse
+import retrofit2.Response
 import retrofit2.http.Body
+import retrofit2.http.DELETE
 import retrofit2.http.GET
+import retrofit2.http.Header
 import retrofit2.http.POST
 
 /**
@@ -21,4 +25,11 @@ interface ValidateAndSaveUpbit {
 interface FetchUpbitAssets {
     @GET("api/exchange/upbit/accounts")
     suspend fun fetchAssets(): List<UpbitAccountBalanceDto>
+}
+
+interface DeleteUpbitCredentials {
+    @DELETE("api/exchange/upbit/credential")
+    suspend fun deleteUpbitCredential(
+        @Header("Authorization") token: String
+    ): DeleteUpbitCredentialResponse
 }

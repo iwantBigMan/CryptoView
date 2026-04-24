@@ -29,6 +29,7 @@ import com.crypto.cryptoview.presentation.component.holdingCoinView.HoldingCoins
 import com.crypto.cryptoview.presentation.component.holdingCoinView.HoldingDetailScreen
 import com.crypto.cryptoview.presentation.component.holdingCoinView.HoldingsScreen
 import com.crypto.cryptoview.ui.theme.CryptoViewTheme
+import com.crypto.cryptoview.ui.theme.LocalAppColors
 
 @Composable
 fun MainScreen(
@@ -41,14 +42,15 @@ fun MainScreen(
 ) {
     val navController = rememberNavController()
     var selectedTab by remember { mutableIntStateOf(initialTab) }
+    val colors = LocalAppColors.current
 
     NavHost(navController = navController, startDestination = "main") {
         composable("main") {
             Scaffold(
                 bottomBar = {
                     NavigationBar(
-                        containerColor = Color(0xFF1A1D2E),
-                        contentColor = Color.White
+                        containerColor = colors.surfaceVariant,
+                        contentColor = colors.textPrimary
                     ) {
                         NavigationBarItem(
                             icon = { Icon(Icons.Default.Home, contentDescription = "Home") },
@@ -56,10 +58,10 @@ fun MainScreen(
                             selected = selectedTab == 0,
                             onClick = { selectedTab = 0 },
                             colors = NavigationBarItemDefaults.colors(
-                                selectedIconColor = Color(0xFF5B7FFF),
-                                selectedTextColor = Color(0xFF5B7FFF),
-                                unselectedIconColor = Color.Gray,
-                                unselectedTextColor = Color.Gray,
+                                selectedIconColor = colors.accentBlue,
+                                selectedTextColor = colors.accentBlue,
+                                unselectedIconColor = colors.textSecondary,
+                                unselectedTextColor = colors.textSecondary,
                                 indicatorColor = Color.Transparent
                             )
                         )
@@ -69,10 +71,10 @@ fun MainScreen(
                             selected = selectedTab == 1,
                             onClick = { selectedTab = 1 },
                             colors = NavigationBarItemDefaults.colors(
-                                selectedIconColor = Color(0xFF5B7FFF),
-                                selectedTextColor = Color(0xFF5B7FFF),
-                                unselectedIconColor = Color.Gray,
-                                unselectedTextColor = Color.Gray,
+                                selectedIconColor = colors.accentBlue,
+                                selectedTextColor = colors.accentBlue,
+                                unselectedIconColor = colors.textSecondary,
+                                unselectedTextColor = colors.textSecondary,
                                 indicatorColor = Color.Transparent
                             )
                         )
@@ -82,10 +84,10 @@ fun MainScreen(
                             selected = selectedTab == 2,
                             onClick = { selectedTab = 2 },
                             colors = NavigationBarItemDefaults.colors(
-                                selectedIconColor = Color(0xFF5B7FFF),
-                                selectedTextColor = Color(0xFF5B7FFF),
-                                unselectedIconColor = Color.Gray,
-                                unselectedTextColor = Color.Gray,
+                                selectedIconColor = colors.accentBlue,
+                                selectedTextColor = colors.accentBlue,
+                                unselectedIconColor = colors.textSecondary,
+                                unselectedTextColor = colors.textSecondary,
                                 indicatorColor = Color.Transparent
                             )
                         )
