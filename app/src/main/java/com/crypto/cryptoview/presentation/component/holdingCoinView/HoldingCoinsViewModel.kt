@@ -37,10 +37,6 @@ class HoldingCoinsViewModel @Inject constructor(
     private var autoRefreshJob: Job? = null
     private var isAutoRefreshEnabled = true
 
-    init {
-        startAutoRefresh()
-    }
-
     fun startAutoRefresh() {
         if (autoRefreshJob?.isActive == true) return
 

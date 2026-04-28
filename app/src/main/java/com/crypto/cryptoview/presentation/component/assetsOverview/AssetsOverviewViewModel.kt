@@ -11,6 +11,8 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import javax.inject.Inject
 
 /**
@@ -32,6 +34,7 @@ class AssetsOverviewViewModel @Inject constructor(
 
     private var autoRefreshJob: Job? = null
     private var isAutoRefreshEnabled = true
+    private val loadMutex = Mutex()
 
     init {
         startAutoRefresh()
@@ -59,8 +62,10 @@ class AssetsOverviewViewModel @Inject constructor(
      * 자산 데이터 로드
      * UseCase에 모든 데이터 조회/계산 위임
      */
-    private fun loadAssets() {
-        viewModelScope.launch {
+    private suspend fun loadAssets() {
+        if (loadMutex.isLocked) return
+
+        loadMutex.withLock {
             _uiState.value = _uiState.value.copy(isLoading = true)
 
             getAllHoldingsUseCase(minValue = 1.0)
