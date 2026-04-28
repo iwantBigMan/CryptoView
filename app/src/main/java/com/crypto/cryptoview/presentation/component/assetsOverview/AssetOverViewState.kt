@@ -1,8 +1,8 @@
 package com.crypto.cryptoview.presentation.component.assetsOverview
 
-import com.crypto.cryptoview.domain.model.AggregatedHolding
-import com.crypto.cryptoview.domain.model.ExchangeData
-import com.crypto.cryptoview.domain.model.HoldingData
+import com.crypto.cryptoview.domain.model.asset.AggregatedHolding
+import com.crypto.cryptoview.domain.model.asset.ExchangeData
+import com.crypto.cryptoview.domain.model.asset.HoldingData
 
 /**
  * 자산 개요 화면의 UI 상태

@@ -1,9 +1,9 @@
 package com.crypto.cryptoview.domain.usecase
 
-import com.crypto.cryptoview.domain.model.CurrencyUnit
-import com.crypto.cryptoview.domain.model.ExchangeHoldingDetail
-import com.crypto.cryptoview.domain.model.ExchangeType
-import com.crypto.cryptoview.domain.model.HoldingData
+import com.crypto.cryptoview.domain.model.asset.CurrencyUnit
+import com.crypto.cryptoview.domain.model.asset.ExchangeHoldingDetail
+import com.crypto.cryptoview.domain.model.exchange.ExchangeType
+import com.crypto.cryptoview.domain.model.asset.HoldingData
 import javax.inject.Inject
 
 /**

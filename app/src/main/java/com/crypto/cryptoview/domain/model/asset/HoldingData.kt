@@ -1,4 +1,6 @@
-package com.crypto.cryptoview.domain.model
+package com.crypto.cryptoview.domain.model.asset
+
+import com.crypto.cryptoview.domain.model.exchange.ExchangeType
 
 data class HoldingData(
     val symbol: String,

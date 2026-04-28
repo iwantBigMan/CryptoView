@@ -1,4 +1,4 @@
-package com.crypto.cryptoview.domain.model
+package com.crypto.cryptoview.domain.model.upbit
 
 
 

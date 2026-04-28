@@ -25,8 +25,8 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
-import com.crypto.cryptoview.domain.model.AggregatedHolding
-import com.crypto.cryptoview.domain.model.HoldingData
+import com.crypto.cryptoview.domain.model.asset.AggregatedHolding
+import com.crypto.cryptoview.domain.model.asset.HoldingData
 import com.crypto.cryptoview.presentation.component.holdingCoinView.preview.SortType
 import com.crypto.cryptoview.ui.theme.LocalAppColors
 

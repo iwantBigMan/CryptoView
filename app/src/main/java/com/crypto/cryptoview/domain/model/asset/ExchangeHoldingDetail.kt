@@ -1,4 +1,6 @@
-package com.crypto.cryptoview.domain.model
+package com.crypto.cryptoview.domain.model.asset
+
+import com.crypto.cryptoview.domain.model.exchange.ExchangeType
 
 /**
  * 거래소별 보유 상세 정보 (도메인 모델)

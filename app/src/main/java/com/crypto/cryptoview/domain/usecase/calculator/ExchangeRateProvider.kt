@@ -1,6 +1,6 @@
 package com.crypto.cryptoview.domain.usecase.calculator
 
-import com.crypto.cryptoview.domain.model.UpbitMarketTicker
+import com.crypto.cryptoview.domain.model.upbit.UpbitMarketTicker
 import javax.inject.Inject
 
 /**

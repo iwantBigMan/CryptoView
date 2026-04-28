@@ -2,7 +2,7 @@ package com.crypto.cryptoview.presentation.main
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.crypto.cryptoview.domain.model.AppTheme
+import com.crypto.cryptoview.domain.model.settings.AppTheme
 import com.crypto.cryptoview.data.local.ThemeManager
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.SharingStarted

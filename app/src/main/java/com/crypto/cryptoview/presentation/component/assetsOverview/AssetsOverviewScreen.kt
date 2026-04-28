@@ -22,8 +22,8 @@ import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import java.util.Locale
 import com.crypto.cryptoview.R
-import com.crypto.cryptoview.domain.model.AggregatedHolding
-import com.crypto.cryptoview.domain.model.ExchangeData
+import com.crypto.cryptoview.domain.model.asset.AggregatedHolding
+import com.crypto.cryptoview.domain.model.asset.ExchangeData
 import com.crypto.cryptoview.presentation.component.assetsOverview.chart.ChartData
 import com.crypto.cryptoview.presentation.component.assetsOverview.chart.DonutChart
 import com.crypto.cryptoview.ui.theme.LocalAppColors
@@ -323,7 +323,7 @@ private fun AggregatedHoldingItem(
     changePercent: String,
     isPositive: Boolean,
     exchangeCount: Int,
-    exchanges: List<com.crypto.cryptoview.domain.model.ExchangeType>
+    exchanges: List<com.crypto.cryptoview.domain.model.exchange.ExchangeType>
 ) {
     val colors = LocalAppColors.current
 

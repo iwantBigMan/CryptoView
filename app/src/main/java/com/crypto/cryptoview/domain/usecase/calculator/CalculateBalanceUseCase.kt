@@ -1,12 +1,12 @@
 package com.crypto.cryptoview.domain.usecase.calculator
 
-import com.crypto.cryptoview.domain.model.ExchangeType
-import com.crypto.cryptoview.domain.model.ForeignBalance
-import com.crypto.cryptoview.domain.model.GateSpotBalance
-import com.crypto.cryptoview.domain.model.UpbitAccountBalance
-import com.crypto.cryptoview.domain.model.UpbitMarketTicker
+import com.crypto.cryptoview.domain.model.exchange.ExchangeType
+import com.crypto.cryptoview.domain.model.asset.ForeignBalance
+import com.crypto.cryptoview.domain.model.gate.GateSpotBalance
+import com.crypto.cryptoview.domain.model.upbit.UpbitAccountBalance
+import com.crypto.cryptoview.domain.model.upbit.UpbitMarketTicker
 import com.crypto.cryptoview.domain.model.gate.GateSpotTicker
-import com.crypto.cryptoview.domain.model.toForeignBalance
+import com.crypto.cryptoview.domain.model.gate.toForeignBalance
 import javax.inject.Inject
 
 /**

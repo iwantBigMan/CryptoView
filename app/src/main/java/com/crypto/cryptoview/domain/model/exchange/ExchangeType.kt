@@ -1,4 +1,4 @@
-package com.crypto.cryptoview.domain.model
+package com.crypto.cryptoview.domain.model.exchange
 
 import androidx.compose.ui.graphics.Color
 

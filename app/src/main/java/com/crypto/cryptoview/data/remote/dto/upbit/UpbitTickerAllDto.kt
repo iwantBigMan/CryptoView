@@ -1,6 +1,6 @@
 package com.crypto.cryptoview.data.remote.dto.upbit
 
-import com.crypto.cryptoview.domain.model.UpbitTickerAll
+import com.crypto.cryptoview.domain.model.upbit.UpbitTickerAll
 import com.google.gson.annotations.SerializedName
 
 data class UpbitTickerAllDto(

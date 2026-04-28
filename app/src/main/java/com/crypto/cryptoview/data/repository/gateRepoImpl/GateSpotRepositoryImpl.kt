@@ -1,10 +1,10 @@
 package com.crypto.cryptoview.data.repository.gateRepoImpl
 
 import com.crypto.cryptoview.data.remote.api.GateSpotApi
-import com.crypto.cryptoview.domain.model.GateSpotBalance
+import com.crypto.cryptoview.domain.model.gate.GateSpotBalance
 import com.crypto.cryptoview.domain.model.gate.GateSpotTicker
 import com.crypto.cryptoview.domain.model.gate.toDomain
-import com.crypto.cryptoview.domain.model.toDomain
+import com.crypto.cryptoview.domain.model.gate.toDomain
 import com.crypto.cryptoview.domain.repository.GateSpotRepository
 import javax.inject.Inject
 

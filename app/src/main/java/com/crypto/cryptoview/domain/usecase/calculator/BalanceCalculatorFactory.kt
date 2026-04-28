@@ -1,6 +1,6 @@
 package com.crypto.cryptoview.domain.usecase.calculator
 
-import com.crypto.cryptoview.domain.model.ExchangeType
+import com.crypto.cryptoview.domain.model.exchange.ExchangeType
 import javax.inject.Inject
 import javax.inject.Provider
 import javax.inject.Singleton

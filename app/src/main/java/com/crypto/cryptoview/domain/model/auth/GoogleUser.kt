@@ -1,4 +1,4 @@
-package com.crypto.cryptoview.domain.model
+package com.crypto.cryptoview.domain.model.auth
 
 /**
  * Google 로그인 사용자 정보 (Domain Model)

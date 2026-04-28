@@ -19,7 +19,7 @@ import com.crypto.cryptoview.presentation.login.LoginScreen
 import com.crypto.cryptoview.presentation.login.GoogleLoginViewModel
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.runtime.collectAsState
-import com.crypto.cryptoview.domain.model.AppTheme
+import com.crypto.cryptoview.domain.model.settings.AppTheme
 import com.crypto.cryptoview.presentation.main.ThemeViewModel
 import com.crypto.cryptoview.presentation.settings.ExchangeSettingsViewModel
 import com.crypto.cryptoview.ui.theme.CryptoViewTheme

@@ -1,7 +1,7 @@
 package com.crypto.cryptoview.presentation.component.holdingCoinView
 
-import com.crypto.cryptoview.domain.model.AggregatedHolding
-import com.crypto.cryptoview.domain.model.HoldingData
+import com.crypto.cryptoview.domain.model.asset.AggregatedHolding
+import com.crypto.cryptoview.domain.model.asset.HoldingData
 import com.crypto.cryptoview.presentation.component.holdingCoinView.preview.SortType
 
 /**
