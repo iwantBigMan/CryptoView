@@ -82,7 +82,7 @@ class GoogleAuthService @Inject constructor(
         val googleIdOption = GetGoogleIdOption.Builder()
             .setFilterByAuthorizedAccounts(false)
             .setServerClientId(webClientId)
-            .setAutoSelectEnabled(true)
+            .setAutoSelectEnabled(false)
             .build()
 
         val request = GetCredentialRequest.Builder()
@@ -162,6 +162,10 @@ class GoogleAuthService @Inject constructor(
                  firebaseAuth.signOut()
              }
              android.util.Log.d("GoogleAuthService", "❌ 강제 로그아웃 시도 후 - isSignedIn: $isSignedIn")
+
+             if (isSignedIn) {
+                 throw IllegalStateException("Firebase 로그아웃 후에도 로그인 상태가 유지됩니다")
+             }
          }
       }
 

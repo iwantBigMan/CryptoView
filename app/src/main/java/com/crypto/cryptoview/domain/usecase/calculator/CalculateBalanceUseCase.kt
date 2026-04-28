@@ -5,7 +5,6 @@ import com.crypto.cryptoview.domain.model.ForeignBalance
 import com.crypto.cryptoview.domain.model.GateSpotBalance
 import com.crypto.cryptoview.domain.model.UpbitAccountBalance
 import com.crypto.cryptoview.domain.model.UpbitMarketTicker
-import com.crypto.cryptoview.domain.model.UpbitTickerAll
 import com.crypto.cryptoview.domain.model.gate.GateSpotTicker
 import com.crypto.cryptoview.domain.model.toForeignBalance
 import javax.inject.Inject
@@ -65,41 +64,40 @@ class CalculateBalanceUseCase @Inject constructor(
      * 전체 거래소 잔고 통합 계산
      * @return 통합 계산 결과
      */
-fun calculateAll(
+    fun calculateAll(
         upbitBalances: List<UpbitAccountBalance>,
         upbitTickers: List<UpbitMarketTicker>,
-        upbitAllTickers: List<UpbitTickerAll>,
         gateioBalances: List<GateSpotBalance>,
         gateioTickers: List<GateSpotTicker>
-): TotalBalanceResult {
-    val usdtKrwRate = getUsdtKrwRate(upbitTickers)
-    val results = mutableListOf<BalanceCalculator.CalculationResult>()
+    ): TotalBalanceResult {
+        val usdtKrwRate = getUsdtKrwRate(upbitTickers)
+        val results = mutableListOf<BalanceCalculator.CalculationResult>()
 
-    // 업비트 계산
-    results.add(calculateUpbit(upbitBalances, upbitTickers))
+        // 업비트 계산
+        results.add(calculateUpbit(upbitBalances, upbitTickers))
 
-    // 해외 거래소 계산 (잔고가 있는 경우만)
+        // 해외 거래소 계산 (잔고가 있는 경우만)
 //    if (binanceBalances.isNotEmpty()) {
 //        results.add(calculateForeign(binanceBalances, binanceTickers, usdtKrwRate, ExchangeType.BINANCE))
 //    }
 //    if (bybitBalances.isNotEmpty()) {
 //        results.add(calculateForeign(bybitBalances, bybitTickers, usdtKrwRate, ExchangeType.BYBIT))
 //    }
-if (gateioBalances.isNotEmpty()) {
-    val foreignBalances = gateioBalances.map { it.toForeignBalance() }
-    val tickerMap = gateioTickers.associate { ticker ->
-        // XRP_USDT -> XRPUSDT 변환
-        ticker.symbol.replace("_", "") to ticker.lastPrice
-    }
-    results.add(calculateForeign(foreignBalances, tickerMap, usdtKrwRate, ExchangeType.GATEIO))
-}
+        if (gateioBalances.isNotEmpty()) {
+            val foreignBalances = gateioBalances.map { it.toForeignBalance() }
+            val tickerMap = gateioTickers.associate { ticker ->
+                // XRP_USDT -> XRPUSDT 변환
+                ticker.symbol.replace("_", "") to ticker.lastPrice
+            }
+            results.add(calculateForeign(foreignBalances, tickerMap, usdtKrwRate, ExchangeType.GATEIO))
+        }
 
-    return TotalBalanceResult(
-        totalValue = results.sumOf { it.totalValue },
-        results = results,
-        usdtKrwRate = usdtKrwRate
-    )
-}
+        return TotalBalanceResult(
+            totalValue = results.sumOf { it.totalValue },
+            results = results,
+            usdtKrwRate = usdtKrwRate
+        )
+    }
 
     /**
      * 통합 계산 결과

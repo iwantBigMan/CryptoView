@@ -44,6 +44,23 @@ class ExchangeSettingsViewModel @Inject constructor(
             try {
                 val savedExchanges = mutableListOf<ExchangeType>()
 
+                val hasUpbitCredentials = credentialsManager.hasUpbitCredentialsLinked()
+                credentialsManager.credentials.first().let { creds ->
+                    if (hasUpbitCredentials) savedExchanges.add(ExchangeType.UPBIT)
+                    if (creds.hasGateioCredentials()) savedExchanges.add(ExchangeType.GATEIO)
+                }
+
+                val localInputs = ExchangeType.entries.associateWith { ex ->
+                    _uiState.value.inputs[ex] ?: ExchangeInput()
+                }
+
+                _uiState.value = _uiState.value.copy(
+                    savedCredentials = savedExchanges,
+                    inputs = localInputs,
+                    isLoading = false
+                )
+                return@launch
+
                 // 백엔드 API 호출 성공 여부로 업비트 연동 상태 판단
                 getUpbitAccountBalances()
                     .onSuccess { savedExchanges.add(ExchangeType.UPBIT) }
@@ -127,6 +144,7 @@ class ExchangeSettingsViewModel @Inject constructor(
                                 )
                                 return@launch
                             }
+                            credentialsManager.markUpbitCredentialsLinked()
                         }
                         else -> {
                             // 다른 거래소는 추후 백엔드 구현 시 추가
@@ -147,7 +165,9 @@ class ExchangeSettingsViewModel @Inject constructor(
         }
     }
 
-    /** 특정 거래소 인증 정보 삭제 */
+
+
+     /** 완전 로그아웃: 백엔드 키 삭제 + Google 로그아웃 + 로컬 저장소 + 메모리 캐시 모두 정리 */
     fun deleteCredentials(exchange: ExchangeType) {
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(isLoading = true)
@@ -155,13 +175,14 @@ class ExchangeSettingsViewModel @Inject constructor(
                 when (exchange) {
                     ExchangeType.UPBIT -> {
                         val response = deleteExchangeCredential(ExchangeType.UPBIT)
-                        android.util.Log.d("ExchangeSettingsVM", "거래소 연동 해제: ${response.deleted} ${response.message}")
-                        if (!response.deleted) throw Exception("삭제 실패: ${response.message}")
+                        android.util.Log.d("ExchangeSettingsVM", "delete credential: ${response.deleted} ${response.message}")
+                        if (!response.deleted) throw Exception("delete failed: ${response.message}")
+                        credentialsManager.clearUpbitCredentials()
                     }
                     ExchangeType.GATEIO -> credentialsManager.clearGateioCredentials()
                     else -> {}
                 }
-                loadSavedCredentials()  // UI 상태 즉시 갱신
+                loadSavedCredentials()
             } catch (t: Throwable) {
                 android.util.Log.e("ExchangeSettingsVM", "deleteCredentials error", t)
                 _uiState.value = _uiState.value.copy(
@@ -172,8 +193,9 @@ class ExchangeSettingsViewModel @Inject constructor(
         }
     }
 
-     /** 완전 로그아웃: 백엔드 키 삭제 + Google 로그아웃 + 로컬 저장소 + 메모리 캐시 모두 정리 */
      suspend fun logout() {
+         _uiState.value = _uiState.value.copy(isLoading = true, error = null)
+
          // 1단계: 백엔드 키 삭제
          try {
              val response = deleteExchangeCredential(ExchangeType.UPBIT)
@@ -202,6 +224,10 @@ class ExchangeSettingsViewModel @Inject constructor(
              }
          } catch (t: Throwable) {
              android.util.Log.e("ExchangeSettingsVM", "Google 로그아웃 실패", t)
+             _uiState.value = _uiState.value.copy(
+                 isLoading = false,
+                 error = "Google 로그아웃에 실패했습니다: ${t.message ?: t::class.simpleName}"
+             )
              throw Exception("Google 로그아웃 실패: ${t.message}", t)
          }
 
@@ -229,6 +255,7 @@ class ExchangeSettingsViewModel @Inject constructor(
 
     /** 연동된 거래소 존재 여부 확인 — 백엔드 API 호출로 판단 */
     suspend fun hasAnyCredentials(): Boolean {
-        return getUpbitAccountBalances().isSuccess
+        val localCredentials = credentialsManager.credentials.first()
+        return credentialsManager.hasUpbitCredentialsLinked() || localCredentials.hasAnyCredentials()
     }
 }

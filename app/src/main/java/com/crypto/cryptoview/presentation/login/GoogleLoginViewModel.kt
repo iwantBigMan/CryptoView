@@ -84,13 +84,11 @@ class GoogleLoginViewModel @Inject constructor(
     }
 
 
+    fun isSignedIn(): Boolean = getCurrentUser.isSignedIn()
 
-    suspend fun signOutSuspend() {
-        signOutGoogle()
+    fun markSignedOut() {
         _uiState.value = GoogleLoginUiState()
     }
-
-    fun isSignedIn(): Boolean = getCurrentUser.isSignedIn()
 
     fun clearError() {
         _uiState.value = _uiState.value.copy(error = null)

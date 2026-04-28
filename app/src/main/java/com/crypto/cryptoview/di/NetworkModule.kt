@@ -166,7 +166,7 @@ object NetworkModule {
     // 백엔드 Retrofit 인스턴스
     private fun createBackendRetrofit(client: OkHttpClient, json: Json): Retrofit {
         return Retrofit.Builder()
-            .baseUrl("https://cryptoview-api-620339426938.us-central1.run.app/")
+            .baseUrl("https://cryptoview-api-xt7sre5ska-du.a.run.app/")
             .client(client)
             .addConverterFactory(json.asConverterFactory("application/json".toMediaType()))
             .build()
