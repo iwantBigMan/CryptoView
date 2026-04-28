@@ -9,7 +9,6 @@ import com.crypto.cryptoview.domain.usecase.gate.GetGateSpotBalancesUseCase
 import com.crypto.cryptoview.domain.usecase.gate.GetGateSpotTickersUseCase
 import com.crypto.cryptoview.domain.usecase.upbit.GetUpbitAccountBalancesUseCase
 import com.crypto.cryptoview.domain.usecase.upbit.GetUpbitMTickerUseCase
-import com.crypto.cryptoview.domain.usecase.upbit.GetUpbitTickerAllUseCase
 import com.crypto.cryptoview.domain.util.HoldingAggregator
 import javax.inject.Inject
 
@@ -26,7 +25,6 @@ import javax.inject.Inject
 class GetAllHoldingsUseCase @Inject constructor(
     private val getUpbitAccountBalance: GetUpbitAccountBalancesUseCase,
     private val getUpbitMarketTicker: GetUpbitMTickerUseCase,
-    private val getUpbitTickerAll: GetUpbitTickerAllUseCase,
     private val getGateSpotBalances: GetGateSpotBalancesUseCase,
     private val getGateSpotTickers: GetGateSpotTickersUseCase,
     private val calculateBalanceUseCase: CalculateBalanceUseCase,
@@ -43,7 +41,6 @@ class GetAllHoldingsUseCase @Inject constructor(
         // 잔고의 currency 목록을 티커 조회에 전달 (직접 Upbit API 재호출 방지)
         val upbitCurrencies = upbitBalances.map { it.currency }
         val upbitTickers = getUpbitMarketTicker(upbitCurrencies).getOrElse { emptyList() }
-        val upbitTickerAll = getUpbitTickerAll().getOrElse { emptyList() }
         val gateBalances = getGateSpotBalances().getOrElse { emptyList() }
         val gateTickers = getGateSpotTickers().getOrElse { emptyList() }
 
@@ -54,7 +51,6 @@ class GetAllHoldingsUseCase @Inject constructor(
         val calculationResult = calculateBalanceUseCase.calculateAll(
             upbitBalances = upbitBalances,
             upbitTickers = upbitTickers,
-            upbitAllTickers = upbitTickerAll,
             gateioBalances = gateBalances,
             gateioTickers = gateTickers
         )
