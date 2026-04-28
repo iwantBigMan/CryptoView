@@ -3,12 +3,14 @@ package com.crypto.cryptoview.data.local
 import android.content.Context
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
+import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import com.crypto.cryptoview.domain.model.ExchangeCredentials
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -28,6 +30,7 @@ class CredentialsManager @Inject constructor(
     companion object {
         private val UPBIT_API_KEY = stringPreferencesKey("upbit_api_key")
         private val UPBIT_SECRET_KEY = stringPreferencesKey("upbit_secret_key")
+        private val UPBIT_LINKED = booleanPreferencesKey("upbit_linked")
         private val GATEIO_API_KEY = stringPreferencesKey("gateio_api_key")
         private val GATEIO_SECRET_KEY = stringPreferencesKey("gateio_secret_key")
         private val BINANCE_API_KEY = stringPreferencesKey("binance_api_key")
@@ -61,16 +64,18 @@ class CredentialsManager @Inject constructor(
         )
     }
 
-    /**
-     * 업비트 인증 정보 저장 (암호화 후 저장)
-     */
-    suspend fun saveUpbitCredentials(apiKey: String, secretKey: String) {
-        val apiEnc = SecureStorage.encrypt(apiKey) ?: ""
-        val secretEnc = SecureStorage.encrypt(secretKey) ?: ""
+
+
+    suspend fun markUpbitCredentialsLinked() {
         dataStore.edit { preferences ->
-            preferences[UPBIT_API_KEY] = apiEnc
-            preferences[UPBIT_SECRET_KEY] = secretEnc
+            preferences[UPBIT_LINKED] = true
         }
+    }
+
+    suspend fun hasUpbitCredentialsLinked(): Boolean {
+        return dataStore.data.map { preferences ->
+            preferences[UPBIT_LINKED] ?: false
+        }.first()
     }
 
     /**
@@ -118,13 +123,11 @@ class CredentialsManager @Inject constructor(
         }
     }
 
-    /**
-     * 특정 거래소 인증 정보 삭제
-     */
     suspend fun clearUpbitCredentials() {
         dataStore.edit { preferences ->
             preferences.remove(UPBIT_API_KEY)
             preferences.remove(UPBIT_SECRET_KEY)
+            preferences.remove(UPBIT_LINKED)
         }
     }
 

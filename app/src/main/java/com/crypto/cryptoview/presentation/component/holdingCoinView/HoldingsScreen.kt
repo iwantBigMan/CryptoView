@@ -45,6 +45,10 @@ fun HoldingsScreen(
     val lifecycleOwner = LocalLifecycleOwner.current
     val colors = LocalAppColors.current
 
+    LaunchedEffect(viewModel) {
+        viewModel.startAutoRefresh()
+    }
+
     DisposableEffect(lifecycleOwner) {
         val observer = LifecycleEventObserver { _, event ->
             when (event) {
@@ -54,7 +58,10 @@ fun HoldingsScreen(
             }
         }
         lifecycleOwner.lifecycle.addObserver(observer)
-        onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
+        onDispose {
+            lifecycleOwner.lifecycle.removeObserver(observer)
+            viewModel.stopAutoRefresh()
+        }
     }
 
     Column(
