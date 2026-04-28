@@ -162,7 +162,7 @@ fun LoginScreen(
 
             // 하단 안내
             Text(
-                text = "로그인 후 설정에서 거래소를 연동할 수 있습니다\nAPI 키는 서버에 저장되지 않습니다",
+                text = "로그인 후 설정에서 거래소를 연동할 수 있습니다\nAPI 키는 서버에 암호화 된 상태로 저장됩니다.",
                 color = colors.textTertiary,
                 fontSize = 12.sp,
                 textAlign = TextAlign.Center,

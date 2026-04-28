@@ -316,11 +316,10 @@ fun SettingsScreen(
                                 viewModel.logout()
 
                                 showLogoutDialog = false
-                                onLogout()  // MainActivity: finishAffinity + killProcess
+                                onLogout()
                             } catch (e: Exception) {
                                 android.util.Log.e("SettingsScreen", "로그아웃 중 오류", e)
                                 showLogoutDialog = false
-                                onLogout()  // 오류 발생해도 앱 종료
                             }
                         }
                     },

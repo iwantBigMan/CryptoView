@@ -25,6 +25,7 @@ import com.crypto.cryptoview.presentation.settings.ExchangeSettingsViewModel
 import com.crypto.cryptoview.ui.theme.CryptoViewTheme
 import com.google.firebase.auth.FirebaseAuth
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
 
@@ -65,10 +66,11 @@ class MainActivity : ComponentActivity() {
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
-                    AppNavigation(onLogout = {
-                        finishAffinity()
-                        android.os.Process.killProcess(android.os.Process.myPid())
-                    })
+                    AppNavigation(
+                        onLogoutCompleted = {
+                            finishAndRemoveTask()
+                        }
+                    )
                 }
             }
 
@@ -89,13 +91,26 @@ enum class AuthState {
 
 @Composable
 fun AppNavigation(
-    onLogout: () -> Unit = {}
+    onLogoutCompleted: () -> Unit = {}
 ) {
     val exchangeSettingsViewModel: ExchangeSettingsViewModel = hiltViewModel()
     val googleLoginViewModel: GoogleLoginViewModel = hiltViewModel()
     val scope = rememberCoroutineScope()
 
     var authState by remember { mutableStateOf(AuthState.LOADING) }
+    val handleLogoutCompleted: () -> Unit = {
+        googleLoginViewModel.markSignedOut()
+        authState = AuthState.NEED_GOOGLE_LOGIN
+
+        if (FirebaseAuth.getInstance().currentUser == null) {
+            scope.launch {
+                delay(300)
+                onLogoutCompleted()
+            }
+        } else {
+            Log.e("AppNavigation", "로그아웃 완료 후에도 Firebase currentUser가 남아 있습니다")
+        }
+    }
 
     // 인증 상태 확인 — ViewModel을 통해 (클린 아키텍처)
     LaunchedEffect(Unit) {
@@ -146,7 +161,7 @@ fun AppNavigation(
                 holdingsViewModel = holdingCoinsViewModel,
                 initialTab = 2,
                 showExchangeSetup = true,
-                onLogout = onLogout,  // SettingsScreen이 logout/signOut 처리 후 여기까지 전달
+                onLogout = handleLogoutCompleted,
                 onExchangeLinked = {
                     authState = AuthState.READY
                 }
@@ -159,7 +174,7 @@ fun AppNavigation(
             MainScreen(
                 viewModel = viewModel,
                 holdingsViewModel = holdingCoinsViewModel,
-                onLogout = onLogout   // SettingsScreen이 logout/signOut 처리 후 여기까지 전달
+                onLogout = handleLogoutCompleted
             )
         }
     }

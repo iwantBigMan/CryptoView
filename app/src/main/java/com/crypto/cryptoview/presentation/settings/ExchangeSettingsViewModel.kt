@@ -174,6 +174,8 @@ class ExchangeSettingsViewModel @Inject constructor(
 
      /** 완전 로그아웃: 백엔드 키 삭제 + Google 로그아웃 + 로컬 저장소 + 메모리 캐시 모두 정리 */
      suspend fun logout() {
+         _uiState.value = _uiState.value.copy(isLoading = true, error = null)
+
          // 1단계: 백엔드 키 삭제
          try {
              val response = deleteExchangeCredential(ExchangeType.UPBIT)
@@ -202,6 +204,10 @@ class ExchangeSettingsViewModel @Inject constructor(
              }
          } catch (t: Throwable) {
              android.util.Log.e("ExchangeSettingsVM", "Google 로그아웃 실패", t)
+             _uiState.value = _uiState.value.copy(
+                 isLoading = false,
+                 error = "Google 로그아웃에 실패했습니다: ${t.message ?: t::class.simpleName}"
+             )
              throw Exception("Google 로그아웃 실패: ${t.message}", t)
          }
 
