@@ -1,4 +1,4 @@
-package com.crypto.cryptoview.domain.model
+package com.crypto.cryptoview.domain.model.asset
 
 /**
  * 해외 거래소 잔고 모델

@@ -1,6 +1,6 @@
 package com.crypto.cryptoview.domain.usecase.upbit
 
-import com.crypto.cryptoview.domain.model.UpbitMarketTicker
+import com.crypto.cryptoview.domain.model.upbit.UpbitMarketTicker
 import com.crypto.cryptoview.domain.repository.UbbitMTickerRepository
 import javax.inject.Inject
 

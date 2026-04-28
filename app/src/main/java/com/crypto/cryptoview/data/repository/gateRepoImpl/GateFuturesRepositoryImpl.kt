@@ -1,7 +1,7 @@
 package com.crypto.cryptoview.data.repository.gateRepoImpl
 
 import com.crypto.cryptoview.data.remote.api.GateFuturesApi
-import com.crypto.cryptoview.domain.model.GateSpotBalance
+import com.crypto.cryptoview.domain.model.gate.GateSpotBalance
 import com.crypto.cryptoview.domain.model.gate.GateFuturesAccount
 import com.crypto.cryptoview.domain.model.gate.GateFuturesPosition
 import com.crypto.cryptoview.domain.model.gate.GateFuturesTicker

@@ -1,8 +1,8 @@
 package com.crypto.cryptoview.domain.repository
 
-import com.crypto.cryptoview.domain.model.UpbitAccountBalance
-import com.crypto.cryptoview.domain.model.UpbitTickerAll
-import com.crypto.cryptoview.domain.model.UpbitMarketTicker
+import com.crypto.cryptoview.domain.model.upbit.UpbitAccountBalance
+import com.crypto.cryptoview.domain.model.upbit.UpbitTickerAll
+import com.crypto.cryptoview.domain.model.upbit.UpbitMarketTicker
 
 interface UpbitAssetRepository {
     suspend fun getAccountBalances(): Result<List<UpbitAccountBalance>>

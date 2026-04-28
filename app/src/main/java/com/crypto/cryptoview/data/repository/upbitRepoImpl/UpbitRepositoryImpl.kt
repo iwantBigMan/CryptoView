@@ -1,7 +1,7 @@
 package com.crypto.cryptoview.data.repository.upbitRepoImpl
 
 import com.crypto.cryptoview.data.remote.api.FetchUpbitAssets
-import com.crypto.cryptoview.domain.model.UpbitAccountBalance
+import com.crypto.cryptoview.domain.model.upbit.UpbitAccountBalance
 import com.crypto.cryptoview.domain.repository.UpbitAssetRepository
 import javax.inject.Inject
 import javax.inject.Singleton

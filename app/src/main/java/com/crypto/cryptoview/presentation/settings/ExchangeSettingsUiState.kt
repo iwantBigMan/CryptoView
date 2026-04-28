@@ -1,6 +1,6 @@
 package com.crypto.cryptoview.presentation.settings
 
-import com.crypto.cryptoview.domain.model.ExchangeType
+import com.crypto.cryptoview.domain.model.exchange.ExchangeType
 
 /**
  * 거래소 연동 설정 UI 상태

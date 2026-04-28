@@ -1,6 +1,6 @@
 package com.crypto.cryptoview.data.local
 
-import com.crypto.cryptoview.domain.model.ExchangeCredentials
+import com.crypto.cryptoview.domain.model.exchange.ExchangeCredentials
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.launchIn

@@ -20,9 +20,9 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
-import com.crypto.cryptoview.domain.model.CurrencyUnit
-import com.crypto.cryptoview.domain.model.ExchangeHoldingDetail
-import com.crypto.cryptoview.domain.model.ExchangeType
+import com.crypto.cryptoview.domain.model.asset.CurrencyUnit
+import com.crypto.cryptoview.domain.model.asset.ExchangeHoldingDetail
+import com.crypto.cryptoview.domain.model.exchange.ExchangeType
 import com.crypto.cryptoview.ui.theme.LocalAppColors
 
 /**

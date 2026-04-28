@@ -22,8 +22,8 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
-import com.crypto.cryptoview.domain.model.AppTheme
-import com.crypto.cryptoview.domain.model.ExchangeType
+import com.crypto.cryptoview.domain.model.settings.AppTheme
+import com.crypto.cryptoview.domain.model.exchange.ExchangeType
 import com.crypto.cryptoview.presentation.login.GoogleLoginViewModel
 import com.crypto.cryptoview.presentation.main.ThemeViewModel
 import com.crypto.cryptoview.ui.theme.*

@@ -1,6 +1,6 @@
 package com.crypto.cryptoview.domain.repository
 
-import com.crypto.cryptoview.domain.model.GoogleUser
+import com.crypto.cryptoview.domain.model.auth.GoogleUser
 
 /**
  * Google 인증 Repository 인터페이스 (Domain Layer)

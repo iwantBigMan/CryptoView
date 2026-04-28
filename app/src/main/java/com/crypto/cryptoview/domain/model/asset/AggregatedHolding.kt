@@ -1,4 +1,6 @@
-package com.crypto.cryptoview.domain.model
+package com.crypto.cryptoview.domain.model.asset
+
+import com.crypto.cryptoview.domain.model.exchange.ExchangeType
 
 /**
  * 여러 거래소에서 보유한 동일 코인을 통합한 모델

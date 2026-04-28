@@ -1,6 +1,6 @@
 package com.crypto.cryptoview.data.remote.dto.upbit
 
-import com.crypto.cryptoview.domain.model.UpbitMarketTicker
+import com.crypto.cryptoview.domain.model.upbit.UpbitMarketTicker
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 

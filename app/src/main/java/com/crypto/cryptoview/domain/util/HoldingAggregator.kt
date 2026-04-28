@@ -1,7 +1,7 @@
 package com.crypto.cryptoview.domain.util
 
-import com.crypto.cryptoview.domain.model.AggregatedHolding
-import com.crypto.cryptoview.domain.model.HoldingData
+import com.crypto.cryptoview.domain.model.asset.AggregatedHolding
+import com.crypto.cryptoview.domain.model.asset.HoldingData
 
 /**
  * 여러 거래소의 HoldingData를 심볼 기준으로 통합하는 유틸리티
