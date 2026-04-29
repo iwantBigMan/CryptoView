@@ -11,7 +11,6 @@ import com.crypto.cryptoview.data.remote.api.UpbitMarketApi
 import com.crypto.cryptoview.data.remote.api.UpbitTickerAllApi
 import com.crypto.cryptoview.data.remote.interceptor.AccountResponseLoggingInterceptor
 import com.crypto.cryptoview.data.remote.interceptor.FirebaseAuthInterceptor
-import com.crypto.cryptoview.data.remote.interceptor.GateIOAuthInterceptor
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -163,7 +162,7 @@ object NetworkModule {
     // 백엔드 Retrofit 인스턴스
     private fun createBackendRetrofit(client: OkHttpClient, json: Json): Retrofit {
         return Retrofit.Builder()
-            .baseUrl("https://cryptoview-api-xt7sre5ska-du.a.run.app/")
+            .baseUrl(BuildConfig.BACKEND_BASE_URL)
             .client(client)
             .addConverterFactory(json.asConverterFactory("application/json".toMediaType()))
             .build()
@@ -200,19 +199,49 @@ object NetworkModule {
             .create(com.crypto.cryptoview.data.remote.api.DeleteUpbitCredentials::class.java)
     }
 
+    @Provides
+    @Singleton
+    fun provideValidateAndSaveGateIoApi(
+        client: OkHttpClient,
+        json: Json
+    ): com.crypto.cryptoview.data.remote.api.ValidateAndSaveGateIo {
+        return createBackendRetrofit(client, json)
+            .create(com.crypto.cryptoview.data.remote.api.ValidateAndSaveGateIo::class.java)
+    }
+
+    @Provides
+    @Singleton
+    fun provideFetchGateIoAccountsApi(
+        client: OkHttpClient,
+        json: Json
+    ): com.crypto.cryptoview.data.remote.api.FetchGateIoAccounts {
+        return createBackendRetrofit(client, json)
+            .create(com.crypto.cryptoview.data.remote.api.FetchGateIoAccounts::class.java)
+    }
+
+    @Provides
+    @Singleton
+    fun provideDeleteGateIoCredentialApi(
+        client: OkHttpClient,
+        json: Json
+    ): com.crypto.cryptoview.data.remote.api.DeleteGateIoCredential {
+        return createBackendRetrofit(client, json)
+            .create(com.crypto.cryptoview.data.remote.api.DeleteGateIoCredential::class.java)
+    }
+
     // Gate.io
 
     @Provides
     @Singleton
     @GateIoClient
     fun provideGateIoOkHttpClient(
-        loggingInterceptor: HttpLoggingInterceptor,
-        credentialsProvider: CredentialsProvider
+        loggingInterceptor: HttpLoggingInterceptor
     ): OkHttpClient {
-        return createOkHttpClient(
-            loggingInterceptor,
-            GateIOAuthInterceptor(credentialsProvider)
-        )
+        return OkHttpClient.Builder()
+            .addInterceptor(loggingInterceptor)
+            .connectTimeout(30, TimeUnit.SECONDS)
+            .readTimeout(30, TimeUnit.SECONDS)
+            .build()
     }
 
 

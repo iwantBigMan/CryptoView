@@ -11,6 +11,7 @@ class DeleteExchangeCredentialUseCase @Inject constructor(
     suspend operator fun invoke(exchangeType: ExchangeType): CredentialDeletionResult {
         return when (exchangeType) {
             ExchangeType.UPBIT -> authRepository.deleteUpbitCredential()
+            ExchangeType.GATEIO -> authRepository.deleteGateIoCredential()
             else -> throw UnsupportedOperationException("${exchangeType.displayName} deletion is not supported")
         }
     }

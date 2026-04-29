@@ -1,6 +1,6 @@
 package com.crypto.cryptoview.domain.model.auth
 
-data class UpbitCredentialValidationResult(
+data class CredentialValidationResult(
     val valid: Boolean,
     val message: String,
     val saved: Boolean

@@ -104,3 +104,58 @@
 - 작업 전 현재 브랜치와 변경 파일을 확인한다.
 - `.idea` 변경은 사용자 요청 범위가 아니므로 수정하지 않는다.
 - 수정 후 변경 파일 목록과 핵심 변경 내용을 한국어로 요약한다.
+
+## 기능 관련 프롬프트
+- Upbit와 향후 Gate.io 백엔드 API가 공통으로 사용할 수 있도록 백엔드 Base URL을 BuildConfig로 이동한다.
+- `BACKEND_BASE_URL` BuildConfig 필드를 추가하고 백엔드 Retrofit 생성부가 해당 값을 사용하도록 변경한다.
+
+## 테스트 관련 프롬프트
+- `testDebugUnitTest`를 실행해 BuildConfig 생성과 Kotlin 컴파일 및 단위 테스트 통과 여부를 확인한다.
+
+## 기타 프롬프트
+- 작업 전 현재 브랜치와 변경 파일을 확인한다.
+- `.idea` 변경은 사용자 요청 범위가 아니므로 수정하지 않는다.
+- 수정 중 발견된 `app/build.gradle.kts` 첫 줄 인코딩 문제를 정상화한다.
+- 수정 후 변경 파일 목록과 테스트 결과를 한국어로 요약한다.
+
+## 기능 관련 프롬프트
+- Gate.io 백엔드 MVP 엔드포인트에 맞춰 Android 연동을 구현한다.
+- 공통 `BACKEND_BASE_URL`을 새 Cloud Run URL로 갱신한다.
+- Gate.io 키 검증/저장, 자산 조회, 키 삭제 API를 Retrofit에 추가한다.
+- Gate.io 로컬 API Key/Secret 저장과 HMAC 인증 인터셉터를 제거하고 `GATEIO_LINKED` marker만 저장하도록 변경한다.
+- 설정 화면에서 Upbit/Gate.io 중 연동할 거래소를 선택해 검증할 수 있도록 처리한다.
+- Gate.io Spot 잔고 조회는 백엔드 API를 사용하고, ticker 조회는 기존 공식 공개 API를 유지한다.
+
+## 테스트 관련 프롬프트
+- `testDebugUnitTest`를 실행해 Hilt 주입, BuildConfig 생성, Kotlin 컴파일, 단위 테스트 통과 여부를 확인한다.
+- Gate.io 로컬 키 저장 및 HMAC 인증 관련 문자열이 남아 있지 않은지 검색한다.
+
+## 기타 프롬프트
+- 작업 전 현재 브랜치와 변경 파일을 확인한다.
+- `.idea` 변경은 사용자 요청 범위가 아니므로 수정하지 않는다.
+- 수정 후 변경 파일 목록과 테스트 결과를 한국어로 요약한다.
+
+## 기능 관련 프롬프트
+- Gate.io 백엔드 상태 코드별 Android 오류 메시지 처리를 추가한다.
+- 400, 401, 403, 404, 500, 502 응답을 사용자가 이해할 수 있는 Gate.io 안내 메시지로 변환한다.
+
+## 테스트 관련 프롬프트
+- `testDebugUnitTest`를 다시 실행해 상태 코드 매핑 추가 후 컴파일과 단위 테스트 통과 여부를 확인한다.
+
+## 기타 프롬프트
+- 수정 후 변경 파일 목록과 테스트 결과를 한국어로 요약한다.
+
+## 기능 관련 프롬프트
+- `saveSelectedCredentials`에서 Gate.io 키 저장 시 `저장된 Gate.io 키가 없습니다` 오류가 발생하는 원인을 확인한다.
+- Cloud Run 로그로 `POST /api/exchange/gateio/validate-and-save`와 `GET /api/exchange/gateio/accounts`의 404 응답 여부를 확인한다.
+- Gate.io 백엔드 오류 메시지를 저장, 조회, 삭제 작업별로 분리해 저장 API 404가 저장된 키 없음으로 표시되지 않도록 수정한다.
+- Gate.io가 로컬 연동 상태가 아닐 때 전체 보유자산 조회에서 Gate.io 계정 조회 API를 호출하지 않도록 수정한다.
+
+## 테스트 관련 프롬프트
+- `rg`로 기존 Gate.io 오류 매퍼 참조가 남아 있는지 확인한다.
+- `compileDebugKotlin`을 실행해 Kotlin 컴파일과 Hilt 주입 변경이 정상인지 확인한다.
+
+## 기타 프롬프트
+- 작업 전 현재 브랜치와 변경 파일을 확인한다.
+- `.idea` 변경 파일은 사용자 요청 범위가 아니므로 수정하지 않는다.
+- 수정 후 변경 파일 목록과 테스트 결과를 한국어로 요약한다.

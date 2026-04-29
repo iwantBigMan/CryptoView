@@ -366,6 +366,7 @@ private fun ExchangeSetupDialog(
     onSuccess: () -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    var selectedExchange by remember { mutableStateOf(ExchangeType.UPBIT) }
     var apiKey by remember { mutableStateOf("") }
     var secretKey by remember { mutableStateOf("") }
     var localError by remember { mutableStateOf<String?>(null) }
@@ -411,6 +412,26 @@ private fun ExchangeSetupDialog(
         },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                if (!isRequired) {
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        listOf(ExchangeType.UPBIT, ExchangeType.GATEIO).forEach { exchange ->
+                            FilterChip(
+                                selected = selectedExchange == exchange,
+                                onClick = {
+                                    selectedExchange = exchange
+                                    apiKey = ""
+                                    secretKey = ""
+                                    localError = null
+                                },
+                                label = { Text(exchange.displayName) },
+                                enabled = !uiState.isLoading
+                            )
+                        }
+                    }
+                } else {
+                    selectedExchange = ExchangeType.UPBIT
+                }
+
                 // API Key
                 OutlinedTextField(
                     value = apiKey,
@@ -472,9 +493,7 @@ private fun ExchangeSetupDialog(
                     }
                     localError = null
                     // ViewModel에 키 설정 후 비동기 검증+저장 시작
-                    viewModel.updateApiKey(ExchangeType.UPBIT, apiKey)
-                    viewModel.updateSecretKey(ExchangeType.UPBIT, secretKey)
-                    viewModel.saveSelectedCredentials()
+                    viewModel.saveCredential(selectedExchange, apiKey, secretKey)
                     // LaunchedEffect(uiState.saveSuccess)에서 검증 성공 시에만 호출됨
                 },
                 enabled = !uiState.isLoading

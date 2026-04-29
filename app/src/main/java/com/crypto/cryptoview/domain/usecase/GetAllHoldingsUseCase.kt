@@ -2,6 +2,8 @@ package com.crypto.cryptoview.domain.usecase
 
 import com.crypto.cryptoview.domain.model.asset.AggregatedHolding
 import com.crypto.cryptoview.domain.model.asset.HoldingData
+import com.crypto.cryptoview.domain.model.exchange.ExchangeType
+import com.crypto.cryptoview.domain.repository.ExchangeCredentialRepository
 import com.crypto.cryptoview.domain.usecase.calculator.BalanceCalculator
 import com.crypto.cryptoview.domain.usecase.calculator.CalculateBalanceUseCase
 import com.crypto.cryptoview.domain.usecase.calculator.ExchangeRateProvider
@@ -28,7 +30,8 @@ class GetAllHoldingsUseCase @Inject constructor(
     private val getGateSpotBalances: GetGateSpotBalancesUseCase,
     private val getGateSpotTickers: GetGateSpotTickersUseCase,
     private val calculateBalanceUseCase: CalculateBalanceUseCase,
-    private val exchangeRateProvider: ExchangeRateProvider
+    private val exchangeRateProvider: ExchangeRateProvider,
+    private val exchangeCredentialRepository: ExchangeCredentialRepository
 ) {
     /**
      * 전체 보유 자산 조회
@@ -41,8 +44,19 @@ class GetAllHoldingsUseCase @Inject constructor(
         // 잔고의 currency 목록을 티커 조회에 전달 (직접 Upbit API 재호출 방지)
         val upbitCurrencies = upbitBalances.map { it.currency }
         val upbitTickers = getUpbitMarketTicker(upbitCurrencies).getOrElse { emptyList() }
-        val gateBalances = getGateSpotBalances().getOrElse { emptyList() }
-        val gateTickers = getGateSpotTickers().getOrElse { emptyList() }
+        val hasGateIoCredentials = exchangeCredentialRepository
+            .getSavedExchanges()
+            .contains(ExchangeType.GATEIO)
+        val gateBalances = if (hasGateIoCredentials) {
+            getGateSpotBalances().getOrElse { emptyList() }
+        } else {
+            emptyList()
+        }
+        val gateTickers = if (gateBalances.isNotEmpty()) {
+            getGateSpotTickers().getOrElse { emptyList() }
+        } else {
+            emptyList()
+        }
 
         // 2. USDT/KRW 환율 조회
         val usdtKrwRate = exchangeRateProvider.getUsdtKrwRate(upbitTickers)
