@@ -26,7 +26,7 @@ import com.crypto.cryptoview.presentation.settings.SettingsScreen
 import com.crypto.cryptoview.presentation.component.assetsOverview.AssetsOverviewScreen
 import com.crypto.cryptoview.presentation.component.assetsOverview.AssetsOverviewViewModel
 import com.crypto.cryptoview.presentation.component.holdingCoinView.HoldingCoinsViewModel
-import com.crypto.cryptoview.presentation.component.holdingCoinView.HoldingDetailScreen
+import com.crypto.cryptoview.presentation.component.holdingCoinView.detail.HoldingDetailScreen
 import com.crypto.cryptoview.presentation.component.holdingCoinView.HoldingsScreen
 import com.crypto.cryptoview.ui.theme.CryptoViewTheme
 import com.crypto.cryptoview.ui.theme.LocalAppColors

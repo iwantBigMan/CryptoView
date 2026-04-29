@@ -1,4 +1,4 @@
-package com.crypto.cryptoview.presentation.component.holdingCoinView
+package com.crypto.cryptoview.presentation.component.holdingCoinView.detail
 
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
@@ -10,6 +10,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
@@ -23,6 +24,7 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.crypto.cryptoview.domain.model.asset.CurrencyUnit
 import com.crypto.cryptoview.domain.model.asset.ExchangeHoldingDetail
 import com.crypto.cryptoview.domain.model.exchange.ExchangeType
+import com.crypto.cryptoview.presentation.component.holdingCoinView.detail.HoldingDetailViewModel
 import com.crypto.cryptoview.ui.theme.LocalAppColors
 
 /**
@@ -39,7 +41,7 @@ fun HoldingDetailScreen(
     val colors = LocalAppColors.current
 
     // 심볼이 변경되면 ViewModel에 설정
-    androidx.compose.runtime.LaunchedEffect(symbol) {
+    LaunchedEffect(symbol) {
         viewModel.setSymbol(symbol)
     }
 

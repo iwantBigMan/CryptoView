@@ -28,6 +28,7 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.crypto.cryptoview.domain.model.asset.AggregatedHolding
 import com.crypto.cryptoview.domain.model.asset.HoldingData
 import com.crypto.cryptoview.presentation.component.holdingCoinView.preview.SortType
+import com.crypto.cryptoview.presentation.model.uiColor
 import com.crypto.cryptoview.ui.theme.LocalAppColors
 
 /**
@@ -277,7 +278,7 @@ private fun AggregatedHoldingCard(
                             Box(
                                 modifier = Modifier
                                     .size(6.dp)
-                                    .background(exchange.color, CircleShape)
+                                    .background(exchange.uiColor(), CircleShape)
                             )
                         }
                         if (holding.exchanges.size > 4) {
