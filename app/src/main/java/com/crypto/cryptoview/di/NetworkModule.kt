@@ -12,7 +12,6 @@ import com.crypto.cryptoview.data.remote.api.UpbitTickerAllApi
 import com.crypto.cryptoview.data.remote.interceptor.AccountResponseLoggingInterceptor
 import com.crypto.cryptoview.data.remote.interceptor.FirebaseAuthInterceptor
 import com.crypto.cryptoview.data.remote.interceptor.GateIOAuthInterceptor
-import com.crypto.cryptoview.data.remote.interceptor.UpbitAuthInterceptor
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -116,12 +115,10 @@ object NetworkModule {
     @Singleton
     @UpbitClient
     fun provideUpbitOkHttpClient(
-        loggingInterceptor: HttpLoggingInterceptor,
-        credentialsProvider: CredentialsProvider
+        loggingInterceptor: HttpLoggingInterceptor
     ): OkHttpClient {
         return OkHttpClient.Builder()
             .addInterceptor(loggingInterceptor)
-            .addInterceptor(UpbitAuthInterceptor(credentialsProvider))
             .addInterceptor(AccountResponseLoggingInterceptor())
             .connectTimeout(30, TimeUnit.SECONDS)
             .readTimeout(30, TimeUnit.SECONDS)

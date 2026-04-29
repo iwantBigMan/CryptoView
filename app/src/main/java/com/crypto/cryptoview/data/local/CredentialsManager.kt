@@ -28,8 +28,6 @@ class CredentialsManager @Inject constructor(
     private val dataStore = context.dataStore
 
     companion object {
-        private val UPBIT_API_KEY = stringPreferencesKey("upbit_api_key")
-        private val UPBIT_SECRET_KEY = stringPreferencesKey("upbit_secret_key")
         private val UPBIT_LINKED = booleanPreferencesKey("upbit_linked")
         private val GATEIO_API_KEY = stringPreferencesKey("gateio_api_key")
         private val GATEIO_SECRET_KEY = stringPreferencesKey("gateio_secret_key")
@@ -43,8 +41,6 @@ class CredentialsManager @Inject constructor(
      * 저장된 인증 정보를 Flow로 제공 (복호화 수행)
      */
     val credentials: Flow<ExchangeCredentials> = dataStore.data.map { preferences ->
-        val upbitApiEnc = preferences[UPBIT_API_KEY]
-        val upbitSecretEnc = preferences[UPBIT_SECRET_KEY]
         val gateApiEnc = preferences[GATEIO_API_KEY]
         val gateSecretEnc = preferences[GATEIO_SECRET_KEY]
         val binanceApiEnc = preferences[BINANCE_API_KEY]
@@ -53,8 +49,6 @@ class CredentialsManager @Inject constructor(
         val bybitSecretEnc = preferences[BYBIT_SECRET_KEY]
 
         ExchangeCredentials(
-            upbitApiKey = upbitApiEnc?.let { SecureStorage.decrypt(it) } ?: "",
-            upbitSecretKey = upbitSecretEnc?.let { SecureStorage.decrypt(it) } ?: "",
             gateioApiKey = gateApiEnc?.let { SecureStorage.decrypt(it) } ?: "",
             gateioSecretKey = gateSecretEnc?.let { SecureStorage.decrypt(it) } ?: "",
             binanceApiKey = binanceApiEnc?.let { SecureStorage.decrypt(it) } ?: "",
@@ -66,13 +60,13 @@ class CredentialsManager @Inject constructor(
 
 
 
-    suspend fun markUpbitCredentialsLinked() {
+    suspend fun markUpbitLinked() {
         dataStore.edit { preferences ->
             preferences[UPBIT_LINKED] = true
         }
     }
 
-    suspend fun hasUpbitCredentialsLinked(): Boolean {
+    suspend fun hasUpbitLinked(): Boolean {
         return dataStore.data.map { preferences ->
             preferences[UPBIT_LINKED] ?: false
         }.first()
@@ -123,10 +117,8 @@ class CredentialsManager @Inject constructor(
         }
     }
 
-    suspend fun clearUpbitCredentials() {
+    suspend fun clearUpbitLinkStatus() {
         dataStore.edit { preferences ->
-            preferences.remove(UPBIT_API_KEY)
-            preferences.remove(UPBIT_SECRET_KEY)
             preferences.remove(UPBIT_LINKED)
         }
     }

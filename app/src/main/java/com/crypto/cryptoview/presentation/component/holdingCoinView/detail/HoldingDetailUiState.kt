@@ -1,4 +1,4 @@
-package com.crypto.cryptoview.presentation.component.holdingCoinView
+package com.crypto.cryptoview.presentation.component.holdingCoinView.detail
 
 import com.crypto.cryptoview.domain.model.asset.ExchangeHoldingDetail
 

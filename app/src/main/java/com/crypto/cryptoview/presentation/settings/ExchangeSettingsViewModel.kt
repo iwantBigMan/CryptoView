@@ -2,18 +2,15 @@ package com.crypto.cryptoview.presentation.settings
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.crypto.cryptoview.data.local.CredentialsManager
-import com.crypto.cryptoview.data.local.CredentialsProvider
 import com.crypto.cryptoview.domain.model.exchange.ExchangeType
+import com.crypto.cryptoview.domain.repository.ExchangeCredentialRepository
 import com.crypto.cryptoview.domain.repository.GoogleAuthRepository
 import com.crypto.cryptoview.domain.usecase.auth.DeleteExchangeCredentialUseCase
 import com.crypto.cryptoview.domain.usecase.auth.ValidateAndSaveUpbitCredentialsUseCase
-import com.crypto.cryptoview.domain.usecase.upbit.GetUpbitAccountBalancesUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -23,10 +20,8 @@ import javax.inject.Inject
  */
 @HiltViewModel
 class ExchangeSettingsViewModel @Inject constructor(
-    private val credentialsManager: CredentialsManager,
-    private val credentialsProvider: CredentialsProvider,
+    private val exchangeCredentialRepository: ExchangeCredentialRepository,
     private val saveUpbit: ValidateAndSaveUpbitCredentialsUseCase,
-    private val getUpbitAccountBalances: GetUpbitAccountBalancesUseCase,
     private val deleteExchangeCredential: DeleteExchangeCredentialUseCase,
     private val googleAuthRepository: GoogleAuthRepository
 ) : ViewModel() {
@@ -42,13 +37,7 @@ class ExchangeSettingsViewModel @Inject constructor(
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(isLoading = true)
             try {
-                val savedExchanges = mutableListOf<ExchangeType>()
-
-                val hasUpbitCredentials = credentialsManager.hasUpbitCredentialsLinked()
-                credentialsManager.credentials.first().let { creds ->
-                    if (hasUpbitCredentials) savedExchanges.add(ExchangeType.UPBIT)
-                    if (creds.hasGateioCredentials()) savedExchanges.add(ExchangeType.GATEIO)
-                }
+                val savedExchanges = exchangeCredentialRepository.getSavedExchanges()
 
                 val localInputs = ExchangeType.entries.associateWith { ex ->
                     _uiState.value.inputs[ex] ?: ExchangeInput()
@@ -59,27 +48,12 @@ class ExchangeSettingsViewModel @Inject constructor(
                     inputs = localInputs,
                     isLoading = false
                 )
-                return@launch
 
                 // 백엔드 API 호출 성공 여부로 업비트 연동 상태 판단
-                getUpbitAccountBalances()
-                    .onSuccess { savedExchanges.add(ExchangeType.UPBIT) }
-                    .onFailure { android.util.Log.d("ExchangeSettingsVM", "업비트 미연동: ${it.message}") }
 
                 // Gate.io는 로컬 키 존재 여부로 판단
-                credentialsManager.credentials.first().let { creds ->
-                    if (creds.hasGateioCredentials()) savedExchanges.add(ExchangeType.GATEIO)
-                }
 
-                val inputs = ExchangeType.entries.associateWith { ex ->
-                    _uiState.value.inputs[ex] ?: ExchangeInput()
-                }
 
-                _uiState.value = _uiState.value.copy(
-                    savedCredentials = savedExchanges,
-                    inputs = inputs,
-                    isLoading = false
-                )
             } catch (t: Throwable) {
                 android.util.Log.e("ExchangeSettingsVM", "loadSavedCredentials error", t)
                 _uiState.value = _uiState.value.copy(
@@ -144,7 +118,7 @@ class ExchangeSettingsViewModel @Inject constructor(
                                 )
                                 return@launch
                             }
-                            credentialsManager.markUpbitCredentialsLinked()
+                            exchangeCredentialRepository.markUpbitLinked()
                         }
                         else -> {
                             // 다른 거래소는 추후 백엔드 구현 시 추가
@@ -177,9 +151,9 @@ class ExchangeSettingsViewModel @Inject constructor(
                         val response = deleteExchangeCredential(ExchangeType.UPBIT)
                         android.util.Log.d("ExchangeSettingsVM", "delete credential: ${response.deleted} ${response.message}")
                         if (!response.deleted) throw Exception("delete failed: ${response.message}")
-                        credentialsManager.clearUpbitCredentials()
+                        exchangeCredentialRepository.clearCredentials(ExchangeType.UPBIT)
                     }
-                    ExchangeType.GATEIO -> credentialsManager.clearGateioCredentials()
+                    ExchangeType.GATEIO -> exchangeCredentialRepository.clearCredentials(ExchangeType.GATEIO)
                     else -> {}
                 }
                 loadSavedCredentials()
@@ -233,8 +207,8 @@ class ExchangeSettingsViewModel @Inject constructor(
 
          // 3단계: 로컬 저장소 정리 (로그아웃이 성공한 경우에만 실행)
          try {
-             credentialsManager.clearAllCredentials()
-             credentialsProvider.clear()
+             exchangeCredentialRepository.clearAllCredentials()
+             exchangeCredentialRepository.clearCache()
              _uiState.value = ExchangeSettingsUiState(
                  inputs = ExchangeType.entries.associateWith { ExchangeInput() }
              )
@@ -255,7 +229,6 @@ class ExchangeSettingsViewModel @Inject constructor(
 
     /** 연동된 거래소 존재 여부 확인 — 백엔드 API 호출로 판단 */
     suspend fun hasAnyCredentials(): Boolean {
-        val localCredentials = credentialsManager.credentials.first()
-        return credentialsManager.hasUpbitCredentialsLinked() || localCredentials.hasAnyCredentials()
+        return exchangeCredentialRepository.hasAnyCredentials()
     }
 }

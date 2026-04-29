@@ -1,7 +1,6 @@
 package com.crypto.cryptoview.presentation.main
 
 import android.os.Bundle
-import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.SystemBarStyle
 import androidx.activity.compose.setContent
@@ -20,14 +19,11 @@ import com.crypto.cryptoview.presentation.login.GoogleLoginViewModel
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.runtime.collectAsState
 import com.crypto.cryptoview.domain.model.settings.AppTheme
-import com.crypto.cryptoview.presentation.main.ThemeViewModel
 import com.crypto.cryptoview.presentation.settings.ExchangeSettingsViewModel
 import com.crypto.cryptoview.ui.theme.CryptoViewTheme
-import com.google.firebase.auth.FirebaseAuth
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.tasks.await
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
@@ -102,25 +98,16 @@ fun AppNavigation(
         googleLoginViewModel.markSignedOut()
         authState = AuthState.NEED_GOOGLE_LOGIN
 
-        if (FirebaseAuth.getInstance().currentUser == null) {
-            scope.launch {
-                delay(300)
-                onLogoutCompleted()
-            }
-        } else {
-            Log.e("AppNavigation", "로그아웃 완료 후에도 Firebase currentUser가 남아 있습니다")
+        scope.launch {
+            delay(300)
+            onLogoutCompleted()
         }
     }
 
     // 인증 상태 확인 — ViewModel을 통해 (클린 아키텍처)
     LaunchedEffect(Unit) {
         // TODO: 테스트 후 삭제 ↓↓↓
-        val token = FirebaseAuth.getInstance().currentUser?.getIdToken(true)?.await()?.token
-        Log.d("류류류", "Bearer $token")
-
-        val t0 = System.currentTimeMillis()
         val result = exchangeSettingsViewModel.hasAnyCredentials()
-        Log.d("류류류", "자산조회(hasAnyCredentials): ${System.currentTimeMillis() - t0}ms / result=$result")
         // TODO: 테스트 후 삭제 ↑↑↑
 
         authState = when {

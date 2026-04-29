@@ -26,6 +26,7 @@ import com.crypto.cryptoview.domain.model.asset.AggregatedHolding
 import com.crypto.cryptoview.domain.model.asset.ExchangeData
 import com.crypto.cryptoview.presentation.component.assetsOverview.chart.ChartData
 import com.crypto.cryptoview.presentation.component.assetsOverview.chart.DonutChart
+import com.crypto.cryptoview.presentation.model.uiColor
 import com.crypto.cryptoview.ui.theme.LocalAppColors
 import kotlin.compareTo
 
@@ -161,7 +162,7 @@ private fun ExchangeBreakdownCard(
                         ChartData(
                             exchange.exchange.displayName,
                             exchange.totalValue,
-                            exchange.exchange.color
+                            exchange.exchange.uiColor()
                         )
                     }.filter { it.value > 0 },
                     modifier = Modifier.fillMaxWidth()
@@ -179,7 +180,7 @@ private fun ExchangeBreakdownCard(
                         row.forEach { exchange ->
                             ExchangeItem(
                                 name = exchange.exchange.displayName,
-                                color = exchange.exchange.color
+                                color = exchange.exchange.uiColor()
                             )
                         }
                     }
@@ -204,7 +205,7 @@ private fun ExchangeBreakdownCard(
                             ExchangeAmount(
                                 name = exchange.exchange.displayName,
                                 amount = String.format(Locale.getDefault(), "₩%,.0f", exchange.totalValue),
-                                color = exchange.exchange.color,
+                                color = exchange.exchange.uiColor(),
                                 modifier = Modifier.weight(1f)
                             )
                         }
@@ -383,7 +384,7 @@ private fun AggregatedHoldingItem(
                             Box(
                                 modifier = Modifier
                                     .size(6.dp)
-                                    .background(exchange.color, CircleShape)
+                                    .background(exchange.uiColor(), CircleShape)
                             )
                         }
                         if (exchanges.size > 3) {

@@ -3,9 +3,10 @@ package com.crypto.cryptoview.data.repository.auth
 import com.crypto.cryptoview.data.auth.FirebaseTokenProvider
 import com.crypto.cryptoview.data.remote.api.DeleteUpbitCredentials
 import com.crypto.cryptoview.data.remote.api.ValidateAndSaveUpbit
-import com.crypto.cryptoview.data.remote.dto.upbit.DeleteUpbitCredentialResponse
+import com.crypto.cryptoview.data.remote.mapper.toDomain
 import com.crypto.cryptoview.data.remote.dto.upbit.ValidateUpbitRequest
-import com.crypto.cryptoview.data.remote.dto.upbit.ValidateUpbitResponse
+import com.crypto.cryptoview.domain.model.auth.CredentialDeletionResult
+import com.crypto.cryptoview.domain.model.auth.UpbitCredentialValidationResult
 import com.crypto.cryptoview.domain.repository.AuthRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -22,18 +23,18 @@ class AuthRepositoryImpl @Inject constructor(
     override suspend fun validateAndSaveUpbit(
         accessKey: String,
         secretKey: String
-    ): ValidateUpbitResponse {
+    ): UpbitCredentialValidationResult {
         return withContext(Dispatchers.IO) {
             validateAndSaveUpbit.validateAndSaveCredentials(
                 request = ValidateUpbitRequest(accessKey, secretKey)
-            )
+            ).toDomain()
         }
     }
 
-    override suspend fun deleteUpbitCredential(): DeleteUpbitCredentialResponse {
+    override suspend fun deleteUpbitCredential(): CredentialDeletionResult {
         return withContext(Dispatchers.IO) {
             val token = tokenProvider.getIdToken() ?: throw Exception("Firebase 토큰 없음")
-            deleteUpbitCredentials.deleteUpbitCredential("Bearer $token")
+            deleteUpbitCredentials.deleteUpbitCredential("Bearer $token").toDomain()
         }
     }
 }
