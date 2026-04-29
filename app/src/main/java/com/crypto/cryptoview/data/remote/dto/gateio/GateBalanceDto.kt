@@ -12,7 +12,13 @@ data class GateSpotBalanceDto(
     val available: String,
 
     @SerialName("locked")
-    val locked: String
+    val locked: String,
+
+    @SerialName("update_id")
+    val updateId: Long? = null,
+
+    @SerialName("refresh_time")
+    val refreshTime: Long? = null
 )
 
 @Serializable

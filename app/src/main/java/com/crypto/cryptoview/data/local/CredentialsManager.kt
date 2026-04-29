@@ -17,10 +17,6 @@ import javax.inject.Singleton
 
 private val Context.dataStore: DataStore<Preferences> by preferencesDataStore(name = "exchange_credentials")
 
-/**
- * 거래소 인증 정보 저장소
- * DataStore를 사용하여 안전하게 API 키를 저장 (암호화 적용)
- */
 @Singleton
 class CredentialsManager @Inject constructor(
     @param:ApplicationContext private val context: Context
@@ -29,36 +25,26 @@ class CredentialsManager @Inject constructor(
 
     companion object {
         private val UPBIT_LINKED = booleanPreferencesKey("upbit_linked")
-        private val GATEIO_API_KEY = stringPreferencesKey("gateio_api_key")
-        private val GATEIO_SECRET_KEY = stringPreferencesKey("gateio_secret_key")
+        private val GATEIO_LINKED = booleanPreferencesKey("gateio_linked")
         private val BINANCE_API_KEY = stringPreferencesKey("binance_api_key")
         private val BINANCE_SECRET_KEY = stringPreferencesKey("binance_secret_key")
         private val BYBIT_API_KEY = stringPreferencesKey("bybit_api_key")
         private val BYBIT_SECRET_KEY = stringPreferencesKey("bybit_secret_key")
     }
 
-    /**
-     * 저장된 인증 정보를 Flow로 제공 (복호화 수행)
-     */
     val credentials: Flow<ExchangeCredentials> = dataStore.data.map { preferences ->
-        val gateApiEnc = preferences[GATEIO_API_KEY]
-        val gateSecretEnc = preferences[GATEIO_SECRET_KEY]
         val binanceApiEnc = preferences[BINANCE_API_KEY]
         val binanceSecretEnc = preferences[BINANCE_SECRET_KEY]
         val bybitApiEnc = preferences[BYBIT_API_KEY]
         val bybitSecretEnc = preferences[BYBIT_SECRET_KEY]
 
         ExchangeCredentials(
-            gateioApiKey = gateApiEnc?.let { SecureStorage.decrypt(it) } ?: "",
-            gateioSecretKey = gateSecretEnc?.let { SecureStorage.decrypt(it) } ?: "",
             binanceApiKey = binanceApiEnc?.let { SecureStorage.decrypt(it) } ?: "",
             binanceSecretKey = binanceSecretEnc?.let { SecureStorage.decrypt(it) } ?: "",
             bybitApiKey = bybitApiEnc?.let { SecureStorage.decrypt(it) } ?: "",
             bybitSecretKey = bybitSecretEnc?.let { SecureStorage.decrypt(it) } ?: ""
         )
     }
-
-
 
     suspend fun markUpbitLinked() {
         dataStore.edit { preferences ->
@@ -72,21 +58,18 @@ class CredentialsManager @Inject constructor(
         }.first()
     }
 
-    /**
-     * Gate.io 인증 정보 저장
-     */
-    suspend fun saveGateioCredentials(apiKey: String, secretKey: String) {
-        val apiEnc = SecureStorage.encrypt(apiKey) ?: ""
-        val secretEnc = SecureStorage.encrypt(secretKey) ?: ""
+    suspend fun markGateIoLinked() {
         dataStore.edit { preferences ->
-            preferences[GATEIO_API_KEY] = apiEnc
-            preferences[GATEIO_SECRET_KEY] = secretEnc
+            preferences[GATEIO_LINKED] = true
         }
     }
 
-    /**
-     * 바이낸스 인증 정보 저장
-     */
+    suspend fun hasGateIoLinked(): Boolean {
+        return dataStore.data.map { preferences ->
+            preferences[GATEIO_LINKED] ?: false
+        }.first()
+    }
+
     suspend fun saveBinanceCredentials(apiKey: String, secretKey: String) {
         val apiEnc = SecureStorage.encrypt(apiKey) ?: ""
         val secretEnc = SecureStorage.encrypt(secretKey) ?: ""
@@ -96,9 +79,6 @@ class CredentialsManager @Inject constructor(
         }
     }
 
-    /**
-     * 바이비트 인증 정보 저장
-     */
     suspend fun saveBybitCredentials(apiKey: String, secretKey: String) {
         val apiEnc = SecureStorage.encrypt(apiKey) ?: ""
         val secretEnc = SecureStorage.encrypt(secretKey) ?: ""
@@ -108,9 +88,6 @@ class CredentialsManager @Inject constructor(
         }
     }
 
-    /**
-     * 모든 인증 정보 삭제 (로그아웃)
-     */
     suspend fun clearAllCredentials() {
         dataStore.edit { preferences ->
             preferences.clear()
@@ -123,10 +100,9 @@ class CredentialsManager @Inject constructor(
         }
     }
 
-    suspend fun clearGateioCredentials() {
+    suspend fun clearGateIoLinkStatus() {
         dataStore.edit { preferences ->
-            preferences.remove(GATEIO_API_KEY)
-            preferences.remove(GATEIO_SECRET_KEY)
+            preferences.remove(GATEIO_LINKED)
         }
     }
 }

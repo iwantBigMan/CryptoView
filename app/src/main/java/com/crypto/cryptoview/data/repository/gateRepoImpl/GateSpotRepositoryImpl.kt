@@ -1,26 +1,28 @@
 package com.crypto.cryptoview.data.repository.gateRepoImpl
 
+import com.crypto.cryptoview.data.remote.api.FetchGateIoAccounts
 import com.crypto.cryptoview.data.remote.api.GateSpotApi
+import com.crypto.cryptoview.data.remote.mapper.toDomain
+import com.crypto.cryptoview.data.remote.mapper.toGateIoAccountFetchMessage
 import com.crypto.cryptoview.domain.model.gate.GateSpotBalance
 import com.crypto.cryptoview.domain.model.gate.GateSpotTicker
-import com.crypto.cryptoview.domain.model.gate.toDomain
-import com.crypto.cryptoview.domain.model.gate.toDomain
 import com.crypto.cryptoview.domain.repository.GateSpotRepository
 import javax.inject.Inject
 
 class GateSpotRepositoryImpl @Inject constructor(
-    private val gateIOApi: GateSpotApi
+    private val fetchGateIoAccounts: FetchGateIoAccounts,
+    private val gateSpotApi: GateSpotApi
 ) : GateSpotRepository {
 
     override suspend fun getSpotBalances(): Result<List<GateSpotBalance>> {
         return try {
-            val response = gateIOApi.getSpotBalances()
+            val response = fetchGateIoAccounts.fetchAccounts()
             val balances = response
                 .filter { (it.available.toDoubleOrNull() ?: 0.0) > 0 }
                 .map { it.toDomain() }
             Result.success(balances)
         } catch (e: Exception) {
-            Result.failure(e)
+            Result.failure(Exception(e.toGateIoAccountFetchMessage(), e))
         }
     }
 
@@ -28,13 +30,13 @@ class GateSpotRepositoryImpl @Inject constructor(
         return try {
             if (currencyPairs.isEmpty()) {
                 // 전체 티커 조회
-                val response = gateIOApi.getSpotTickers(null)
+                val response = gateSpotApi.getSpotTickers(null)
                 Result.success(response.map { it.toDomain() })
             } else {
                 // 특정 페어만 조회
                 val tickers = currencyPairs.mapNotNull { pair ->
                     try {
-                        gateIOApi.getSpotTickers(pair).firstOrNull()?.toDomain()
+                        gateSpotApi.getSpotTickers(pair).firstOrNull()?.toDomain()
                     } catch (e: Exception) {
                         null
                     }

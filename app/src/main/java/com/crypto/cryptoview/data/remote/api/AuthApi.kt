@@ -1,10 +1,13 @@
 package com.crypto.cryptoview.data.remote.api
 
 import com.crypto.cryptoview.data.remote.dto.upbit.DeleteUpbitCredentialResponse
+import com.crypto.cryptoview.data.remote.dto.gateio.GateIoCredentialDeleteResponse
+import com.crypto.cryptoview.data.remote.dto.gateio.GateIoValidateAndSaveRequest
+import com.crypto.cryptoview.data.remote.dto.gateio.GateIoValidateAndSaveResponse
+import com.crypto.cryptoview.data.remote.dto.gateio.GateSpotBalanceDto
 import com.crypto.cryptoview.data.remote.dto.upbit.UpbitAccountBalanceDto
 import com.crypto.cryptoview.data.remote.dto.upbit.ValidateUpbitRequest
 import com.crypto.cryptoview.data.remote.dto.upbit.ValidateUpbitResponse
-import retrofit2.Response
 import retrofit2.http.Body
 import retrofit2.http.DELETE
 import retrofit2.http.GET
@@ -32,4 +35,23 @@ interface DeleteUpbitCredentials {
     suspend fun deleteUpbitCredential(
         @Header("Authorization") token: String
     ): DeleteUpbitCredentialResponse
+}
+
+interface ValidateAndSaveGateIo {
+    @POST("api/exchange/gateio/validate-and-save")
+    suspend fun validateAndSaveCredential(
+        @Body request: GateIoValidateAndSaveRequest
+    ): GateIoValidateAndSaveResponse
+}
+
+interface FetchGateIoAccounts {
+    @GET("api/exchange/gateio/accounts")
+    suspend fun fetchAccounts(): List<GateSpotBalanceDto>
+}
+
+interface DeleteGateIoCredential {
+    @DELETE("api/exchange/gateio/credential")
+    suspend fun deleteGateIoCredential(
+        @Header("Authorization") token: String
+    ): GateIoCredentialDeleteResponse
 }

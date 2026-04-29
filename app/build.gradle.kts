@@ -36,9 +36,12 @@ android {
             "GATE_BASE_URL",
             "\"https://api.gateio.ws/api/v4/\""
         )
+        buildConfigField(
+            "String",
+            "BACKEND_BASE_URL",
+            "\"https://cryptoview-api-620339426938.asia-northeast3.run.app/\""
+        )
     }
-
-
 
     buildTypes {
         release {
@@ -61,11 +64,9 @@ android {
         }
     }
 
-
-
     buildFeatures {
         compose = true
-        buildConfig  = true
+        buildConfig = true
     }
 
     packaging {
@@ -142,7 +143,6 @@ dependencies {
     implementation(libs.androidx.credentials)
     implementation(libs.androidx.credentials.play.services.auth)
     implementation(libs.googleid)
-
 
     // Unit Test
     testImplementation(libs.junit)

@@ -21,7 +21,7 @@ class ExchangeCredentialRepositoryImpl @Inject constructor(
         if (credentialsManager.hasUpbitLinked()) {
             savedExchanges.add(ExchangeType.UPBIT)
         }
-        if (credentials.hasGateioCredentials()) {
+        if (credentialsManager.hasGateIoLinked()) {
             savedExchanges.add(ExchangeType.GATEIO)
         }
 
@@ -32,10 +32,14 @@ class ExchangeCredentialRepositoryImpl @Inject constructor(
         credentialsManager.markUpbitLinked()
     }
 
+    override suspend fun markGateIoLinked() {
+        credentialsManager.markGateIoLinked()
+    }
+
     override suspend fun clearCredentials(exchangeType: ExchangeType) {
         when (exchangeType) {
             ExchangeType.UPBIT -> credentialsManager.clearUpbitLinkStatus()
-            ExchangeType.GATEIO -> credentialsManager.clearGateioCredentials()
+            ExchangeType.GATEIO -> credentialsManager.clearGateIoLinkStatus()
             else -> Unit
         }
     }
@@ -50,6 +54,8 @@ class ExchangeCredentialRepositoryImpl @Inject constructor(
 
     override suspend fun hasAnyCredentials(): Boolean {
         val localCredentials = credentialsManager.credentials.first()
-        return credentialsManager.hasUpbitLinked() || localCredentials.hasAnyCredentials()
+        return credentialsManager.hasUpbitLinked()
+            || credentialsManager.hasGateIoLinked()
+            || localCredentials.hasAnyCredentials()
     }
 }
