@@ -1,6 +1,6 @@
 package com.crypto.cryptoview.domain.usecase.gate
 
-import com.crypto.cryptoview.domain.model.GateSpotBalance
+import com.crypto.cryptoview.domain.model.gate.GateSpotBalance
 import com.crypto.cryptoview.domain.repository.GateSpotRepository
 import javax.inject.Inject
 

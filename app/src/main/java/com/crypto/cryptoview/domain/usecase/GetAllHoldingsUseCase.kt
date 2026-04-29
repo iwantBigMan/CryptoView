@@ -1,7 +1,7 @@
 package com.crypto.cryptoview.domain.usecase
 
-import com.crypto.cryptoview.domain.model.AggregatedHolding
-import com.crypto.cryptoview.domain.model.HoldingData
+import com.crypto.cryptoview.domain.model.asset.AggregatedHolding
+import com.crypto.cryptoview.domain.model.asset.HoldingData
 import com.crypto.cryptoview.domain.usecase.calculator.BalanceCalculator
 import com.crypto.cryptoview.domain.usecase.calculator.CalculateBalanceUseCase
 import com.crypto.cryptoview.domain.usecase.calculator.ExchangeRateProvider

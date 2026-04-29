@@ -1,6 +1,6 @@
 package com.crypto.cryptoview.data.remote.dto.upbit
 
-import com.crypto.cryptoview.domain.model.UpbitAccountBalance
+import com.crypto.cryptoview.domain.model.upbit.UpbitAccountBalance
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 

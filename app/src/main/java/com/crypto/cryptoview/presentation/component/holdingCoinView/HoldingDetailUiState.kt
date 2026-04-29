@@ -1,6 +1,6 @@
 package com.crypto.cryptoview.presentation.component.holdingCoinView
 
-import com.crypto.cryptoview.domain.model.ExchangeHoldingDetail
+import com.crypto.cryptoview.domain.model.asset.ExchangeHoldingDetail
 
 /**
  * 보유 상세 화면 UI 상태

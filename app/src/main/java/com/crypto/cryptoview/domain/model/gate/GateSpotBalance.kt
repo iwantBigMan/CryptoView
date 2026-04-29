@@ -1,7 +1,8 @@
 // File: 'app/src/main/java/com/crypto/cryptoview/domain/model/GateSpotBalance.kt'
-package com.crypto.cryptoview.domain.model
+package com.crypto.cryptoview.domain.model.gate
 
 import com.crypto.cryptoview.data.remote.dto.gateio.GateSpotBalanceDto
+import com.crypto.cryptoview.domain.model.asset.ForeignBalance
 
 data class GateSpotBalance(
     val currency: String,

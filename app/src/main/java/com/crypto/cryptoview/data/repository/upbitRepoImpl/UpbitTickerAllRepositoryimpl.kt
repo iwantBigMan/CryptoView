@@ -1,7 +1,7 @@
 package com.crypto.cryptoview.data.repository.upbitRepoImpl
 
 import com.crypto.cryptoview.data.remote.api.UpbitTickerAllApi
-import com.crypto.cryptoview.domain.model.UpbitTickerAll
+import com.crypto.cryptoview.domain.model.upbit.UpbitTickerAll
 import com.crypto.cryptoview.domain.repository.UpbitTickerAllRepository
 import javax.inject.Inject
 

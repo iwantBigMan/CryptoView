@@ -2,8 +2,8 @@ package com.crypto.cryptoview.presentation.component.holdingCoinView
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.crypto.cryptoview.domain.model.AggregatedHolding
-import com.crypto.cryptoview.domain.model.HoldingData
+import com.crypto.cryptoview.domain.model.asset.AggregatedHolding
+import com.crypto.cryptoview.domain.model.asset.HoldingData
 import com.crypto.cryptoview.domain.usecase.GetAllHoldingsUseCase
 import com.crypto.cryptoview.presentation.component.holdingCoinView.preview.SortType
 import dagger.hilt.android.lifecycle.HiltViewModel

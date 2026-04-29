@@ -1,7 +1,7 @@
 package com.crypto.cryptoview.domain.usecase.calculator
 
-import com.crypto.cryptoview.domain.model.ExchangeData
-import com.crypto.cryptoview.domain.model.HoldingData
+import com.crypto.cryptoview.domain.model.asset.ExchangeData
+import com.crypto.cryptoview.domain.model.asset.HoldingData
 
 /**
  * 잔고 계산기 인터페이스

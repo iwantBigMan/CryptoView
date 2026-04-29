@@ -1,6 +1,6 @@
 package com.crypto.cryptoview.domain.usecase.auth
 
-import com.crypto.cryptoview.domain.model.GoogleUser
+import com.crypto.cryptoview.domain.model.auth.GoogleUser
 import com.crypto.cryptoview.domain.repository.GoogleAuthRepository
 import javax.inject.Inject
 

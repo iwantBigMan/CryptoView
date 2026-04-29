@@ -1,7 +1,7 @@
 package com.crypto.cryptoview.data.repository.upbitRepoImpl
 
 import com.crypto.cryptoview.data.remote.api.UpbitMarketApi
-import com.crypto.cryptoview.domain.model.UpbitMarketTicker
+import com.crypto.cryptoview.domain.model.upbit.UpbitMarketTicker
 import com.crypto.cryptoview.domain.repository.UbbitMTickerRepository
 import javax.inject.Inject
 import javax.inject.Singleton

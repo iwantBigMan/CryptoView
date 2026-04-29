@@ -4,7 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.crypto.cryptoview.data.local.CredentialsManager
 import com.crypto.cryptoview.data.local.CredentialsProvider
-import com.crypto.cryptoview.domain.model.ExchangeType
+import com.crypto.cryptoview.domain.model.exchange.ExchangeType
 import com.crypto.cryptoview.domain.repository.GoogleAuthRepository
 import com.crypto.cryptoview.domain.usecase.auth.DeleteExchangeCredentialUseCase
 import com.crypto.cryptoview.domain.usecase.auth.ValidateAndSaveUpbitCredentialsUseCase
