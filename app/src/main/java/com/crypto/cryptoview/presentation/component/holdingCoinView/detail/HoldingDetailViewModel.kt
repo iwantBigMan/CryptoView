@@ -1,4 +1,4 @@
-package com.crypto.cryptoview.presentation.component.holdingCoinView
+package com.crypto.cryptoview.presentation.component.holdingCoinView.detail
 
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
