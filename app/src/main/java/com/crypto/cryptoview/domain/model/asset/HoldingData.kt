@@ -10,5 +10,6 @@ data class HoldingData(
     val totalValue: Double,
     val change: Double,
     val changePercent: Double,
-    val exchange: ExchangeType
+    val exchange: ExchangeType,
+    val avgBuyPrice: Double? = null
 )

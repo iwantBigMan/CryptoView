@@ -229,6 +229,16 @@ object NetworkModule {
             .create(com.crypto.cryptoview.data.remote.api.DeleteGateIoCredential::class.java)
     }
 
+    @Provides
+    @Singleton
+    fun provideFetchGateIoSpotAveragePriceApi(
+        client: OkHttpClient,
+        json: Json
+    ): com.crypto.cryptoview.data.remote.api.FetchGateIoSpotAveragePrice {
+        return createBackendRetrofit(client, json)
+            .create(com.crypto.cryptoview.data.remote.api.FetchGateIoSpotAveragePrice::class.java)
+    }
+
     // Gate.io
 
     @Provides

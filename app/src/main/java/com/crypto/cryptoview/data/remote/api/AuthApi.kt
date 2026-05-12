@@ -2,6 +2,8 @@ package com.crypto.cryptoview.data.remote.api
 
 import com.crypto.cryptoview.data.remote.dto.upbit.DeleteUpbitCredentialResponse
 import com.crypto.cryptoview.data.remote.dto.gateio.GateIoCredentialDeleteResponse
+import com.crypto.cryptoview.data.remote.dto.gateio.GateIoSpotAveragePriceRequest
+import com.crypto.cryptoview.data.remote.dto.gateio.GateIoSpotAveragePriceResponse
 import com.crypto.cryptoview.data.remote.dto.gateio.GateIoValidateAndSaveRequest
 import com.crypto.cryptoview.data.remote.dto.gateio.GateIoValidateAndSaveResponse
 import com.crypto.cryptoview.data.remote.dto.gateio.GateSpotBalanceDto
@@ -54,4 +56,11 @@ interface DeleteGateIoCredential {
     suspend fun deleteGateIoCredential(
         @Header("Authorization") token: String
     ): GateIoCredentialDeleteResponse
+}
+
+interface FetchGateIoSpotAveragePrice {
+    @POST("api/exchange/gateio/spot-average-price")
+    suspend fun fetchSpotAveragePrice(
+        @Body request: GateIoSpotAveragePriceRequest
+    ): GateIoSpotAveragePriceResponse
 }

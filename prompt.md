@@ -174,3 +174,47 @@
 - 작업 전 현재 브랜치와 변경 파일을 확인한다.
 - `.idea` 변경 파일은 사용자 요청 범위가 아니므로 수정하지 않는다.
 - README 전체를 정상 한국어 문서로 재작성하고 변경 내용을 한국어로 요약한다.
+
+## 기능 관련 프롬프트
+- Gate.io 평균단가 데이터가 백엔드에서 내려오고 있을 텐데 Android 앱에서 표시되지 않는 원인을 확인하고 수정했다.
+- `GateSpotBalanceDto`에서 `avg_buy_price`, `avgBuyPrice`, `avg_buy_price_usdt`, `avgBuyPriceUsdt`, `average_buy_price`, `averageBuyPrice` 형태의 평균단가 필드를 받을 수 있게 했다.
+- Gate.io 평균단가를 DTO, mapper, domain model, `ForeignBalance`, `HoldingData`, 상세 화면 UseCase까지 전달되도록 수정했다.
+- 상세 화면에서 Gate.io 현재가와 평균단가는 USDT 단위로 표시하고, 평가금액과 손익 계산은 기존 KRW 기준을 유지하도록 처리했다.
+
+## 테스트 관련 프롬프트
+- Gate.io 평균단가 매핑 테스트를 추가해 snake_case와 camelCase 평균단가 응답을 domain model로 변환하는지 확인했다.
+- `.\gradlew.bat testDebugUnitTest`를 실행해 Kotlin 컴파일과 단위 테스트 통과 여부를 확인했다.
+
+## 기타 프롬프트
+- 작업 전 현재 브랜치와 변경 파일을 확인했다.
+- 기존 `.idea` 변경 파일은 사용자 요청 범위가 아니므로 수정하지 않았다.
+- `GetExchangeHoldingDetailsUseCase.kt` 수정 중 깨진 주석 인코딩을 UTF-8 한국어 주석으로 복구했다.
+
+## 기능 관련 프롬프트
+- 백엔드에 구현된 `POST /api/exchange/gateio/spot-average-price` API를 Android에 연동했다.
+- Android에서 accessKey/secretKey를 보내지 않고 기존 Firebase ID Token Authorization 헤더 주입 구조를 재사용하도록 구현했다.
+- Gate.io 현물 평균단가 request/response DTO를 추가하고, 문자열 숫자는 String으로 유지한 뒤 domain model에서 BigDecimal로 변환하도록 했다.
+- `GateSpotRepository`, `GateSpotRepositoryImpl`, `GetGateIoSpotAveragePriceUseCase`를 추가/확장해 평균단가 조회 흐름을 구성했다.
+- 보유 상세 화면 진입 시 Gate.io 보유 항목이 있으면 `BTC_USDT` 같은 단일 currencyPair로 평균단가를 조회하도록 ViewModel에 연결했다.
+- 평균단가 조회 상태를 loading, success, error로 분리하고 400, 401, 404, 502 응답을 화면 메시지로 구분했다.
+- 상세 화면에서 Gate.io 평균단가, API 보유수량, 총 매입금액, 수량 차이 경고, warnings를 표시하도록 추가했다.
+
+## 테스트 관련 프롬프트
+- Gate.io 평균단가 응답 DTO가 문자열 숫자를 유지하고 BigDecimal 값으로 노출하는지 단위 테스트를 추가했다.
+- `.\gradlew.bat testDebugUnitTest`를 실행해 Kotlin 컴파일, Hilt 주입, 단위 테스트 통과 여부를 확인했다.
+
+## 기타 프롬프트
+- 작업 전 현재 브랜치와 변경 파일을 확인했다.
+- 기존 `.idea` 변경 파일과 docs 신규 파일은 사용자 요청 범위가 아니므로 수정하지 않았다.
+
+## 기능 관련 프롬프트
+- `HoldingDetailScreen.kt`의 깨진 한글 UI 텍스트와 깨진 금액 포맷 문자열을 정상 한국어/정상 포맷으로 복구했다.
+- 보유 상세 화면의 빈 상태, 오류, 거래소별 보유 현황, 수량, 평균 단가, 현재가, 평가 금액, 손익, Gate.io 평균단가 안내 문구를 정리했다.
+- KRW 금액은 `₩`, USDT 가격은 `USDT` 단위로 표시되도록 포맷 함수를 정리했다.
+
+## 테스트 관련 프롬프트
+- `.\gradlew.bat testDebugUnitTest`를 실행해 상세 화면 텍스트 복구 후 Kotlin 컴파일과 단위 테스트 통과 여부를 확인했다.
+
+## 기타 프롬프트
+- 작업 전 현재 변경 파일을 확인했다.
+- 기존 `.idea` 변경 파일과 docs 신규 파일은 사용자 요청 범위가 아니므로 수정하지 않았다.

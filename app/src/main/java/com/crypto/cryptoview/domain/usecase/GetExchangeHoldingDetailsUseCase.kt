@@ -2,8 +2,8 @@ package com.crypto.cryptoview.domain.usecase
 
 import com.crypto.cryptoview.domain.model.asset.CurrencyUnit
 import com.crypto.cryptoview.domain.model.asset.ExchangeHoldingDetail
-import com.crypto.cryptoview.domain.model.exchange.ExchangeType
 import com.crypto.cryptoview.domain.model.asset.HoldingData
+import com.crypto.cryptoview.domain.model.exchange.ExchangeType
 import javax.inject.Inject
 
 /**
@@ -21,28 +21,24 @@ data class ExchangeHoldingResult(
 
 /**
  * 코인 심볼 기준으로 거래소별 보유 상세 정보를 조회하는 UseCase
- * 클린 아키텍처 준수: 도메인 레이어에서 비즈니스 로직 담당
  */
 class GetExchangeHoldingDetailsUseCase @Inject constructor() {
 
     /**
-     * 심볼 기준으로 거래소별 보유 상세 정보 + 총합 계산 결과 반환
-     * @param symbol 조회할 코인 심볼
-     * @param allHoldings 전체 보유 자산 리스트
-     * @param usdtKrwRate USDT/KRW 환율
-     * @return 거래소별 보유 상세 + 총합 계산 결과
+     * 심볼 기준으로 거래소별 보유 상세 정보와 총합 계산 결과를 반환
      */
     operator fun invoke(
         symbol: String,
         allHoldings: List<HoldingData>,
         usdtKrwRate: Double
     ): ExchangeHoldingResult {
-        // 거래소별 상세 정보 생성
         val exchangeDetails = allHoldings
             .filter { it.symbol.equals(symbol, ignoreCase = true) }
             .map { holding ->
                 val currencyUnit = getCurrencyUnit(holding.exchange)
                 val avgBuyPrice = calculateAvgBuyPrice(holding)
+                val displayAvgBuyPrice = convertPriceForCurrencyUnit(avgBuyPrice, currencyUnit, usdtKrwRate)
+                val displayCurrentPrice = convertPriceForCurrencyUnit(holding.currentPrice, currencyUnit, usdtKrwRate)
                 val profitLoss = calculateProfitLoss(holding, avgBuyPrice)
                 val profitLossPercent = calculateProfitLossPercent(holding, avgBuyPrice)
 
@@ -50,8 +46,8 @@ class GetExchangeHoldingDetailsUseCase @Inject constructor() {
                     exchange = holding.exchange,
                     symbol = holding.symbol,
                     quantity = holding.balance,
-                    avgBuyPrice = avgBuyPrice,
-                    currentPrice = holding.currentPrice,
+                    avgBuyPrice = displayAvgBuyPrice,
+                    currentPrice = displayCurrentPrice,
                     currencyUnit = currencyUnit,
                     valueKrw = holding.totalValue,
                     profitLoss = profitLoss,
@@ -60,7 +56,6 @@ class GetExchangeHoldingDetailsUseCase @Inject constructor() {
             }
             .sortedByDescending { it.valueKrw }
 
-        // 총합 계산 (비즈니스 로직 - UseCase에서 담당)
         val totalValueKrw = exchangeDetails.sumOf { it.valueKrw }
         val totalProfitLoss = exchangeDetails
             .mapNotNull { it.profitLoss }
@@ -79,18 +74,12 @@ class GetExchangeHoldingDetailsUseCase @Inject constructor() {
         )
     }
 
-    /**
-     * 총 손익률 계산
-     */
     private fun calculateTotalProfitLossPercent(totalValueKrw: Double, totalProfitLoss: Double?): Double? {
         if (totalProfitLoss == null || totalValueKrw <= 0) return null
         val buyValue = totalValueKrw - totalProfitLoss
         return if (buyValue > 0) (totalProfitLoss / buyValue) * 100 else null
     }
 
-    /**
-     * 거래소에 따른 화폐 단위 결정
-     */
     private fun getCurrencyUnit(exchange: ExchangeType): CurrencyUnit {
         return when (exchange) {
             ExchangeType.UPBIT -> CurrencyUnit.KRW
@@ -98,29 +87,33 @@ class GetExchangeHoldingDetailsUseCase @Inject constructor() {
         }
     }
 
-    /**
-     * 평균 매수가 계산
-     * 업비트: API에서 제공
-     * 해외 거래소: 현재 API에서 제공하지 않으므로 null 반환
-     */
-    private fun calculateAvgBuyPrice(holding: HoldingData): Double? {
-        return when (holding.exchange) {
-            ExchangeType.UPBIT -> {
-                // 업비트는 change와 changePercent로 평단 역산 가능
-                if (holding.changePercent != 0.0) {
-                    val avgPrice = holding.currentPrice / (1 + holding.changePercent / 100)
-                    if (avgPrice > 0) avgPrice else null
-                } else {
-                    holding.currentPrice // 변동률 0이면 현재가 = 평단
-                }
-            }
-            else -> null // 해외 거래소는 평단 정보 없음
+    private fun convertPriceForCurrencyUnit(
+        priceKrw: Double?,
+        currencyUnit: CurrencyUnit,
+        usdtKrwRate: Double
+    ): Double? {
+        if (priceKrw == null) return null
+        return when {
+            currencyUnit == CurrencyUnit.USDT && usdtKrwRate > 0.0 -> priceKrw / usdtKrwRate
+            else -> priceKrw
         }
     }
 
-    /**
-     * 손익 계산 (원화 기준)
-     */
+    private fun convertPriceForCurrencyUnit(
+        priceKrw: Double,
+        currencyUnit: CurrencyUnit,
+        usdtKrwRate: Double
+    ): Double {
+        return when {
+            currencyUnit == CurrencyUnit.USDT && usdtKrwRate > 0.0 -> priceKrw / usdtKrwRate
+            else -> priceKrw
+        }
+    }
+
+    private fun calculateAvgBuyPrice(holding: HoldingData): Double? {
+        return holding.avgBuyPrice?.takeIf { it > 0.0 }
+    }
+
     private fun calculateProfitLoss(holding: HoldingData, avgBuyPrice: Double?): Double? {
         return if (avgBuyPrice != null && avgBuyPrice > 0) {
             holding.change
@@ -129,9 +122,6 @@ class GetExchangeHoldingDetailsUseCase @Inject constructor() {
         }
     }
 
-    /**
-     * 손익률 계산
-     */
     private fun calculateProfitLossPercent(holding: HoldingData, avgBuyPrice: Double?): Double? {
         return if (avgBuyPrice != null && avgBuyPrice > 0) {
             holding.changePercent

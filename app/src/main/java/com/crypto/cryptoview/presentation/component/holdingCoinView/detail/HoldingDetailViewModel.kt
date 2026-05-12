@@ -3,31 +3,32 @@ package com.crypto.cryptoview.presentation.component.holdingCoinView.detail
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.crypto.cryptoview.domain.model.exchange.ExchangeType
 import com.crypto.cryptoview.domain.usecase.GetAllHoldingsUseCase
 import com.crypto.cryptoview.domain.usecase.GetExchangeHoldingDetailsUseCase
+import com.crypto.cryptoview.domain.usecase.gate.GetGateIoSpotAveragePriceUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import retrofit2.HttpException
 import javax.inject.Inject
 
 /**
  * 보유 상세 화면 ViewModel
- * 클린 아키텍처 준수: UseCase를 통해 비즈니스 로직 처리
- * ViewModel은 UI 상태 관리만 담당
  */
 @HiltViewModel
 class HoldingDetailViewModel @Inject constructor(
     savedStateHandle: SavedStateHandle,
     private val getAllHoldingsUseCase: GetAllHoldingsUseCase,
-    private val getExchangeHoldingDetailsUseCase: GetExchangeHoldingDetailsUseCase
+    private val getExchangeHoldingDetailsUseCase: GetExchangeHoldingDetailsUseCase,
+    private val getGateIoSpotAveragePriceUseCase: GetGateIoSpotAveragePriceUseCase
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(HoldingDetailUiState())
     val uiState: StateFlow<HoldingDetailUiState> = _uiState.asStateFlow()
 
-    // 현재 심볼 (변경 가능)
     private var currentSymbol: String = savedStateHandle["symbol"] ?: ""
 
     init {
@@ -37,30 +38,25 @@ class HoldingDetailViewModel @Inject constructor(
         }
     }
 
-    /**
-     * 데이터 로드
-     * 1. GetAllHoldingsUseCase로 전체 보유 자산 조회
-     * 2. GetExchangeHoldingDetailsUseCase로 해당 심볼의 거래소별 상세 조회
-     */
     private fun loadData() {
         if (currentSymbol.isEmpty()) return
 
         viewModelScope.launch {
-            _uiState.value = _uiState.value.copy(isLoading = true)
+            _uiState.value = _uiState.value.copy(
+                isLoading = true,
+                gateIoAveragePriceState = GateIoAveragePriceUiState()
+            )
 
             try {
-                // 1. 전체 보유 자산 조회
                 val holdingsResult = getAllHoldingsUseCase(minValue = 0.0)
 
                 holdingsResult.onSuccess { result ->
-                    // 2. 해당 심볼의 거래소별 상세 조회
                     val detailResult = getExchangeHoldingDetailsUseCase(
                         symbol = currentSymbol,
                         allHoldings = result.allHoldings,
-                        usdtKrwRate = 1.0 // 이미 KRW로 변환된 값 사용
+                        usdtKrwRate = result.usdtKrwRate
                     )
 
-                    // UseCase 결과를 UI 상태로 매핑
                     _uiState.value = _uiState.value.copy(
                         symbol = detailResult.symbol,
                         coinName = detailResult.coinName,
@@ -71,6 +67,8 @@ class HoldingDetailViewModel @Inject constructor(
                         isLoading = false,
                         error = null
                     )
+
+                    loadGateIoAveragePriceIfNeeded()
                 }.onFailure { e ->
                     _uiState.value = _uiState.value.copy(
                         isLoading = false,
@@ -86,25 +84,77 @@ class HoldingDetailViewModel @Inject constructor(
         }
     }
 
-    /**
-     * 심볼 설정 및 데이터 로드
-     * Screen에서 호출됨
-     */
+    private fun loadGateIoAveragePriceIfNeeded() {
+        val gateHolding = _uiState.value.exchangeHoldings
+            .firstOrNull { it.exchange == ExchangeType.GATEIO }
+            ?: run {
+                _uiState.value = _uiState.value.copy(
+                    gateIoAveragePriceState = GateIoAveragePriceUiState()
+                )
+                return
+            }
+
+        val currencyPair = "${gateHolding.symbol.uppercase()}_USDT"
+        viewModelScope.launch {
+            _uiState.value = _uiState.value.copy(
+                gateIoAveragePriceState = GateIoAveragePriceUiState(
+                    currencyPair = currencyPair,
+                    isLoading = true
+                )
+            )
+
+            getGateIoSpotAveragePriceUseCase(currencyPair = currencyPair)
+                .onSuccess { averagePrice ->
+                    _uiState.value = _uiState.value.copy(
+                        gateIoAveragePriceState = GateIoAveragePriceUiState(
+                            currencyPair = currencyPair,
+                            data = averagePrice
+                        )
+                    )
+                }
+                .onFailure { throwable ->
+                    _uiState.value = _uiState.value.copy(
+                        gateIoAveragePriceState = GateIoAveragePriceUiState(
+                            currencyPair = currencyPair,
+                            errorMessage = throwable.toGateIoAveragePriceMessage(),
+                            errorType = throwable.toGateIoAveragePriceErrorType()
+                        )
+                    )
+                }
+        }
+    }
+
     fun setSymbol(newSymbol: String) {
         if (newSymbol.isNotEmpty() && newSymbol != currentSymbol) {
             currentSymbol = newSymbol
             _uiState.value = _uiState.value.copy(symbol = newSymbol)
             loadData()
         } else if (newSymbol.isNotEmpty() && _uiState.value.exchangeHoldings.isEmpty() && !_uiState.value.isLoading) {
-            // 심볼은 같지만 데이터가 없으면 다시 로드
             loadData()
         }
     }
 
-    /**
-     * 새로고침
-     */
     fun refresh() {
         loadData()
+    }
+
+    private fun Throwable.toGateIoAveragePriceErrorType(): GateIoAveragePriceErrorType {
+        return when ((this as? HttpException)?.code()) {
+            400 -> GateIoAveragePriceErrorType.REQUEST_ERROR
+            401 -> GateIoAveragePriceErrorType.AUTH_ERROR
+            404 -> GateIoAveragePriceErrorType.CREDENTIAL_NOT_FOUND
+            502 -> GateIoAveragePriceErrorType.GATE_API_ERROR
+            else -> GateIoAveragePriceErrorType.UNKNOWN
+        }
+    }
+
+    private fun Throwable.toGateIoAveragePriceMessage(): String {
+        return when (toGateIoAveragePriceErrorType()) {
+            GateIoAveragePriceErrorType.REQUEST_ERROR -> "Gate.io 평균단가 요청 형식이 올바르지 않습니다"
+            GateIoAveragePriceErrorType.AUTH_ERROR -> "로그인이 만료되었습니다. 다시 로그인해 주세요"
+            GateIoAveragePriceErrorType.CREDENTIAL_NOT_FOUND -> "저장된 Gate.io 키가 없습니다. 설정에서 Gate.io 키를 등록해 주세요"
+            GateIoAveragePriceErrorType.GATE_API_ERROR -> "Gate.io 평균단가 계산에 실패했습니다. 잠시 후 다시 시도해 주세요"
+            GateIoAveragePriceErrorType.UNKNOWN -> message ?: "Gate.io 평균단가 조회에 실패했습니다"
+        }
     }
 }

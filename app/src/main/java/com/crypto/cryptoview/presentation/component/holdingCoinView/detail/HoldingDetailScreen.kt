@@ -2,13 +2,30 @@ package com.crypto.cryptoview.presentation.component.holdingCoinView.detail
 
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.systemBarsPadding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material3.*
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -24,13 +41,11 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.crypto.cryptoview.domain.model.asset.CurrencyUnit
 import com.crypto.cryptoview.domain.model.asset.ExchangeHoldingDetail
 import com.crypto.cryptoview.domain.model.exchange.ExchangeType
-import com.crypto.cryptoview.presentation.component.holdingCoinView.detail.HoldingDetailViewModel
+import com.crypto.cryptoview.domain.model.gate.GateIoSpotAveragePrice
 import com.crypto.cryptoview.ui.theme.LocalAppColors
+import java.math.BigDecimal
+import java.text.DecimalFormat
 
-/**
- * 보유 상세 화면
- * 거래소별 보유 정보를 표시
- */
 @Composable
 fun HoldingDetailScreen(
     symbol: String,
@@ -40,7 +55,6 @@ fun HoldingDetailScreen(
     val uiState by viewModel.uiState.collectAsState()
     val colors = LocalAppColors.current
 
-    // 심볼이 변경되면 ViewModel에 설정
     LaunchedEffect(symbol) {
         viewModel.setSymbol(symbol)
     }
@@ -53,13 +67,11 @@ fun HoldingDetailScreen(
             .background(colors.backgroundPrimary)
             .systemBarsPadding()
     ) {
-        // 상단 헤더
         HoldingDetailHeader(
             symbol = uiState.symbol,
             onBack = onBack
         )
 
-        // 콘텐츠
         when {
             uiState.isLoading -> {
                 Box(
@@ -69,6 +81,7 @@ fun HoldingDetailScreen(
                     CircularProgressIndicator(color = colors.accentBlue)
                 }
             }
+
             uiState.error != null -> {
                 Box(
                     modifier = Modifier.fillMaxSize(),
@@ -80,6 +93,7 @@ fun HoldingDetailScreen(
                     )
                 }
             }
+
             uiState.exchangeHoldings.isEmpty() -> {
                 Box(
                     modifier = Modifier.fillMaxSize(),
@@ -91,6 +105,7 @@ fun HoldingDetailScreen(
                     )
                 }
             }
+
             else -> {
                 HoldingDetailContent(uiState = uiState)
             }
@@ -98,9 +113,6 @@ fun HoldingDetailScreen(
     }
 }
 
-/**
- * 헤더 컴포넌트
- */
 @Composable
 private fun HoldingDetailHeader(
     symbol: String,
@@ -116,7 +128,7 @@ private fun HoldingDetailHeader(
         IconButton(onClick = onBack) {
             Icon(
                 imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                contentDescription = "Back",
+                contentDescription = "뒤로가기",
                 tint = colors.textPrimary
             )
         }
@@ -130,9 +142,6 @@ private fun HoldingDetailHeader(
     }
 }
 
-/**
- * 상세 콘텐츠
- */
 @Composable
 private fun HoldingDetailContent(uiState: HoldingDetailUiState) {
     val colors = LocalAppColors.current
@@ -143,7 +152,6 @@ private fun HoldingDetailContent(uiState: HoldingDetailUiState) {
         verticalArrangement = Arrangement.spacedBy(12.dp),
         contentPadding = PaddingValues(bottom = 16.dp)
     ) {
-        // 섹션 타이틀
         item {
             Text(
                 text = "거래소별 보유 현황",
@@ -153,19 +161,23 @@ private fun HoldingDetailContent(uiState: HoldingDetailUiState) {
             )
         }
 
-        // 거래소별 카드
         items(uiState.exchangeHoldings) { holding ->
-            ExchangeHoldingCard(holding = holding)
+            ExchangeHoldingCard(
+                holding = holding,
+                gateIoAveragePriceState = if (holding.exchange == ExchangeType.GATEIO) {
+                    uiState.gateIoAveragePriceState
+                } else {
+                    null
+                }
+            )
         }
     }
 }
 
-/**
- * 거래소별 보유 카드
- */
 @Composable
 fun ExchangeHoldingCard(
     holding: ExchangeHoldingDetail,
+    gateIoAveragePriceState: GateIoAveragePriceUiState? = null,
     modifier: Modifier = Modifier
 ) {
     val colors = LocalAppColors.current
@@ -175,7 +187,6 @@ fun ExchangeHoldingCard(
         colors = CardDefaults.cardColors(containerColor = colors.cardBackground)
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
-            // 거래소 이름 + 화폐 태그
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -192,7 +203,6 @@ fun ExchangeHoldingCard(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // 수량 & 평단가
             Row(modifier = Modifier.fillMaxWidth()) {
                 InfoColumn(
                     label = "수량",
@@ -202,17 +212,19 @@ fun ExchangeHoldingCard(
                 )
                 InfoColumn(
                     label = "평균 단가",
-                    value = holding.avgBuyPrice?.let {
-                        formatPrice(it, holding.currencyUnit)
-                    } ?: "-",
+                    value = averagePriceText(holding, gateIoAveragePriceState),
                     valueColor = colors.accentBlue,
                     modifier = Modifier.weight(1f)
                 )
             }
 
+            GateIoAveragePriceInfo(
+                state = gateIoAveragePriceState,
+                modifier = Modifier.padding(top = 10.dp)
+            )
+
             Spacer(modifier = Modifier.height(12.dp))
 
-            // 현재가 & 평가금액
             Row(modifier = Modifier.fillMaxWidth()) {
                 InfoColumn(
                     label = "현재가",
@@ -222,7 +234,7 @@ fun ExchangeHoldingCard(
                 )
                 InfoColumn(
                     label = "평가 금액 (KRW)",
-                    value = "₩${formatNumber(holding.valueKrw)}",
+                    value = formatKrw(holding.valueKrw),
                     valueColor = colors.textPrimary,
                     modifier = Modifier.weight(1f)
                 )
@@ -232,20 +244,117 @@ fun ExchangeHoldingCard(
             HorizontalDivider(color = colors.surfaceVariant)
             Spacer(modifier = Modifier.height(12.dp))
 
-            // 손익
             ProfitLossRow(holding = holding)
         }
     }
 }
 
-/**
- * 화폐 단위 태그
- */
+@Composable
+private fun GateIoAveragePriceInfo(
+    state: GateIoAveragePriceUiState?,
+    modifier: Modifier = Modifier
+) {
+    if (state == null) return
+
+    val colors = LocalAppColors.current
+    when {
+        state.isLoading -> {
+            Text(
+                text = "Gate.io 평균단가 조회 중...",
+                color = colors.textTertiary,
+                fontSize = 12.sp,
+                modifier = modifier
+            )
+        }
+
+        state.errorMessage != null -> {
+            Text(
+                text = state.errorMessage,
+                color = if (state.errorType == GateIoAveragePriceErrorType.CREDENTIAL_NOT_FOUND) {
+                    colors.accentBlue
+                } else {
+                    colors.error
+                },
+                fontSize = 12.sp,
+                modifier = modifier
+            )
+        }
+
+        state.data != null -> {
+            GateIoAveragePriceSummary(
+                averagePrice = state.data,
+                modifier = modifier
+            )
+        }
+    }
+}
+
+@Composable
+private fun GateIoAveragePriceSummary(
+    averagePrice: GateIoSpotAveragePrice,
+    modifier: Modifier = Modifier
+) {
+    val colors = LocalAppColors.current
+    Column(modifier = modifier.fillMaxWidth()) {
+        Row(modifier = Modifier.fillMaxWidth()) {
+            InfoColumn(
+                label = "API 보유수량",
+                value = averagePrice.currentQuantityValue?.let {
+                    "${formatDecimal(it, 8)} ${averagePrice.baseCurrency}"
+                } ?: "-",
+                valueColor = colors.textPrimary,
+                modifier = Modifier.weight(1f)
+            )
+            InfoColumn(
+                label = "총 매입금액",
+                value = averagePrice.totalCostValue?.let {
+                    "${formatDecimal(it, 2)} ${averagePrice.quoteCurrency}"
+                } ?: "-",
+                valueColor = colors.textPrimary,
+                modifier = Modifier.weight(1f)
+            )
+        }
+
+        if (averagePrice.quantity != averagePrice.currentQuantity) {
+            Spacer(modifier = Modifier.height(6.dp))
+            Text(
+                text = "계산 수량과 현재 보유 수량이 다릅니다.",
+                color = colors.textTertiary,
+                fontSize = 12.sp
+            )
+        }
+
+        if (averagePrice.warnings.isNotEmpty()) {
+            Spacer(modifier = Modifier.height(6.dp))
+            Text(
+                text = averagePrice.warnings.joinToString(separator = "\n"),
+                color = colors.textTertiary,
+                fontSize = 12.sp
+            )
+        }
+    }
+}
+
+private fun averagePriceText(
+    holding: ExchangeHoldingDetail,
+    gateIoAveragePriceState: GateIoAveragePriceUiState?
+): String {
+    val gateIoAveragePrice = gateIoAveragePriceState?.data
+    if (holding.exchange == ExchangeType.GATEIO && gateIoAveragePrice != null) {
+        return gateIoAveragePrice.averagePriceValue?.let {
+            "${formatDecimal(it, 2)} ${gateIoAveragePrice.quoteCurrency}"
+        } ?: "-"
+    }
+
+    return holding.avgBuyPrice?.let {
+        formatPrice(it, holding.currencyUnit)
+    } ?: "-"
+}
+
 @Composable
 private fun CurrencyTag(currencyUnit: CurrencyUnit) {
-    // 화폐 태그는 고정 색상 사용 (의미론적 색상)
     val (backgroundColor, textColor) = when (currencyUnit) {
-        CurrencyUnit.KRW  -> Color(0xFF1A3A4A) to Color(0xFFBFD6E9)
+        CurrencyUnit.KRW -> Color(0xFF1A3A4A) to Color(0xFFBFD6E9)
         CurrencyUnit.USDT -> Color(0xFF3A4A1A) to Color(0xFFD6E9BF)
     }
 
@@ -263,9 +372,6 @@ private fun CurrencyTag(currencyUnit: CurrencyUnit) {
     }
 }
 
-/**
- * 정보 컬럼
- */
 @Composable
 private fun InfoColumn(
     label: String,
@@ -287,9 +393,6 @@ private fun InfoColumn(
     }
 }
 
-/**
- * 손익 표시 Row
- */
 @Composable
 private fun ProfitLossRow(holding: ExchangeHoldingDetail) {
     val colors = LocalAppColors.current
@@ -306,7 +409,7 @@ private fun ProfitLossRow(holding: ExchangeHoldingDetail) {
             val sign = if (isPositive) "+" else ""
 
             Text(
-                text = "${sign}₩${formatNumber(holding.profitLoss)} (${String.format("%.2f", holding.profitLossPercent)}%)",
+                text = "$sign${formatKrw(holding.profitLoss)} (${String.format("%.2f", holding.profitLossPercent)}%)",
                 color = color,
                 fontSize = 14.sp,
                 fontWeight = FontWeight.Bold
@@ -317,15 +420,27 @@ private fun ProfitLossRow(holding: ExchangeHoldingDetail) {
     }
 }
 
-// 포맷 유틸 함수들
 private fun formatPrice(value: Double, unit: CurrencyUnit): String {
     return when (unit) {
-        CurrencyUnit.KRW  -> "₩${formatNumber(value)}"
-        CurrencyUnit.USDT -> "$${formatNumber(value)}"
+        CurrencyUnit.KRW -> formatKrw(value)
+        CurrencyUnit.USDT -> "${formatNumber(value)} USDT"
     }
 }
 
+private fun formatKrw(value: Double): String = "₩${formatNumber(value)}"
+
 private fun formatNumber(value: Double): String = String.format("%,.0f", value)
+
+private fun formatDecimal(value: BigDecimal, maxFractionDigits: Int): String {
+    val pattern = buildString {
+        append("#,##0")
+        if (maxFractionDigits > 0) {
+            append(".")
+            repeat(maxFractionDigits) { append("#") }
+        }
+    }
+    return DecimalFormat(pattern).format(value)
+}
 
 private fun formatQuantity(quantity: Double): String {
     return if (quantity % 1.0 == 0.0) {
@@ -335,7 +450,6 @@ private fun formatQuantity(quantity: Double): String {
     }
 }
 
-// Preview
 @Preview(showBackground = true, backgroundColor = 0xFF0F1117)
 @Composable
 private fun PreviewExchangeHoldingCard() {
@@ -343,7 +457,6 @@ private fun PreviewExchangeHoldingCard() {
         modifier = Modifier.padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        // 업비트 (평단 있음)
         ExchangeHoldingCard(
             holding = ExchangeHoldingDetail(
                 exchange = ExchangeType.UPBIT,
@@ -358,7 +471,6 @@ private fun PreviewExchangeHoldingCard() {
             )
         )
 
-        // Gate.io (평단 없음 - USDT)
         ExchangeHoldingCard(
             holding = ExchangeHoldingDetail(
                 exchange = ExchangeType.GATEIO,

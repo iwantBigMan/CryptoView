@@ -1,9 +1,12 @@
 package com.crypto.cryptoview.data.repository.gateRepoImpl
 
 import com.crypto.cryptoview.data.remote.api.FetchGateIoAccounts
+import com.crypto.cryptoview.data.remote.api.FetchGateIoSpotAveragePrice
 import com.crypto.cryptoview.data.remote.api.GateSpotApi
+import com.crypto.cryptoview.data.remote.dto.gateio.GateIoSpotAveragePriceRequest
 import com.crypto.cryptoview.data.remote.mapper.toDomain
 import com.crypto.cryptoview.data.remote.mapper.toGateIoAccountFetchMessage
+import com.crypto.cryptoview.domain.model.gate.GateIoSpotAveragePrice
 import com.crypto.cryptoview.domain.model.gate.GateSpotBalance
 import com.crypto.cryptoview.domain.model.gate.GateSpotTicker
 import com.crypto.cryptoview.domain.repository.GateSpotRepository
@@ -11,6 +14,7 @@ import javax.inject.Inject
 
 class GateSpotRepositoryImpl @Inject constructor(
     private val fetchGateIoAccounts: FetchGateIoAccounts,
+    private val fetchGateIoSpotAveragePrice: FetchGateIoSpotAveragePrice,
     private val gateSpotApi: GateSpotApi
 ) : GateSpotRepository {
 
@@ -45,6 +49,24 @@ class GateSpotRepositoryImpl @Inject constructor(
             }
         } catch (e: Exception) {
             Result.failure(e)
+        }
+    }
+
+    override suspend fun getSpotAveragePrice(
+        currencyPair: String,
+        from: Long?,
+        to: Long?,
+        maxPages: Int?
+    ): Result<GateIoSpotAveragePrice> {
+        return runCatching {
+            fetchGateIoSpotAveragePrice.fetchSpotAveragePrice(
+                request = GateIoSpotAveragePriceRequest(
+                    currencyPair = currencyPair,
+                    from = from,
+                    to = to,
+                    maxPages = maxPages
+                )
+            ).toDomain()
         }
     }
 }

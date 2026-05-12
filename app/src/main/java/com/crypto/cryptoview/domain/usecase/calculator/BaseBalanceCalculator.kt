@@ -46,7 +46,8 @@ abstract class BaseBalanceCalculator<BALANCE, TICKER> : BalanceCalculator<BALANC
             totalValue = totalValue,
             change = change,
             changePercent = changePercent,
-            exchange = exchange
+            exchange = exchange,
+            avgBuyPrice = avgBuyPrice.takeIf { it > 0.0 }
         )
     }
 
