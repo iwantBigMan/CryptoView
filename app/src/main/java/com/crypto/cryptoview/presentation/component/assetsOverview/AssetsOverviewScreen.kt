@@ -5,6 +5,8 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.AccountBalanceWallet
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
@@ -38,10 +40,12 @@ import kotlin.compareTo
 fun AssetsOverviewScreen(
     modifier: Modifier = Modifier,
     viewModel: AssetsOverviewViewModel = hiltViewModel(),
+    aiPortfolioInsightViewModel: AiPortfolioInsightViewModel = hiltViewModel(),
     displayCurrencyViewModel: DisplayCurrencyViewModel = hiltViewModel(),
     onNavigateToHoldings: () -> Unit = {}
 ) {
     val uiState = viewModel.uiState.collectAsState().value
+    val aiInsightUiState = aiPortfolioInsightViewModel.uiState.collectAsState().value
     val displayCurrency by displayCurrencyViewModel.currentCurrency.collectAsState()
     val lifecycleOwner = LocalLifecycleOwner.current
     val colors = LocalAppColors.current
@@ -75,6 +79,13 @@ fun AssetsOverviewScreen(
             )
         }
         item {
+            AiPortfolioInsightCard(
+                uiState = aiInsightUiState,
+                onGenerateClick = aiPortfolioInsightViewModel::generateInsight,
+                onClearClick = aiPortfolioInsightViewModel::clearInsight
+            )
+        }
+        item {
             ExchangeBreakdownCard(
                 exchanges = uiState.exchangeBreakdown,
                 usdtKrwRate = uiState.usdtKrwRate,
@@ -88,6 +99,119 @@ fun AssetsOverviewScreen(
                 displayCurrency = displayCurrency,
                 onViewAllClick = onNavigateToHoldings
             )
+        }
+    }
+}
+
+@Composable
+private fun AiPortfolioInsightCard(
+    uiState: AiPortfolioInsightUiState,
+    onGenerateClick: () -> Unit,
+    onClearClick: () -> Unit
+) {
+    val colors = LocalAppColors.current
+    val isLoading = uiState is AiPortfolioInsightUiState.RefreshingAssets ||
+        uiState is AiPortfolioInsightUiState.GeneratingInsight
+    val statusText = when (uiState) {
+        AiPortfolioInsightUiState.RefreshingAssets -> "전체 자산을 최신화하는 중입니다."
+        AiPortfolioInsightUiState.GeneratingInsight -> "AI 포트폴리오 요약을 생성하는 중입니다."
+        else -> null
+    }
+
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(containerColor = colors.surfaceVariant)
+    ) {
+        Column(
+            modifier = Modifier.padding(20.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = "AI 포트폴리오 요약",
+                        color = colors.textPrimary,
+                        fontSize = 18.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Text(
+                        text = "현재 자산 상태를 기준으로 요약합니다.",
+                        color = colors.textSecondary,
+                        fontSize = 12.sp
+                    )
+                }
+
+                Button(
+                    onClick = onGenerateClick,
+                    enabled = !isLoading,
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = colors.accentBlue,
+                        contentColor = colors.textPrimary
+                    )
+                ) {
+                    if (isLoading) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(16.dp),
+                            strokeWidth = 2.dp,
+                            color = colors.textPrimary
+                        )
+                    } else {
+                        Icon(
+                            imageVector = Icons.Outlined.AccountBalanceWallet,
+                            contentDescription = null,
+                            modifier = Modifier.size(18.dp)
+                        )
+                    }
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(text = if (isLoading) "분석 중" else "분석")
+                }
+            }
+
+            statusText?.let { text ->
+                Text(
+                    text = text,
+                    color = colors.textSecondary,
+                    fontSize = 13.sp
+                )
+            }
+
+            when (uiState) {
+                is AiPortfolioInsightUiState.Success -> {
+                    Text(
+                        text = uiState.insight.insight,
+                        color = colors.textPrimary,
+                        fontSize = 14.sp,
+                        lineHeight = 20.sp
+                    )
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = uiState.insight.model,
+                            color = colors.textTertiary,
+                            fontSize = 11.sp
+                        )
+                        TextButton(onClick = onClearClick) {
+                            Text(text = "닫기", color = colors.accentBlue)
+                        }
+                    }
+                }
+                is AiPortfolioInsightUiState.Error -> {
+                    Text(
+                        text = uiState.message,
+                        color = colors.negative,
+                        fontSize = 13.sp
+                    )
+                }
+                else -> Unit
+            }
         }
     }
 }

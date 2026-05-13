@@ -3,11 +3,13 @@ package com.crypto.cryptoview.di
 import com.crypto.cryptoview.data.repository.auth.AuthRepositoryImpl
 import com.crypto.cryptoview.data.repository.auth.ExchangeCredentialRepositoryImpl
 import com.crypto.cryptoview.data.repository.auth.GoogleAuthRepositoryImpl
+import com.crypto.cryptoview.data.repository.ai.AiPortfolioInsightRepositoryImpl
 import com.crypto.cryptoview.data.repository.gateRepoImpl.GateSpotRepositoryImpl
 import com.crypto.cryptoview.data.repository.upbitRepoImpl.UbitMTickerRepositoryImpl
 import com.crypto.cryptoview.data.repository.upbitRepoImpl.UpbitTickerAllRepositoryimpl
 import com.crypto.cryptoview.data.repository.upbitRepoImpl.UpbitRepositoryImpl
 import com.crypto.cryptoview.domain.repository.AuthRepository
+import com.crypto.cryptoview.domain.repository.AiPortfolioInsightRepository
 import com.crypto.cryptoview.domain.repository.ExchangeCredentialRepository
 import com.crypto.cryptoview.domain.repository.GoogleAuthRepository
 import com.crypto.cryptoview.domain.repository.GateFuturesRepository
@@ -71,4 +73,10 @@ abstract class RepositoryModule {
     abstract fun bindExchangeCredentialRepository(
         impl: ExchangeCredentialRepositoryImpl
     ): ExchangeCredentialRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindAiPortfolioInsightRepository(
+        impl: AiPortfolioInsightRepositoryImpl
+    ): AiPortfolioInsightRepository
 }

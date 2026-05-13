@@ -332,3 +332,17 @@
 
 ## 기타 프롬프트
 - 기존 `.idea` 변경 파일은 사용자 요청 범위가 아니므로 수정하지 않았다.
+
+## 기능 관련 프롬프트
+- AI 포트폴리오 분석 1차 구현 목표를 기준으로, 오버뷰 화면에 AI 분석 버튼을 추가하고 버튼 클릭 시 전체 자산을 최신화한 뒤 AI 분석용 포트폴리오 스냅샷을 생성하도록 구현한다.
+- 클라이언트는 투자 판단을 하지 않고 현재 자산 상태를 `baseCurrency`, `totalValuationKrw`, `totalPnlKrw`, `totalPnlRate`, `holdings` 구조로 정리해 백엔드 `/api/ai/portfolio-insight` API에 전달한다.
+- 기존 Clean Architecture 구조를 유지하며 DTO, Domain Model, Repository, UseCase, ViewModel, Compose UI를 분리한다.
+- AI 분석 결과는 장기 저장하지 않고 Repository 메모리 캐시로 5분 동안 동일 스냅샷의 백엔드 재요청만 방지한다.
+- ViewModel은 UI 진행 상태만 관리하고, 전체 자산 조회와 스냅샷 생성 및 캐시 확인은 UseCase/Repository 계층에서 처리한다.
+
+## 테스트 관련 프롬프트
+- `.\gradlew.bat testDebugUnitTest`를 실행해 AI 포트폴리오 분석 파이프라인 추가 후 Kotlin 컴파일, Hilt 바인딩, Compose 컴파일, 단위 테스트 통과 여부를 확인한다.
+
+## 기타 프롬프트
+- 기존 `.idea` 변경 파일은 사용자 요청 범위가 아니므로 수정하지 않는다.
+- 백엔드 AI API 호출에는 FirebaseAuthInterceptor를 통한 Firebase ID Token만 사용하고, 거래소 accessKey/secretKey는 요청 body에 포함하지 않는다.

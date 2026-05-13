@@ -239,6 +239,16 @@ object NetworkModule {
             .create(com.crypto.cryptoview.data.remote.api.FetchGateIoSpotAveragePrice::class.java)
     }
 
+    @Provides
+    @Singleton
+    fun provideAiPortfolioInsightApi(
+        client: OkHttpClient,
+        json: Json
+    ): com.crypto.cryptoview.data.remote.api.AiPortfolioInsightApi {
+        return createBackendRetrofit(client, json)
+            .create(com.crypto.cryptoview.data.remote.api.AiPortfolioInsightApi::class.java)
+    }
+
     // Gate.io
 
     @Provides

@@ -1,6 +1,8 @@
 package com.crypto.cryptoview.data.remote.api
 
 import com.crypto.cryptoview.data.remote.dto.upbit.DeleteUpbitCredentialResponse
+import com.crypto.cryptoview.data.remote.dto.ai.AiPortfolioInsightRequestDto
+import com.crypto.cryptoview.data.remote.dto.ai.AiPortfolioInsightResponseDto
 import com.crypto.cryptoview.data.remote.dto.gateio.GateIoCredentialDeleteResponse
 import com.crypto.cryptoview.data.remote.dto.gateio.GateIoSpotAveragePriceRequest
 import com.crypto.cryptoview.data.remote.dto.gateio.GateIoSpotAveragePriceResponse
@@ -63,4 +65,11 @@ interface FetchGateIoSpotAveragePrice {
     suspend fun fetchSpotAveragePrice(
         @Body request: GateIoSpotAveragePriceRequest
     ): GateIoSpotAveragePriceResponse
+}
+
+interface AiPortfolioInsightApi {
+    @POST("api/ai/portfolio-insight")
+    suspend fun generatePortfolioInsight(
+        @Body request: AiPortfolioInsightRequestDto
+    ): AiPortfolioInsightResponseDto
 }
