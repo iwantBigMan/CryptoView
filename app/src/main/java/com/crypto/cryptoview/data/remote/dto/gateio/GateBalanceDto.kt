@@ -2,7 +2,6 @@ package com.crypto.cryptoview.data.remote.dto.gateio
 
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.json.JsonElement
 
 @Serializable
 data class GateSpotBalanceDto(
@@ -20,24 +19,6 @@ data class GateSpotBalanceDto(
 
     @SerialName("refresh_time")
     val refreshTime: Long? = null,
-
-    @SerialName("avg_buy_price")
-    val avgBuyPrice: JsonElement? = null,
-
-    @SerialName("avgBuyPrice")
-    val avgBuyPriceCamel: JsonElement? = null,
-
-    @SerialName("avg_buy_price_usdt")
-    val avgBuyPriceUsdt: JsonElement? = null,
-
-    @SerialName("avgBuyPriceUsdt")
-    val avgBuyPriceUsdtCamel: JsonElement? = null,
-
-    @SerialName("average_buy_price")
-    val averageBuyPrice: JsonElement? = null,
-
-    @SerialName("averageBuyPrice")
-    val averageBuyPriceCamel: JsonElement? = null
 )
 
 @Serializable

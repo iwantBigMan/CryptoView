@@ -9,6 +9,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -24,8 +25,11 @@ import java.util.Locale
 import com.crypto.cryptoview.R
 import com.crypto.cryptoview.domain.model.asset.AggregatedHolding
 import com.crypto.cryptoview.domain.model.asset.ExchangeData
+import com.crypto.cryptoview.domain.model.settings.DisplayCurrency
 import com.crypto.cryptoview.presentation.component.assetsOverview.chart.ChartData
 import com.crypto.cryptoview.presentation.component.assetsOverview.chart.DonutChart
+import com.crypto.cryptoview.presentation.main.DisplayCurrencyViewModel
+import com.crypto.cryptoview.presentation.model.formatDisplayMoney
 import com.crypto.cryptoview.presentation.model.uiColor
 import com.crypto.cryptoview.ui.theme.LocalAppColors
 import kotlin.compareTo
@@ -34,9 +38,11 @@ import kotlin.compareTo
 fun AssetsOverviewScreen(
     modifier: Modifier = Modifier,
     viewModel: AssetsOverviewViewModel = hiltViewModel(),
+    displayCurrencyViewModel: DisplayCurrencyViewModel = hiltViewModel(),
     onNavigateToHoldings: () -> Unit = {}
 ) {
     val uiState = viewModel.uiState.collectAsState().value
+    val displayCurrency by displayCurrencyViewModel.currentCurrency.collectAsState()
     val lifecycleOwner = LocalLifecycleOwner.current
     val colors = LocalAppColors.current
 
@@ -63,15 +69,23 @@ fun AssetsOverviewScreen(
             TotalBalanceCard(
                 totalValue = uiState.totalValue,
                 totalChange = uiState.totalChange,
-                totalChangeRate = uiState.totalChangeRate
+                totalChangeRate = uiState.totalChangeRate,
+                usdtKrwRate = uiState.usdtKrwRate,
+                displayCurrency = displayCurrency
             )
         }
         item {
-            ExchangeBreakdownCard(exchanges = uiState.exchangeBreakdown)
+            ExchangeBreakdownCard(
+                exchanges = uiState.exchangeBreakdown,
+                usdtKrwRate = uiState.usdtKrwRate,
+                displayCurrency = displayCurrency
+            )
         }
         item {
             TopHoldingsCard(
                 aggregatedHoldings = uiState.topAggregatedHoldings,
+                usdtKrwRate = uiState.usdtKrwRate,
+                displayCurrency = displayCurrency,
                 onViewAllClick = onNavigateToHoldings
             )
         }
@@ -82,7 +96,9 @@ fun AssetsOverviewScreen(
 private fun TotalBalanceCard(
     totalValue: Double,
     totalChange: Double,
-    totalChangeRate: Double
+    totalChangeRate: Double,
+    usdtKrwRate: Double,
+    displayCurrency: DisplayCurrency
 ) {
     val isPositive = totalChange >= 0
     val colors = LocalAppColors.current
@@ -101,7 +117,7 @@ private fun TotalBalanceCard(
             Spacer(modifier = Modifier.height(8.dp))
             Row(verticalAlignment = Alignment.Bottom) {
                 Text(
-                    text = String.format(Locale.getDefault(), "₩%,.0f", totalValue),
+                    text = formatDisplayMoney(totalValue, displayCurrency, usdtKrwRate),
                     color = colors.textPrimary,
                     fontSize = 32.sp,
                     fontWeight = FontWeight.Bold
@@ -113,7 +129,7 @@ private fun TotalBalanceCard(
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 Text(
-                    text = String.format(Locale.getDefault(), "%s₩%,.0f", if (isPositive) "+" else "", totalChange),
+                    text = formatDisplayMoney(totalChange, displayCurrency, usdtKrwRate, signed = true),
                     color = if (isPositive) colors.positive else colors.negative,
                     fontSize = 18.sp
                 )
@@ -129,7 +145,9 @@ private fun TotalBalanceCard(
 
 @Composable
 private fun ExchangeBreakdownCard(
-    exchanges: List<ExchangeData> = emptyList()
+    exchanges: List<ExchangeData> = emptyList(),
+    usdtKrwRate: Double,
+    displayCurrency: DisplayCurrency
 ) {
     val sortedExchanges = exchanges.sortedByDescending { it.totalValue }
     val colors = LocalAppColors.current
@@ -204,7 +222,7 @@ private fun ExchangeBreakdownCard(
                         rowItems.forEach { exchange ->
                             ExchangeAmount(
                                 name = exchange.exchange.displayName,
-                                amount = String.format(Locale.getDefault(), "₩%,.0f", exchange.totalValue),
+                                amount = formatDisplayMoney(exchange.totalValue, displayCurrency, usdtKrwRate),
                                 color = exchange.exchange.uiColor(),
                                 modifier = Modifier.weight(1f)
                             )
@@ -271,6 +289,8 @@ private fun ExchangeAmount(
 @Composable
 private fun TopHoldingsCard(
     aggregatedHoldings: List<AggregatedHolding> = emptyList(),
+    usdtKrwRate: Double,
+    displayCurrency: DisplayCurrency,
     onViewAllClick: () -> Unit = {}
 ) {
     val colors = LocalAppColors.current
@@ -302,8 +322,8 @@ private fun TopHoldingsCard(
                     AggregatedHoldingItem(
                         symbol = holding.normalizedSymbol,
                         name = holding.name,
-                        totalValue = String.format(Locale.getDefault(), "₩%,.0f", holding.totalValue),
-                        change = String.format(Locale.getDefault(), "%s₩%,.0f", if (holding.totalChange >= 0) "+" else "", holding.totalChange),
+                        totalValue = formatDisplayMoney(holding.totalValue, displayCurrency, usdtKrwRate),
+                        change = formatDisplayMoney(holding.totalChange, displayCurrency, usdtKrwRate, signed = true),
                         changePercent = String.format(Locale.getDefault(), "%.2f%%", holding.totalChangePercent),
                         isPositive = holding.totalChange >= 0,
                         exchangeCount = holding.holdings.size,

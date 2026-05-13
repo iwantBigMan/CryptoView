@@ -20,6 +20,7 @@ data class HoldingsUiState(
     val filteredAggregatedHoldings: List<AggregatedHolding> = emptyList(),
     val searchQuery: String = "",
     val sortType: SortType = SortType.VALUE,
+    val usdtKrwRate: Double = 1300.0,
     val isLoading: Boolean = false
 ) {
     /**

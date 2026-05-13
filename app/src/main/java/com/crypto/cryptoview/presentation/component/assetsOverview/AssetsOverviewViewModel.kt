@@ -80,6 +80,7 @@ class AssetsOverviewViewModel @Inject constructor(
                         totalValue = result.totalValue,
                         totalChange = totalChange,
                         totalChangeRate = totalChangeRate,
+                        usdtKrwRate = result.usdtKrwRate,
                         topAggregatedHoldings = result.aggregatedHoldings.take(5),
                         allHoldings = result.allHoldings,
                         exchangeBreakdown = result.exchangeResults.map { it.exchangeData },

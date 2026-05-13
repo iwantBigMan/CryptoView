@@ -20,6 +20,7 @@ data class MainUiState(
     val totalValue: Double = 0.0,
     val totalChange: Double = 0.0,
     val totalChangeRate: Double = 0.0,
+    val usdtKrwRate: Double = 1300.0,
     val topAggregatedHoldings: List<AggregatedHolding> = emptyList(),  // 통합 홀딩 (Top 5)
     val allHoldings: List<HoldingData> = emptyList(),                  // 원본 홀딩 (거래소별)
     val exchangeBreakdown: List<ExchangeData> = emptyList(),

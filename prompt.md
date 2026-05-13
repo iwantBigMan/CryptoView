@@ -218,3 +218,117 @@
 ## 기타 프롬프트
 - 작업 전 현재 변경 파일을 확인했다.
 - 기존 `.idea` 변경 파일과 docs 신규 파일은 사용자 요청 범위가 아니므로 수정하지 않았다.
+
+## 기능 관련 프롬프트
+- Gate.io 평단 책임을 Android balance/accounts 응답이 아니라 백엔드 `spot-average-price` API로 통일한다.
+- `GateSpotBalanceDto`, `GateMapper`, `GateSpotBalance`, `ForeignBalance`, `ForeignBalanceCalculator`에 남아 있던 Gate.io balance 기반 평균단가 전달 경로를 제거한다.
+- 보유 상세 화면에서 Gate.io 평균단가 API 응답을 받은 뒤 해당 거래소 항목의 평균단가, 수량, 평가금액, 손익, 손익률을 백엔드 평균단가 기준으로 갱신한다.
+- View에서는 계산하지 않고 ViewModel에서 백엔드 응답을 기준으로 화면 상태를 완성하도록 정리한다.
+
+## 테스트 관련 프롬프트
+- `avgBuyPriceUsdt`, `avg_buy_price_usdt`, `avgBuyPriceCamel`, `averageBuyPrice` 검색으로 기존 Gate.io balance 평균단가 경로가 남아 있지 않은지 확인한다.
+- `.\gradlew.bat testDebugUnitTest`를 실행해 Kotlin 컴파일과 단위 테스트 통과 여부를 확인한다.
+
+## 기타 프롬프트
+- 작업 전 현재 브랜치와 변경 파일을 확인했다.
+- 기존 `.idea` 변경 파일은 사용자 요청 범위가 아니므로 수정하지 않았다.
+- 첫 테스트 실행은 Windows 파일 잠금으로 `R.jar` 삭제에 실패해 Gradle daemon을 중지한 뒤 재실행했다.
+
+## 기능 관련 프롬프트
+- Gate.io 평균단가 API 응답에서 `currentQuantity`는 있지만 `averagePrice`와 `totalCost`가 0으로 내려오는 경우 화면에 `0 USDT`로 표시되지 않게 수정한다.
+- 평균단가 또는 총 매입금액이 0 이하이면 상세 화면의 Gate.io 평단/손익 계산에 적용하지 않는다.
+- 평균단가 계산에 필요한 매수 거래 내역이 없다는 안내 문구를 표시하고, 총 매입금액은 `-`로 표시한다.
+
+## 테스트 관련 프롬프트
+- `.\gradlew.bat testDebugUnitTest`를 실행해 수정 후 Kotlin 컴파일과 단위 테스트 통과 여부를 확인한다.
+
+## 기타 프롬프트
+- 스크린샷에서 평균 단가와 총 매입금액이 `0 USDT`로 표시되는 문제를 확인했다.
+- 작업 전 현재 브랜치와 변경 파일을 확인했다.
+- 기존 `.idea` 변경 파일은 사용자 요청 범위가 아니므로 수정하지 않았다.
+
+## 기능 관련 프롬프트
+- Gate.io `spot-average-price` API 호출부에 디버깅 로그를 추가한다.
+- 요청 로그에는 `currencyPair`와 심볼만 남기고 Firebase ID Token이나 거래소 키 같은 민감 정보는 남기지 않는다.
+- 성공 로그에는 평균단가, 총 매입금액, 계산 수량, 현재 보유 수량, 거래 수, 조회 페이지 수, warnings를 남긴다.
+- 실패 로그에는 `currencyPair`와 예외 스택을 남긴다.
+
+## 테스트 관련 프롬프트
+- `.\gradlew.bat testDebugUnitTest`를 실행해 로그 추가 후 Kotlin 컴파일과 단위 테스트 통과 여부를 확인한다.
+
+## 기타 프롬프트
+- 기존 `.idea` 변경 파일은 사용자 요청 범위가 아니므로 수정하지 않았다.
+
+## 기능 관련 프롬프트
+- 기존 코드 구조를 벗어나지 않고 설정 화면에서 KRW/USDT 표시 통화를 전환할 수 있는 버튼을 구현한다.
+- 테마 설정과 같은 DataStore 패턴으로 `DisplayCurrency`, `DisplayCurrencyManager`, `DisplayCurrencyViewModel`을 추가한다.
+- 내부 자산 계산은 기존 KRW 기준을 유지하고, 화면 표시 단계에서만 선택 통화와 `usdtKrwRate`를 이용해 포맷한다.
+- 자산 개요, 보유 코인 목록, 보유 상세 화면에 표시 통화 설정을 반영한다.
+- `MainUiState`, `HoldingsUiState`, `HoldingDetailUiState`에 `usdtKrwRate`를 보존해 표시 포맷에서 사용할 수 있게 한다.
+- 공통 표시 포맷 함수로 KRW 금액과 USDT 환산 금액을 처리한다.
+
+## 테스트 관련 프롬프트
+- `.\gradlew.bat testDebugUnitTest`를 실행해 표시 통화 전환 구현 후 Kotlin 컴파일과 단위 테스트 통과 여부를 확인한다.
+
+## 기타 프롬프트
+- 첫 컴파일에서 `collectAsState()` delegate용 `getValue` import 누락을 확인하고 수정했다.
+- 기존 `.idea` 변경 파일은 사용자 요청 범위가 아니므로 수정하지 않았다.
+
+## 기능 관련 프롬프트
+- 설정 화면의 KRW/USDT 표시 통화 전환 버튼 텍스트를 가운데 정렬한다.
+- 표시 통화 전환 버튼의 세로 크기를 약 5dp 정도 키운다.
+
+## 테스트 관련 프롬프트
+- `.\gradlew.bat testDebugUnitTest`를 실행해 버튼 UI 수정 후 Kotlin 컴파일과 단위 테스트 통과 여부를 확인한다.
+
+## 기타 프롬프트
+- 현재 Material3 `FilterChip`에 `contentPadding` 파라미터가 없어 `heightIn(min = 37.dp)`로 버튼 높이를 조정했다.
+- 기존 `.idea` 변경 파일은 사용자 요청 범위가 아니므로 수정하지 않았다.
+
+## 기능 관련 프롬프트
+- 홈 화면의 총 손익이 Top 5 기준인지 전체 보유자산 기준인지 확인한다.
+- 총 손익은 Top 5가 아니라 `allHoldings` 전체 기준으로 계산되는 구조임을 확인한다.
+- 평단이 없는 Gate.io 항목에서 `avgBuyPrice = 0`이 들어올 때 평가금액 전체가 손익으로 계산되지 않도록 기본 계산 로직을 수정한다.
+- 평단이 0 이하이면 `HoldingData.change`와 `changePercent`를 0으로 두고 `avgBuyPrice`는 null로 유지한다.
+
+## 테스트 관련 프롬프트
+- `.\gradlew.bat testDebugUnitTest`를 실행해 평단 없는 항목의 손익 계산 수정 후 Kotlin 컴파일과 단위 테스트 통과 여부를 확인한다.
+
+## 기타 프롬프트
+- 기존 `.idea` 변경 파일은 사용자 요청 범위가 아니므로 수정하지 않았다.
+
+## 기능 관련 프롬프트
+- 앱이 한화 표기 상태일 때 Gate.io 평균단가와 현재가도 KRW로 보여주도록 수정한다.
+- Gate.io 평균단가는 백엔드 `spot-average-price` 응답의 USDT 값을 Upbit `KRW-USDT` 환율로 환산해 표시한다.
+- Gate.io 현재가는 기존 USDT 현재가에 같은 환율을 곱해 KRW로 표시한다.
+- 평균단가가 없거나 0이어도 현재가는 KRW로 표시하고, 평단/손익만 정보 없음 상태로 둔다.
+- 화면 함수는 백엔드 원본 평균단가를 직접 포맷하지 않고 ViewModel에서 완성한 `ExchangeHoldingDetail` 값을 표시하도록 정리한다.
+
+## 테스트 관련 프롬프트
+- `.\gradlew.bat testDebugUnitTest`를 실행해 KRW 환산 표시 변경 후 Kotlin 컴파일과 단위 테스트 통과 여부를 확인한다.
+
+## 기타 프롬프트
+- 현재 환율은 클라이언트가 Upbit 공개 ticker API의 `KRW-USDT` 값을 직접 받아 사용하는 구조임을 확인했다.
+- 기존 `.idea` 변경 파일은 사용자 요청 범위가 아니므로 수정하지 않았다.
+
+## 기능 관련 프롬프트
+- Gate.io 평균단가 응답의 `warnings` 문구를 보유 상세 화면에 표시하지 않도록 제거한다.
+- 백엔드 warning 데이터는 유지하되 UI에는 노출하지 않는다.
+
+## 테스트 관련 프롬프트
+- `.\gradlew.bat testDebugUnitTest`를 실행해 warning 문구 제거 후 Kotlin 컴파일과 단위 테스트 통과 여부를 확인한다.
+
+## 기타 프롬프트
+- 스크린샷에서 365일 거래내역 조회 안내 문구가 `warnings` 출력 블록에서 표시되는 것을 확인했다.
+- 기존 `.idea` 변경 파일은 사용자 요청 범위가 아니므로 수정하지 않았다.
+
+## 기능 관련 프롬프트
+- Gate.io 평균단가, 현재가, 평가금액을 KRW 기준으로 맞춘 뒤 손익 계산도 같은 기준으로 다시 계산한다.
+- Gate.io 평균단가 API 응답을 적용한 뒤 개별 거래소 항목의 손익과 손익률을 갱신한다.
+- 갱신된 거래소별 보유 항목 목록을 기준으로 상세 화면의 전체 평가금액, 총 손익, 총 수익률도 다시 계산한다.
+
+## 테스트 관련 프롬프트
+- `.\gradlew.bat testDebugUnitTest`를 실행해 손익 재계산 변경 후 Kotlin 컴파일과 단위 테스트 통과 여부를 확인한다.
+
+## 기타 프롬프트
+- 기존 `.idea` 변경 파일은 사용자 요청 범위가 아니므로 수정하지 않았다.

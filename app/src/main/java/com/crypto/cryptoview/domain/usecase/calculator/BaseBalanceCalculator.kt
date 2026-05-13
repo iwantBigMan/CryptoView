@@ -34,8 +34,9 @@ abstract class BaseBalanceCalculator<BALANCE, TICKER> : BalanceCalculator<BALANC
         exchange: ExchangeType
     ): HoldingData {
         val totalValue = amount * currentPrice!!
-        val buyValue = amount * avgBuyPrice
-        val change = totalValue - buyValue
+        val hasAvgBuyPrice = avgBuyPrice > 0.0
+        val buyValue = if (hasAvgBuyPrice) amount * avgBuyPrice else 0.0
+        val change = if (hasAvgBuyPrice) totalValue - buyValue else 0.0
         val changePercent = if (buyValue > 0) (change / buyValue) * 100 else 0.0
 
         return HoldingData(
@@ -47,7 +48,7 @@ abstract class BaseBalanceCalculator<BALANCE, TICKER> : BalanceCalculator<BALANC
             change = change,
             changePercent = changePercent,
             exchange = exchange,
-            avgBuyPrice = avgBuyPrice.takeIf { it > 0.0 }
+            avgBuyPrice = avgBuyPrice.takeIf { hasAvgBuyPrice }
         )
     }
 

@@ -48,12 +48,11 @@ class ForeignBalanceCalculator @Inject constructor() :
 
                 // KRW 환산
                 val priceKrw = priceUsdt * usdtKrwRate
-                val avgBuyPriceKrw = balance.avgBuyPriceUsdt * usdtKrwRate
 
                 createHoldingData(
                     symbol = balance.asset,
                     amount = balance.free,
-                    avgBuyPrice = avgBuyPriceKrw,
+                    avgBuyPrice = 0.0,
                     currentPrice = priceKrw,
                     exchange = exchangeType
                 )

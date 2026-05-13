@@ -42,6 +42,10 @@ import com.crypto.cryptoview.domain.model.asset.CurrencyUnit
 import com.crypto.cryptoview.domain.model.asset.ExchangeHoldingDetail
 import com.crypto.cryptoview.domain.model.exchange.ExchangeType
 import com.crypto.cryptoview.domain.model.gate.GateIoSpotAveragePrice
+import com.crypto.cryptoview.domain.model.settings.DisplayCurrency
+import com.crypto.cryptoview.presentation.main.DisplayCurrencyViewModel
+import com.crypto.cryptoview.presentation.model.formatDisplayMoney
+import com.crypto.cryptoview.presentation.model.formatDisplayPrice
 import com.crypto.cryptoview.ui.theme.LocalAppColors
 import java.math.BigDecimal
 import java.text.DecimalFormat
@@ -50,9 +54,11 @@ import java.text.DecimalFormat
 fun HoldingDetailScreen(
     symbol: String,
     onBack: () -> Unit,
-    viewModel: HoldingDetailViewModel = hiltViewModel()
+    viewModel: HoldingDetailViewModel = hiltViewModel(),
+    displayCurrencyViewModel: DisplayCurrencyViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    val displayCurrency by displayCurrencyViewModel.currentCurrency.collectAsState()
     val colors = LocalAppColors.current
 
     LaunchedEffect(symbol) {
@@ -107,7 +113,10 @@ fun HoldingDetailScreen(
             }
 
             else -> {
-                HoldingDetailContent(uiState = uiState)
+                HoldingDetailContent(
+                    uiState = uiState,
+                    displayCurrency = displayCurrency
+                )
             }
         }
     }
@@ -143,7 +152,10 @@ private fun HoldingDetailHeader(
 }
 
 @Composable
-private fun HoldingDetailContent(uiState: HoldingDetailUiState) {
+private fun HoldingDetailContent(
+    uiState: HoldingDetailUiState,
+    displayCurrency: DisplayCurrency
+) {
     val colors = LocalAppColors.current
     LazyColumn(
         modifier = Modifier
@@ -164,6 +176,8 @@ private fun HoldingDetailContent(uiState: HoldingDetailUiState) {
         items(uiState.exchangeHoldings) { holding ->
             ExchangeHoldingCard(
                 holding = holding,
+                usdtKrwRate = uiState.usdtKrwRate,
+                displayCurrency = displayCurrency,
                 gateIoAveragePriceState = if (holding.exchange == ExchangeType.GATEIO) {
                     uiState.gateIoAveragePriceState
                 } else {
@@ -177,6 +191,8 @@ private fun HoldingDetailContent(uiState: HoldingDetailUiState) {
 @Composable
 fun ExchangeHoldingCard(
     holding: ExchangeHoldingDetail,
+    usdtKrwRate: Double,
+    displayCurrency: DisplayCurrency,
     gateIoAveragePriceState: GateIoAveragePriceUiState? = null,
     modifier: Modifier = Modifier
 ) {
@@ -198,7 +214,7 @@ fun ExchangeHoldingCard(
                     fontSize = 16.sp,
                     fontWeight = FontWeight.Bold
                 )
-                CurrencyTag(currencyUnit = holding.currencyUnit)
+                CurrencyTag(displayCurrency = displayCurrency)
             }
 
             Spacer(modifier = Modifier.height(16.dp))
@@ -212,7 +228,7 @@ fun ExchangeHoldingCard(
                 )
                 InfoColumn(
                     label = "평균 단가",
-                    value = averagePriceText(holding, gateIoAveragePriceState),
+                    value = averagePriceText(holding, displayCurrency, usdtKrwRate),
                     valueColor = colors.accentBlue,
                     modifier = Modifier.weight(1f)
                 )
@@ -228,13 +244,13 @@ fun ExchangeHoldingCard(
             Row(modifier = Modifier.fillMaxWidth()) {
                 InfoColumn(
                     label = "현재가",
-                    value = formatPrice(holding.currentPrice, holding.currencyUnit),
+                    value = formatDisplayPrice(holding.currentPrice, holding.currencyUnit, displayCurrency, usdtKrwRate),
                     valueColor = colors.textPrimary,
                     modifier = Modifier.weight(1f)
                 )
                 InfoColumn(
-                    label = "평가 금액 (KRW)",
-                    value = formatKrw(holding.valueKrw),
+                    label = "평가 금액",
+                    value = formatDisplayMoney(holding.valueKrw, displayCurrency, usdtKrwRate),
                     valueColor = colors.textPrimary,
                     modifier = Modifier.weight(1f)
                 )
@@ -244,7 +260,11 @@ fun ExchangeHoldingCard(
             HorizontalDivider(color = colors.surfaceVariant)
             Spacer(modifier = Modifier.height(12.dp))
 
-            ProfitLossRow(holding = holding)
+            ProfitLossRow(
+                holding = holding,
+                usdtKrwRate = usdtKrwRate,
+                displayCurrency = displayCurrency
+            )
         }
     }
 }
@@ -295,23 +315,16 @@ private fun GateIoAveragePriceSummary(
     modifier: Modifier = Modifier
 ) {
     val colors = LocalAppColors.current
+    val hasAveragePrice = (averagePrice.averagePriceValue?.signum() ?: 0) > 0
+    val hasTotalCost = (averagePrice.totalCostValue?.signum() ?: 0) > 0
+
     Column(modifier = modifier.fillMaxWidth()) {
-        Row(modifier = Modifier.fillMaxWidth()) {
-            InfoColumn(
-                label = "API 보유수량",
-                value = averagePrice.currentQuantityValue?.let {
-                    "${formatDecimal(it, 8)} ${averagePrice.baseCurrency}"
-                } ?: "-",
-                valueColor = colors.textPrimary,
-                modifier = Modifier.weight(1f)
-            )
-            InfoColumn(
-                label = "총 매입금액",
-                value = averagePrice.totalCostValue?.let {
-                    "${formatDecimal(it, 2)} ${averagePrice.quoteCurrency}"
-                } ?: "-",
-                valueColor = colors.textPrimary,
-                modifier = Modifier.weight(1f)
+        if (!hasAveragePrice || !hasTotalCost) {
+            Spacer(modifier = Modifier.height(6.dp))
+            Text(
+                text = "평균단가 계산에 필요한 매수 거래 내역이 없습니다.",
+                color = colors.textTertiary,
+                fontSize = 12.sp
             )
         }
 
@@ -324,38 +337,24 @@ private fun GateIoAveragePriceSummary(
             )
         }
 
-        if (averagePrice.warnings.isNotEmpty()) {
-            Spacer(modifier = Modifier.height(6.dp))
-            Text(
-                text = averagePrice.warnings.joinToString(separator = "\n"),
-                color = colors.textTertiary,
-                fontSize = 12.sp
-            )
-        }
     }
 }
 
 private fun averagePriceText(
     holding: ExchangeHoldingDetail,
-    gateIoAveragePriceState: GateIoAveragePriceUiState?
+    displayCurrency: DisplayCurrency,
+    usdtKrwRate: Double
 ): String {
-    val gateIoAveragePrice = gateIoAveragePriceState?.data
-    if (holding.exchange == ExchangeType.GATEIO && gateIoAveragePrice != null) {
-        return gateIoAveragePrice.averagePriceValue?.let {
-            "${formatDecimal(it, 2)} ${gateIoAveragePrice.quoteCurrency}"
-        } ?: "-"
-    }
-
     return holding.avgBuyPrice?.let {
-        formatPrice(it, holding.currencyUnit)
+        formatDisplayPrice(it, holding.currencyUnit, displayCurrency, usdtKrwRate)
     } ?: "-"
 }
 
 @Composable
-private fun CurrencyTag(currencyUnit: CurrencyUnit) {
-    val (backgroundColor, textColor) = when (currencyUnit) {
-        CurrencyUnit.KRW -> Color(0xFF1A3A4A) to Color(0xFFBFD6E9)
-        CurrencyUnit.USDT -> Color(0xFF3A4A1A) to Color(0xFFD6E9BF)
+private fun CurrencyTag(displayCurrency: DisplayCurrency) {
+    val (backgroundColor, textColor) = when (displayCurrency) {
+        DisplayCurrency.KRW -> Color(0xFF1A3A4A) to Color(0xFFBFD6E9)
+        DisplayCurrency.USDT -> Color(0xFF3A4A1A) to Color(0xFFD6E9BF)
     }
 
     Box(
@@ -364,7 +363,7 @@ private fun CurrencyTag(currencyUnit: CurrencyUnit) {
             .padding(horizontal = 10.dp, vertical = 4.dp)
     ) {
         Text(
-            text = currencyUnit.name,
+            text = displayCurrency.name,
             color = textColor,
             fontSize = 12.sp,
             fontWeight = FontWeight.Medium
@@ -393,8 +392,13 @@ private fun InfoColumn(
     }
 }
 
+
 @Composable
-private fun ProfitLossRow(holding: ExchangeHoldingDetail) {
+private fun ProfitLossRow(
+    holding: ExchangeHoldingDetail,
+    usdtKrwRate: Double,
+    displayCurrency: DisplayCurrency
+) {
     val colors = LocalAppColors.current
     Row(
         modifier = Modifier.fillMaxWidth(),
@@ -406,10 +410,8 @@ private fun ProfitLossRow(holding: ExchangeHoldingDetail) {
         if (holding.profitLoss != null && holding.profitLossPercent != null) {
             val isPositive = holding.profitLoss >= 0
             val color = if (isPositive) colors.positive else colors.negative
-            val sign = if (isPositive) "+" else ""
-
             Text(
-                text = "$sign${formatKrw(holding.profitLoss)} (${String.format("%.2f", holding.profitLossPercent)}%)",
+                text = "${formatDisplayMoney(holding.profitLoss, displayCurrency, usdtKrwRate, signed = true)} (${String.format("%.2f", holding.profitLossPercent)}%)",
                 color = color,
                 fontSize = 14.sp,
                 fontWeight = FontWeight.Bold
@@ -419,17 +421,6 @@ private fun ProfitLossRow(holding: ExchangeHoldingDetail) {
         }
     }
 }
-
-private fun formatPrice(value: Double, unit: CurrencyUnit): String {
-    return when (unit) {
-        CurrencyUnit.KRW -> formatKrw(value)
-        CurrencyUnit.USDT -> "${formatNumber(value)} USDT"
-    }
-}
-
-private fun formatKrw(value: Double): String = "₩${formatNumber(value)}"
-
-private fun formatNumber(value: Double): String = String.format("%,.0f", value)
 
 private fun formatDecimal(value: BigDecimal, maxFractionDigits: Int): String {
     val pattern = buildString {
@@ -458,6 +449,8 @@ private fun PreviewExchangeHoldingCard() {
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
         ExchangeHoldingCard(
+            usdtKrwRate = 1300.0,
+            displayCurrency = DisplayCurrency.KRW,
             holding = ExchangeHoldingDetail(
                 exchange = ExchangeType.UPBIT,
                 symbol = "BTC",
@@ -472,6 +465,8 @@ private fun PreviewExchangeHoldingCard() {
         )
 
         ExchangeHoldingCard(
+            usdtKrwRate = 1300.0,
+            displayCurrency = DisplayCurrency.KRW,
             holding = ExchangeHoldingDetail(
                 exchange = ExchangeType.GATEIO,
                 symbol = "BTC",
@@ -491,6 +486,7 @@ private fun PreviewExchangeHoldingCard() {
 @Composable
 private fun PreviewHoldingDetailContent() {
     HoldingDetailContent(
+        displayCurrency = DisplayCurrency.KRW,
         uiState = HoldingDetailUiState(
             symbol = "BTC",
             coinName = "Bitcoin",

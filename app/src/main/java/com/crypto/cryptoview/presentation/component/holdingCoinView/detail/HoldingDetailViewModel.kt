@@ -3,7 +3,11 @@ package com.crypto.cryptoview.presentation.component.holdingCoinView.detail
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import android.util.Log
+import com.crypto.cryptoview.domain.model.asset.CurrencyUnit
+import com.crypto.cryptoview.domain.model.asset.ExchangeHoldingDetail
 import com.crypto.cryptoview.domain.model.exchange.ExchangeType
+import com.crypto.cryptoview.domain.model.gate.GateIoSpotAveragePrice
 import com.crypto.cryptoview.domain.usecase.GetAllHoldingsUseCase
 import com.crypto.cryptoview.domain.usecase.GetExchangeHoldingDetailsUseCase
 import com.crypto.cryptoview.domain.usecase.gate.GetGateIoSpotAveragePriceUseCase
@@ -25,6 +29,10 @@ class HoldingDetailViewModel @Inject constructor(
     private val getExchangeHoldingDetailsUseCase: GetExchangeHoldingDetailsUseCase,
     private val getGateIoSpotAveragePriceUseCase: GetGateIoSpotAveragePriceUseCase
 ) : ViewModel() {
+
+    private companion object {
+        const val TAG = "HoldingDetailVM"
+    }
 
     private val _uiState = MutableStateFlow(HoldingDetailUiState())
     val uiState: StateFlow<HoldingDetailUiState> = _uiState.asStateFlow()
@@ -63,12 +71,13 @@ class HoldingDetailViewModel @Inject constructor(
                         totalValueKrw = detailResult.totalValueKrw,
                         totalProfitLoss = detailResult.totalProfitLoss,
                         totalProfitLossPercent = detailResult.totalProfitLossPercent,
+                        usdtKrwRate = result.usdtKrwRate,
                         exchangeHoldings = detailResult.exchangeHoldings,
                         isLoading = false,
                         error = null
                     )
 
-                    loadGateIoAveragePriceIfNeeded()
+                    loadGateIoAveragePriceIfNeeded(usdtKrwRate = result.usdtKrwRate)
                 }.onFailure { e ->
                     _uiState.value = _uiState.value.copy(
                         isLoading = false,
@@ -84,7 +93,7 @@ class HoldingDetailViewModel @Inject constructor(
         }
     }
 
-    private fun loadGateIoAveragePriceIfNeeded() {
+    private fun loadGateIoAveragePriceIfNeeded(usdtKrwRate: Double) {
         val gateHolding = _uiState.value.exchangeHoldings
             .firstOrNull { it.exchange == ExchangeType.GATEIO }
             ?: run {
@@ -96,6 +105,11 @@ class HoldingDetailViewModel @Inject constructor(
 
         val currencyPair = "${gateHolding.symbol.uppercase()}_USDT"
         viewModelScope.launch {
+            Log.d(
+                TAG,
+                "Gate.io spot-average-price request: currencyPair=$currencyPair, symbol=${gateHolding.symbol}"
+            )
+
             _uiState.value = _uiState.value.copy(
                 gateIoAveragePriceState = GateIoAveragePriceUiState(
                     currencyPair = currencyPair,
@@ -105,7 +119,29 @@ class HoldingDetailViewModel @Inject constructor(
 
             getGateIoSpotAveragePriceUseCase(currencyPair = currencyPair)
                 .onSuccess { averagePrice ->
+                    Log.d(
+                        TAG,
+                        "Gate.io spot-average-price success: " +
+                            "currencyPair=${averagePrice.currencyPair}, " +
+                            "averagePrice=${averagePrice.averagePrice}, " +
+                            "totalCost=${averagePrice.totalCost}, " +
+                            "quantity=${averagePrice.quantity}, " +
+                            "currentQuantity=${averagePrice.currentQuantity}, " +
+                            "tradeCount=${averagePrice.tradeCount}, " +
+                            "fetchedPages=${averagePrice.fetchedPages}, " +
+                            "warnings=${averagePrice.warnings}"
+                    )
+
+                    val updatedHoldings = applyGateIoAveragePrice(
+                        holdings = _uiState.value.exchangeHoldings,
+                        averagePrice = averagePrice,
+                        usdtKrwRate = usdtKrwRate
+                    )
                     _uiState.value = _uiState.value.copy(
+                        exchangeHoldings = updatedHoldings,
+                        totalValueKrw = updatedHoldings.sumOf { it.valueKrw },
+                        totalProfitLoss = calculateTotalProfitLoss(updatedHoldings),
+                        totalProfitLossPercent = calculateTotalProfitLossPercent(updatedHoldings),
                         gateIoAveragePriceState = GateIoAveragePriceUiState(
                             currencyPair = currencyPair,
                             data = averagePrice
@@ -113,6 +149,12 @@ class HoldingDetailViewModel @Inject constructor(
                     )
                 }
                 .onFailure { throwable ->
+                    Log.e(
+                        TAG,
+                        "Gate.io spot-average-price failure: currencyPair=$currencyPair",
+                        throwable
+                    )
+
                     _uiState.value = _uiState.value.copy(
                         gateIoAveragePriceState = GateIoAveragePriceUiState(
                             currencyPair = currencyPair,
@@ -121,6 +163,61 @@ class HoldingDetailViewModel @Inject constructor(
                         )
                     )
                 }
+        }
+    }
+
+    private fun applyGateIoAveragePrice(
+        holdings: List<ExchangeHoldingDetail>,
+        averagePrice: GateIoSpotAveragePrice,
+        usdtKrwRate: Double
+    ): List<ExchangeHoldingDetail> {
+        val averagePriceUsdt = averagePrice.averagePriceValue?.toDouble()
+        val totalCostUsdt = averagePrice.totalCostValue?.toDouble()
+        val currentQuantity = averagePrice.currentQuantityValue?.toDouble()
+
+        return holdings.map { holding ->
+            if (holding.exchange != ExchangeType.GATEIO) return@map holding
+
+            val displayQuantity = currentQuantity?.takeIf { it > 0.0 } ?: holding.quantity
+            val currentPriceKrw = holding.currentPrice * usdtKrwRate
+            val currentValueKrw = displayQuantity * currentPriceKrw
+            val hasAveragePrice = averagePriceUsdt != null && averagePriceUsdt > 0.0
+            val hasTotalCost = totalCostUsdt != null && totalCostUsdt > 0.0
+            val profitLossUsdt = if (hasTotalCost) {
+                (displayQuantity * holding.currentPrice) - totalCostUsdt
+            } else null
+            val profitLossKrw = profitLossUsdt?.let { it * usdtKrwRate }
+            val profitLossPercent = if (profitLossUsdt != null && totalCostUsdt != null && totalCostUsdt > 0.0) {
+                (profitLossUsdt / totalCostUsdt) * 100
+            } else null
+
+            holding.copy(
+                quantity = displayQuantity,
+                avgBuyPrice = averagePriceUsdt?.takeIf { hasAveragePrice }?.let { it * usdtKrwRate },
+                currentPrice = currentPriceKrw,
+                currencyUnit = CurrencyUnit.KRW,
+                valueKrw = currentValueKrw,
+                profitLoss = profitLossKrw,
+                profitLossPercent = profitLossPercent
+            )
+        }
+    }
+
+    private fun calculateTotalProfitLoss(holdings: List<ExchangeHoldingDetail>): Double? {
+        return holdings
+            .mapNotNull { it.profitLoss }
+            .takeIf { it.isNotEmpty() }
+            ?.sum()
+    }
+
+    private fun calculateTotalProfitLossPercent(holdings: List<ExchangeHoldingDetail>): Double? {
+        val totalProfitLoss = calculateTotalProfitLoss(holdings) ?: return null
+        val totalValue = holdings.sumOf { it.valueKrw }
+        val totalBuyValue = totalValue - totalProfitLoss
+        return if (totalBuyValue > 0.0) {
+            (totalProfitLoss / totalBuyValue) * 100
+        } else {
+            null
         }
     }
 

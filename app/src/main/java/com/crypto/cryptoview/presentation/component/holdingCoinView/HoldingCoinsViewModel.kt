@@ -73,6 +73,7 @@ class HoldingCoinsViewModel @Inject constructor(
                             _uiState.value.searchQuery,
                             _uiState.value.sortType
                         ),
+                        usdtKrwRate = result.usdtKrwRate,
                         isLoading = false
                     )
                 }

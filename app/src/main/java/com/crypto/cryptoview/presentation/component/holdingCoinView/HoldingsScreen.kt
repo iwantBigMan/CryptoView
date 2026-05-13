@@ -27,7 +27,10 @@ import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.crypto.cryptoview.domain.model.asset.AggregatedHolding
 import com.crypto.cryptoview.domain.model.asset.HoldingData
+import com.crypto.cryptoview.domain.model.settings.DisplayCurrency
 import com.crypto.cryptoview.presentation.component.holdingCoinView.preview.SortType
+import com.crypto.cryptoview.presentation.main.DisplayCurrencyViewModel
+import com.crypto.cryptoview.presentation.model.formatDisplayMoney
 import com.crypto.cryptoview.presentation.model.uiColor
 import com.crypto.cryptoview.ui.theme.LocalAppColors
 
@@ -40,9 +43,11 @@ import com.crypto.cryptoview.ui.theme.LocalAppColors
 fun HoldingsScreen(
     modifier: Modifier = Modifier,
     viewModel: HoldingCoinsViewModel = hiltViewModel(),
+    displayCurrencyViewModel: DisplayCurrencyViewModel = hiltViewModel(),
     onHoldingClick: (String) -> Unit = {}
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    val displayCurrency by displayCurrencyViewModel.currentCurrency.collectAsState()
     val lifecycleOwner = LocalLifecycleOwner.current
     val colors = LocalAppColors.current
 
@@ -115,6 +120,8 @@ fun HoldingsScreen(
                 items(uiState.filteredAggregatedHoldings) { holding ->
                     AggregatedHoldingCard(
                         holding = holding,
+                        usdtKrwRate = uiState.usdtKrwRate,
+                        displayCurrency = displayCurrency,
                         onClick = { onHoldingClick(holding.normalizedSymbol) }
                     )
                 }
@@ -200,6 +207,8 @@ private fun SortFilterRow(
 @Composable
 private fun AggregatedHoldingCard(
     holding: AggregatedHolding,
+    usdtKrwRate: Double,
+    displayCurrency: DisplayCurrency,
     onClick: () -> Unit = {}
 ) {
     val isPositive = holding.totalChange >= 0
@@ -295,7 +304,7 @@ private fun AggregatedHoldingCard(
             // 가격 정보 (오른쪽)
             Column(horizontalAlignment = Alignment.End) {
                 Text(
-                    text = String.format(Locale.getDefault(), "₩%,.0f", holding.totalValue),
+                    text = formatDisplayMoney(holding.totalValue, displayCurrency, usdtKrwRate),
                     color = colors.textPrimary,
                     fontWeight = FontWeight.Bold,
                     fontSize = 16.sp
@@ -303,9 +312,8 @@ private fun AggregatedHoldingCard(
                 Text(
                     text = String.format(
                         Locale.getDefault(),
-                        "%s₩%,.0f (%,.2f%%)",
-                        if (isPositive) "+" else "",
-                        holding.totalChange,
+                        "%s (%,.2f%%)",
+                        formatDisplayMoney(holding.totalChange, displayCurrency, usdtKrwRate, signed = true),
                         holding.totalChangePercent
                     ),
                     color = if (isPositive) colors.positive else colors.negative,

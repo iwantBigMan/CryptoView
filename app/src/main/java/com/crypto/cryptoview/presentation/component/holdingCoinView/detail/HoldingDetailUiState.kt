@@ -12,6 +12,7 @@ data class HoldingDetailUiState(
     val totalValueKrw: Double = 0.0,
     val totalProfitLoss: Double? = null,
     val totalProfitLossPercent: Double? = null,
+    val usdtKrwRate: Double = 1300.0,
     val exchangeHoldings: List<ExchangeHoldingDetail> = emptyList(),
     val gateIoAveragePriceState: GateIoAveragePriceUiState = GateIoAveragePriceUiState(),
     val isLoading: Boolean = false,

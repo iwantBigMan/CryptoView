@@ -17,14 +17,17 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.crypto.cryptoview.domain.model.settings.AppTheme
+import com.crypto.cryptoview.domain.model.settings.DisplayCurrency
 import com.crypto.cryptoview.domain.model.exchange.ExchangeType
 import com.crypto.cryptoview.presentation.login.GoogleLoginViewModel
+import com.crypto.cryptoview.presentation.main.DisplayCurrencyViewModel
 import com.crypto.cryptoview.presentation.main.ThemeViewModel
 import com.crypto.cryptoview.ui.theme.*
 import kotlinx.coroutines.launch
@@ -35,6 +38,7 @@ fun SettingsScreen(
     viewModel: ExchangeSettingsViewModel = hiltViewModel(),
     googleLoginViewModel: GoogleLoginViewModel = hiltViewModel(),
     themeViewModel: ThemeViewModel = hiltViewModel(),
+    displayCurrencyViewModel: DisplayCurrencyViewModel = hiltViewModel(),
     showExchangeSetup: Boolean = false,
     onLogout: () -> Unit = {},
     onExchangeLinked: () -> Unit = {}
@@ -42,6 +46,7 @@ fun SettingsScreen(
     val uiState by viewModel.uiState.collectAsState()
     val googleUiState by googleLoginViewModel.uiState.collectAsState()
     val currentTheme by themeViewModel.currentTheme.collectAsState()
+    val currentCurrency by displayCurrencyViewModel.currentCurrency.collectAsState()
     val scope = rememberCoroutineScope()
     var showLogoutDialog by remember { mutableStateOf(false) }
     var showExchangeDialog by remember { mutableStateOf(showExchangeSetup) }
@@ -242,6 +247,58 @@ fun SettingsScreen(
                                     )
                                 )
                             }
+                        }
+                    }
+                }
+            }
+
+            // 표시 통화 설정
+            item {
+                Text(
+                    text = "표시 통화",
+                    color = colors.textSecondary,
+                    fontSize = 14.sp,
+                    modifier = Modifier.padding(bottom = 8.dp)
+                )
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(12.dp),
+                    colors = CardDefaults.cardColors(containerColor = colors.cardBackground)
+                ) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(12.dp),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        listOf(
+                            DisplayCurrency.KRW to "KRW",
+                            DisplayCurrency.USDT to "USDT"
+                        ).forEach { (currency, label) ->
+                            FilterChip(
+                                selected = currentCurrency == currency,
+                                onClick = { displayCurrencyViewModel.setCurrency(currency) },
+                                label = {
+                                    Text(
+                                        text = label,
+                                        modifier = Modifier.fillMaxWidth(),
+                                        textAlign = TextAlign.Center
+                                    )
+                                },
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .heightIn(min = 37.dp),
+                                border = FilterChipDefaults.filterChipBorder(
+                                    enabled = true,
+                                    selected = currentCurrency == currency
+                                ),
+                                colors = FilterChipDefaults.filterChipColors(
+                                    selectedContainerColor = colors.chipSelected,
+                                    selectedLabelColor = colors.textPrimary,
+                                    containerColor = colors.chipUnselected,
+                                    labelColor = colors.textSecondary
+                                )
+                            )
                         }
                     }
                 }
