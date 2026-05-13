@@ -45,6 +45,14 @@ annotation class BybitClient
 @Retention(AnnotationRetention.BINARY)
 annotation class GateIoClient
 
+@Qualifier
+@Retention(AnnotationRetention.BINARY)
+annotation class ExchangeRetrofit
+
+@Qualifier
+@Retention(AnnotationRetention.BINARY)
+annotation class AiRetrofit
+
 @Module
 @InstallIn(SingletonComponent::class)
 object NetworkModule {
@@ -160,9 +168,23 @@ object NetworkModule {
     }
 
     // 백엔드 Retrofit 인스턴스
-    private fun createBackendRetrofit(client: OkHttpClient, json: Json): Retrofit {
+    @Provides
+    @Singleton
+    @ExchangeRetrofit
+    fun provideExchangeRetrofit(client: OkHttpClient, json: Json): Retrofit {
         return Retrofit.Builder()
-            .baseUrl(BuildConfig.BACKEND_BASE_URL)
+            .baseUrl(BuildConfig.EXCHANGE_BACKEND_BASE_URL)
+            .client(client)
+            .addConverterFactory(json.asConverterFactory("application/json".toMediaType()))
+            .build()
+    }
+
+    @Provides
+    @Singleton
+    @AiRetrofit
+    fun provideAiRetrofit(client: OkHttpClient, json: Json): Retrofit {
+        return Retrofit.Builder()
+            .baseUrl(BuildConfig.AI_BACKEND_BASE_URL)
             .client(client)
             .addConverterFactory(json.asConverterFactory("application/json".toMediaType()))
             .build()
@@ -172,81 +194,65 @@ object NetworkModule {
     @Provides
     @Singleton
     fun provideValidateAndSaveUpbitApi(
-        client: OkHttpClient,
-        json: Json
+        @ExchangeRetrofit retrofit: Retrofit
     ): com.crypto.cryptoview.data.remote.api.ValidateAndSaveUpbit {
-        return createBackendRetrofit(client, json)
-            .create(com.crypto.cryptoview.data.remote.api.ValidateAndSaveUpbit::class.java)
+        return retrofit.create(com.crypto.cryptoview.data.remote.api.ValidateAndSaveUpbit::class.java)
     }
 
     @Provides
     @Singleton
     fun provideFetchUpbitAssetsApi(
-        client: OkHttpClient,
-        json: Json
+        @ExchangeRetrofit retrofit: Retrofit
     ): com.crypto.cryptoview.data.remote.api.FetchUpbitAssets {
-        return createBackendRetrofit(client, json)
-            .create(com.crypto.cryptoview.data.remote.api.FetchUpbitAssets::class.java)
+        return retrofit.create(com.crypto.cryptoview.data.remote.api.FetchUpbitAssets::class.java)
     }
 
     @Provides
     @Singleton
     fun provideDeleteUpbitCredentialsApi(
-        client: OkHttpClient,
-        json: Json
+        @ExchangeRetrofit retrofit: Retrofit
     ): com.crypto.cryptoview.data.remote.api.DeleteUpbitCredentials {
-        return createBackendRetrofit(client, json)
-            .create(com.crypto.cryptoview.data.remote.api.DeleteUpbitCredentials::class.java)
+        return retrofit.create(com.crypto.cryptoview.data.remote.api.DeleteUpbitCredentials::class.java)
     }
 
     @Provides
     @Singleton
     fun provideValidateAndSaveGateIoApi(
-        client: OkHttpClient,
-        json: Json
+        @ExchangeRetrofit retrofit: Retrofit
     ): com.crypto.cryptoview.data.remote.api.ValidateAndSaveGateIo {
-        return createBackendRetrofit(client, json)
-            .create(com.crypto.cryptoview.data.remote.api.ValidateAndSaveGateIo::class.java)
+        return retrofit.create(com.crypto.cryptoview.data.remote.api.ValidateAndSaveGateIo::class.java)
     }
 
     @Provides
     @Singleton
     fun provideFetchGateIoAccountsApi(
-        client: OkHttpClient,
-        json: Json
+        @ExchangeRetrofit retrofit: Retrofit
     ): com.crypto.cryptoview.data.remote.api.FetchGateIoAccounts {
-        return createBackendRetrofit(client, json)
-            .create(com.crypto.cryptoview.data.remote.api.FetchGateIoAccounts::class.java)
+        return retrofit.create(com.crypto.cryptoview.data.remote.api.FetchGateIoAccounts::class.java)
     }
 
     @Provides
     @Singleton
     fun provideDeleteGateIoCredentialApi(
-        client: OkHttpClient,
-        json: Json
+        @ExchangeRetrofit retrofit: Retrofit
     ): com.crypto.cryptoview.data.remote.api.DeleteGateIoCredential {
-        return createBackendRetrofit(client, json)
-            .create(com.crypto.cryptoview.data.remote.api.DeleteGateIoCredential::class.java)
+        return retrofit.create(com.crypto.cryptoview.data.remote.api.DeleteGateIoCredential::class.java)
     }
 
     @Provides
     @Singleton
     fun provideFetchGateIoSpotAveragePriceApi(
-        client: OkHttpClient,
-        json: Json
+        @ExchangeRetrofit retrofit: Retrofit
     ): com.crypto.cryptoview.data.remote.api.FetchGateIoSpotAveragePrice {
-        return createBackendRetrofit(client, json)
-            .create(com.crypto.cryptoview.data.remote.api.FetchGateIoSpotAveragePrice::class.java)
+        return retrofit.create(com.crypto.cryptoview.data.remote.api.FetchGateIoSpotAveragePrice::class.java)
     }
 
     @Provides
     @Singleton
     fun provideAiPortfolioInsightApi(
-        client: OkHttpClient,
-        json: Json
+        @AiRetrofit retrofit: Retrofit
     ): com.crypto.cryptoview.data.remote.api.AiPortfolioInsightApi {
-        return createBackendRetrofit(client, json)
-            .create(com.crypto.cryptoview.data.remote.api.AiPortfolioInsightApi::class.java)
+        return retrofit.create(com.crypto.cryptoview.data.remote.api.AiPortfolioInsightApi::class.java)
     }
 
     // Gate.io

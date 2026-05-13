@@ -346,3 +346,58 @@
 ## 기타 프롬프트
 - 기존 `.idea` 변경 파일은 사용자 요청 범위가 아니므로 수정하지 않는다.
 - 백엔드 AI API 호출에는 FirebaseAuthInterceptor를 통한 Firebase ID Token만 사용하고, 거래소 accessKey/secretKey는 요청 body에 포함하지 않는다.
+
+## 기능 관련 프롬프트
+- AI 분석 버튼 클릭 시 오버뷰 카드 안에 결과를 직접 펼치지 않고 `AiPortfolioInsightDialog`를 띄워 로딩, 성공, 오류 상태를 표시하도록 수정한다.
+- 다이얼로그 디자인은 기존 앱 컨셉에 맞춰 `LocalAppColors`의 카드 배경, surfaceVariant, accentBlue를 사용하고, 헤더 아이콘, 스크롤 가능한 분석 본문, 모델 정보, 재시도 버튼을 포함한다.
+- 오버뷰의 AI 분석 카드는 버튼 실행 역할만 맡고, 분석 결과 본문은 다이얼로그에서만 보여주도록 UI 책임을 분리한다.
+
+## 테스트 관련 프롬프트
+- `.\gradlew.bat testDebugUnitTest`를 실행해 AI 분석 다이얼로그 UI 수정 후 Kotlin/Compose 컴파일과 단위 테스트 통과 여부를 확인한다.
+
+## 기타 프롬프트
+- 기존 `.idea` 변경 파일은 사용자 요청 범위가 아니므로 수정하지 않는다.
+- 테스트 실행 후 생성된 `.kotlin` 빌드 산출물은 작업 변경에 포함되지 않도록 정리한다.
+
+## 기능 관련 프롬프트
+- 로컬 개발용 백엔드 Base URL과 배포용 Cloud Run Base URL을 BuildConfig 기반으로 분리한다.
+- Debug 빌드는 기본적으로 `http://10.0.2.2:8080/`를 사용하고, Release 빌드는 `https://cryptoview-api-620339426938.asia-northeast3.run.app/`를 사용하도록 설정한다.
+- 실기기 로컬 테스트를 위해 `local.properties`의 `debug.backend.base.url` 값으로 Debug 백엔드 URL을 쉽게 덮어쓸 수 있게 한다.
+- 백엔드 API들은 단일 `@BackendRetrofit` 인스턴스를 공유하게 하고, Retrofit endpoint annotation은 앞 슬래시 없이 `api/...` 형식으로 통일한다.
+
+## 테스트 관련 프롬프트
+- `.\gradlew.bat testDebugUnitTest :app:compileReleaseKotlin`를 실행해 Debug 테스트와 Release Kotlin 컴파일을 함께 확인한다.
+- 생성된 BuildConfig에서 Debug는 `http://10.0.2.2:8080/`, Release는 Cloud Run URL을 사용하는지 확인한다.
+
+## 기타 프롬프트
+- 기존 `.idea` 변경 파일은 사용자 요청 범위가 아니므로 수정하지 않는다.
+- 테스트 실행 후 생성된 `.kotlin` 빌드 산출물은 작업 변경에 포함되지 않도록 정리한다.
+
+## 기능 관련 프롬프트
+- Android Emulator에서 `http://10.0.2.2:8080/` 로컬 백엔드 호출 시 발생하는 `CLEARTEXT communication to 10.0.2.2 not permitted by network security policy` 오류를 debug 빌드 전용 설정으로 해결한다.
+- `app/src/debug`에 debug 전용 AndroidManifest와 network security config를 추가해 `10.0.2.2`, `localhost`에 대해서만 cleartext HTTP 통신을 허용한다.
+- main/release manifest에는 `usesCleartextTraffic=true`를 넣지 않고, release 빌드는 기존 Cloud Run HTTPS 통신만 사용하게 유지한다.
+
+## 테스트 관련 프롬프트
+- `.\gradlew.bat processDebugMainManifest processReleaseMainManifest`를 실행해 debug/release manifest merge를 확인한다.
+- Debug merged manifest에는 `android:networkSecurityConfig="@xml/network_security_config"`가 포함되고, Release merged manifest에는 cleartext/networkSecurityConfig 설정이 없는지 확인한다.
+
+## 기타 프롬프트
+- 기존 Retrofit, OkHttp, FirebaseAuthInterceptor 구조와 API 경로는 변경하지 않는다.
+- 테스트 실행 후 생성된 `.kotlin` 빌드 산출물은 작업 변경에 포함되지 않도록 정리한다.
+
+## 기능 관련 프롬프트
+- 거래소 Private API용 백엔드 URL과 AI 분석 API용 백엔드 URL을 분리한다.
+- 거래소 백엔드는 Debug/Release 모두 Cloud Run URL을 사용하고, AI 백엔드는 Debug에서만 로컬 `http://10.0.2.2:8080/`을 사용할 수 있게 한다.
+- BuildConfig를 `EXCHANGE_BACKEND_BASE_URL`, `AI_BACKEND_BASE_URL`로 분리하고, NetworkModule에는 `@ExchangeRetrofit`, `@AiRetrofit` Qualifier를 추가한다.
+- Upbit/Gate.io 계정 조회, 평단 조회, credential 저장/삭제 API는 `@ExchangeRetrofit`을 사용하고, AI 포트폴리오 분석 API만 `@AiRetrofit`을 사용하게 한다.
+- 실기기 로컬 AI 테스트를 위해 `local.properties`의 `debug.ai.backend.base.url` 값으로 Debug AI URL을 덮어쓸 수 있게 한다.
+
+## 테스트 관련 프롬프트
+- `.\gradlew.bat testDebugUnitTest :app:compileReleaseKotlin`를 실행해 Debug 테스트와 Release Kotlin 컴파일을 확인한다.
+- 생성된 BuildConfig에서 Debug는 거래소 Cloud Run/AI 로컬 URL, Release는 거래소와 AI 모두 Cloud Run URL을 사용하는지 확인한다.
+- Debug merged manifest에는 networkSecurityConfig가 포함되고 Release merged manifest에는 cleartext 관련 설정이 없는지 확인한다.
+
+## 기타 프롬프트
+- 기존 `.idea` 변경 파일은 사용자 요청 범위가 아니므로 수정하지 않는다.
+- 테스트 실행 후 생성된 `.kotlin` 빌드 산출물은 작업 변경에 포함되지 않도록 정리한다.

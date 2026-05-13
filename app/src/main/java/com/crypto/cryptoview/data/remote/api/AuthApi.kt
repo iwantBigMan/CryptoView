@@ -23,7 +23,7 @@ import retrofit2.http.POST
  * Authorization 헤더는 FirebaseAuthInterceptor 가 자동 주입
  */
 interface ValidateAndSaveUpbit {
-    @POST("/api/exchange/upbit/validate-and-save")
+    @POST("api/exchange/upbit/validate-and-save")
     suspend fun validateAndSaveCredentials(
         @Body request: ValidateUpbitRequest
     ): ValidateUpbitResponse

@@ -12,6 +12,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -28,6 +31,7 @@ import com.crypto.cryptoview.R
 import com.crypto.cryptoview.domain.model.asset.AggregatedHolding
 import com.crypto.cryptoview.domain.model.asset.ExchangeData
 import com.crypto.cryptoview.domain.model.settings.DisplayCurrency
+import com.crypto.cryptoview.presentation.component.assetsOverview.dialog.AiPortfolioInsightDialog
 import com.crypto.cryptoview.presentation.component.assetsOverview.chart.ChartData
 import com.crypto.cryptoview.presentation.component.assetsOverview.chart.DonutChart
 import com.crypto.cryptoview.presentation.main.DisplayCurrencyViewModel
@@ -49,6 +53,7 @@ fun AssetsOverviewScreen(
     val displayCurrency by displayCurrencyViewModel.currentCurrency.collectAsState()
     val lifecycleOwner = LocalLifecycleOwner.current
     val colors = LocalAppColors.current
+    var showAiInsightDialog by remember { mutableStateOf(false) }
 
     DisposableEffect(lifecycleOwner) {
         val observer = LifecycleEventObserver { _, event ->
@@ -79,10 +84,12 @@ fun AssetsOverviewScreen(
             )
         }
         item {
-            AiPortfolioInsightCard(
+            AiPortfolioInsightLauncherCard(
                 uiState = aiInsightUiState,
-                onGenerateClick = aiPortfolioInsightViewModel::generateInsight,
-                onClearClick = aiPortfolioInsightViewModel::clearInsight
+                onGenerateClick = {
+                    showAiInsightDialog = true
+                    aiPortfolioInsightViewModel.generateInsight()
+                }
             )
         }
         item {
@@ -99,6 +106,77 @@ fun AssetsOverviewScreen(
                 displayCurrency = displayCurrency,
                 onViewAllClick = onNavigateToHoldings
             )
+        }
+    }
+
+    if (showAiInsightDialog) {
+        AiPortfolioInsightDialog(
+            uiState = aiInsightUiState,
+            onDismiss = { showAiInsightDialog = false },
+            onRetry = aiPortfolioInsightViewModel::generateInsight
+        )
+    }
+}
+
+@Composable
+private fun AiPortfolioInsightLauncherCard(
+    uiState: AiPortfolioInsightUiState,
+    onGenerateClick: () -> Unit
+) {
+    val colors = LocalAppColors.current
+    val isLoading = uiState is AiPortfolioInsightUiState.RefreshingAssets ||
+        uiState is AiPortfolioInsightUiState.GeneratingInsight
+
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(containerColor = colors.surfaceVariant)
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(20.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = "AI 포트폴리오 요약",
+                    color = colors.textPrimary,
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.Bold
+                )
+                Text(
+                    text = "현재 자산 상태를 기준으로 요약합니다.",
+                    color = colors.textSecondary,
+                    fontSize = 12.sp
+                )
+            }
+
+            Button(
+                onClick = onGenerateClick,
+                enabled = !isLoading,
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = colors.accentBlue,
+                    contentColor = colors.textPrimary
+                )
+            ) {
+                if (isLoading) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(16.dp),
+                        strokeWidth = 2.dp,
+                        color = colors.textPrimary
+                    )
+                } else {
+                    Icon(
+                        imageVector = Icons.Outlined.AccountBalanceWallet,
+                        contentDescription = null,
+                        modifier = Modifier.size(18.dp)
+                    )
+                }
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(text = if (isLoading) "분석 중" else "분석")
+            }
         }
     }
 }

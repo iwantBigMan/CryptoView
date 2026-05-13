@@ -14,6 +14,17 @@ android {
     namespace = "com.crypto.cryptoview"
     compileSdk = 36
 
+    val properties = Properties()
+    val localPropertiesFile = project.rootProject.file("local.properties")
+    if (localPropertiesFile.exists()) {
+        properties.load(localPropertiesFile.inputStream())
+    }
+    val cloudRunBackendBaseUrl = "https://cryptoview-api-620339426938.asia-northeast3.run.app/"
+    val debugAiBackendBaseUrl = properties.getProperty(
+        "debug.ai.backend.base.url",
+        "http://10.0.2.2:8080/"
+    )
+
     defaultConfig {
         applicationId = "com.crypto.cryptoview"
         minSdk = 23
@@ -25,26 +36,39 @@ android {
         vectorDrawables {
             useSupportLibrary = true
         }
-        val properties = Properties()
-        val localPropertiesFile = project.rootProject.file("local.properties")
-        if (localPropertiesFile.exists()) {
-            properties.load(localPropertiesFile.inputStream())
-        }
 
         buildConfigField(
             "String",
             "GATE_BASE_URL",
             "\"https://api.gateio.ws/api/v4/\""
         )
-        buildConfigField(
-            "String",
-            "BACKEND_BASE_URL",
-            "\"https://cryptoview-api-620339426938.asia-northeast3.run.app/\""
-        )
     }
 
     buildTypes {
+        debug {
+            buildConfigField(
+                "String",
+                "EXCHANGE_BACKEND_BASE_URL",
+                "\"$cloudRunBackendBaseUrl\""
+            )
+            buildConfigField(
+                "String",
+                "AI_BACKEND_BASE_URL",
+                "\"$debugAiBackendBaseUrl\""
+            )
+        }
+
         release {
+            buildConfigField(
+                "String",
+                "EXCHANGE_BACKEND_BASE_URL",
+                "\"$cloudRunBackendBaseUrl\""
+            )
+            buildConfigField(
+                "String",
+                "AI_BACKEND_BASE_URL",
+                "\"$cloudRunBackendBaseUrl\""
+            )
             isMinifyEnabled = false
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
