@@ -1,9 +1,11 @@
-package com.crypto.cryptoview.domain.usecase
+package com.crypto.cryptoview.domain.usecase.ai
 
-import com.crypto.cryptoview.domain.mapper.toAiPortfolioSnapshot
+import com.crypto.cryptoview.domain.mapper.ai.toAiPortfolioSnapshot
 import com.crypto.cryptoview.domain.model.ai.AiPortfolioInsight
 import com.crypto.cryptoview.domain.model.ai.AiPortfolioInsightStage
+import com.crypto.cryptoview.domain.model.settings.DisplayCurrency
 import com.crypto.cryptoview.domain.repository.AiPortfolioInsightRepository
+import com.crypto.cryptoview.domain.usecase.GetAllHoldingsUseCase
 import javax.inject.Inject
 
 class GenerateAiPortfolioInsightUseCase @Inject constructor(
@@ -11,6 +13,7 @@ class GenerateAiPortfolioInsightUseCase @Inject constructor(
     private val repository: AiPortfolioInsightRepository
 ) {
     suspend operator fun invoke(
+        displayCurrency: DisplayCurrency,
         onStageChanged: (AiPortfolioInsightStage) -> Unit = {}
     ): Result<AiPortfolioInsight> {
         onStageChanged(AiPortfolioInsightStage.REFRESHING_ASSETS)
@@ -19,8 +22,8 @@ class GenerateAiPortfolioInsightUseCase @Inject constructor(
             return Result.failure(throwable)
         }
 
-        val snapshot = holdingsResult.toAiPortfolioSnapshot()
-        if (snapshot.holdings.isEmpty()) {
+        val snapshot = holdingsResult.toAiPortfolioSnapshot(displayCurrency)
+        if (snapshot.portfolioSummary.holdingsCount == 0) {
             return Result.failure(IllegalStateException("포트폴리오 데이터가 없습니다."))
         }
 

@@ -1,21 +1,26 @@
 package com.crypto.cryptoview.domain.model.ai
 
 data class AiPortfolioSnapshot(
-    val baseCurrency: String,
-    val totalValuationKrw: Double,
-    val totalPnlKrw: Double,
-    val totalPnlRate: Double,
+    val portfolioSummary: AiPortfolioSummarySnapshot,
     val holdings: List<AiPortfolioHoldingSnapshot>
 )
 
+data class AiPortfolioSummarySnapshot(
+    val baseCurrency: String,
+    val holdingsCount: Int,
+    val totalValuation: Double,
+    val totalPnl: Double,
+    val totalPnlRate: Double
+)
+
 data class AiPortfolioHoldingSnapshot(
-    val exchange: String,
     val symbol: String,
+    val market: String,
     val quantity: Double,
-    val valuationKrw: Double,
-    val averagePrice: Double?,
-    val currentPrice: Double?,
-    val pnlKrw: Double?,
-    val pnlRate: Double?
+    val averagePrice: Double,
+    val currentPrice: Double,
+    val valuation: Double,
+    val pnl: Double,
+    val pnlRate: Double
 )
 

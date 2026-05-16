@@ -3,9 +3,6 @@ package com.crypto.cryptoview.di
 import com.crypto.cryptoview.BuildConfig
 import com.crypto.cryptoview.data.auth.FirebaseTokenProvider
 import com.crypto.cryptoview.data.auth.FirebaseTokenProviderImpl
-import com.crypto.cryptoview.data.local.CredentialsManager
-import com.crypto.cryptoview.data.local.CredentialsProvider
-import com.crypto.cryptoview.data.remote.api.GateFuturesApi
 import com.crypto.cryptoview.data.remote.api.GateSpotApi
 import com.crypto.cryptoview.data.remote.api.UpbitMarketApi
 import com.crypto.cryptoview.data.remote.api.UpbitTickerAllApi
@@ -15,9 +12,6 @@ import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.SupervisorJob
 import kotlinx.serialization.json.Json
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
@@ -35,14 +29,6 @@ annotation class UpbitClient
 
 @Qualifier
 @Retention(AnnotationRetention.BINARY)
-annotation class BinanceClient
-
-@Qualifier
-@Retention(AnnotationRetention.BINARY)
-annotation class BybitClient
-
-@Qualifier
-@Retention(AnnotationRetention.BINARY)
 annotation class GateIoClient
 
 @Qualifier
@@ -56,14 +42,6 @@ annotation class AiRetrofit
 @Module
 @InstallIn(SingletonComponent::class)
 object NetworkModule {
-
-    @Provides
-    @Singleton
-    fun provideCredentialsProvider(credentialsManager: CredentialsManager): CredentialsProvider {
-        // create a background scope to observe DataStore and keep latest credentials in memory
-        val scope = CoroutineScope(Dispatchers.Default + SupervisorJob())
-        return CredentialsProvider(credentialsManager, scope)
-    }
 
     @Provides
     @Singleton
@@ -277,19 +255,6 @@ object NetworkModule {
         @GateIoClient okHttpClient: OkHttpClient,
         json: Json
     ): GateSpotApi {
-        return createApiService(
-            baseUrl = BuildConfig.GATE_BASE_URL,
-            okHttpClient = okHttpClient,
-            json = json
-        )
-    }
-
-    @Provides
-    @Singleton
-    fun provideGateFuturesApi(
-        @GateIoClient okHttpClient: OkHttpClient,
-        json: Json
-    ): GateFuturesApi {
         return createApiService(
             baseUrl = BuildConfig.GATE_BASE_URL,
             okHttpClient = okHttpClient,

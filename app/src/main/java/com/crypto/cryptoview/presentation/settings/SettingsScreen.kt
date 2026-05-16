@@ -19,7 +19,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ExitToApp
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.filled.Key
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
@@ -397,11 +396,11 @@ private fun LinkedExchangeCard(
                             horizontalArrangement = Arrangement.spacedBy(8.dp),
                             verticalAlignment = Alignment.CenterVertically
                         ) {
-                            Icon(
-                                imageVector = Icons.Default.Key,
-                                contentDescription = null,
-                                tint = colors.accentBlue,
-                                modifier = Modifier.size(20.dp)
+                            Surface(
+                                color = colors.positive,
+                                shape = RoundedCornerShape(50),
+                                modifier = Modifier.size(8.dp),
+                                content = {}
                             )
                             Text(
                                 text = exchange.displayName,
@@ -409,33 +408,23 @@ private fun LinkedExchangeCard(
                                 fontSize = 16.sp
                             )
                         }
-                        Row(
-                            horizontalArrangement = Arrangement.spacedBy(8.dp),
-                            verticalAlignment = Alignment.CenterVertically
+                        TextButton(
+                            onClick = { onDeleteClick(exchange) },
+                            enabled = !isLoading,
+                            contentPadding = PaddingValues(horizontal = 8.dp, vertical = 4.dp)
                         ) {
+                            Icon(
+                                imageVector = Icons.Default.Delete,
+                                contentDescription = null,
+                                tint = colors.error,
+                                modifier = Modifier.size(16.dp)
+                            )
+                            Spacer(modifier = Modifier.width(4.dp))
                             Text(
-                                text = "연동됨",
-                                color = colors.positive,
+                                text = "해제",
+                                color = colors.error,
                                 fontSize = 12.sp
                             )
-                            TextButton(
-                                onClick = { onDeleteClick(exchange) },
-                                enabled = !isLoading,
-                                contentPadding = PaddingValues(horizontal = 8.dp, vertical = 4.dp)
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Default.Delete,
-                                    contentDescription = null,
-                                    tint = colors.error,
-                                    modifier = Modifier.size(16.dp)
-                                )
-                                Spacer(modifier = Modifier.width(4.dp))
-                                Text(
-                                    text = "해제",
-                                    color = colors.error,
-                                    fontSize = 12.sp
-                                )
-                            }
                         }
                     }
                 }

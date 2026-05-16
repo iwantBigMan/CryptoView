@@ -1,4 +1,4 @@
-package com.crypto.cryptoview.presentation.component.assetsOverview.dialog
+package com.crypto.cryptoview.presentation.component.assetsOverview.ai.dialog
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -33,7 +33,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
-import com.crypto.cryptoview.presentation.component.assetsOverview.AiPortfolioInsightUiState
+import com.crypto.cryptoview.presentation.component.assetsOverview.ai.AiPortfolioInsightUiState
 import com.crypto.cryptoview.ui.theme.LocalAppColors
 
 @Composable
@@ -48,7 +48,7 @@ fun AiPortfolioInsightDialog(
         Surface(
             modifier = Modifier
                 .fillMaxWidth()
-                .heightIn(max = 560.dp),
+                .heightIn(max = 580.dp),
             shape = RoundedCornerShape(18.dp),
             color = colors.cardBackground,
             tonalElevation = 8.dp
@@ -65,6 +65,7 @@ fun AiPortfolioInsightDialog(
                     modifier = Modifier
                         .fillMaxWidth()
                         .weight(1f, fill = false)
+                        .heightIn(min = 220.dp)
                         .background(colors.surfaceVariant, RoundedCornerShape(12.dp))
                         .padding(16.dp)
                 ) {
@@ -74,14 +75,11 @@ fun AiPortfolioInsightDialog(
                         AiPortfolioInsightUiState.GeneratingInsight -> LoadingContent(uiState)
 
                         is AiPortfolioInsightUiState.Success -> {
-                            Text(
+                            InsightTextContent(
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .verticalScroll(rememberScrollState()),
-                                text = uiState.insight.insight,
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = colors.textPrimary,
-                                lineHeight = 21.sp
+                                paragraphs = uiState.insightParagraphs
                             )
                         }
 
@@ -102,6 +100,29 @@ fun AiPortfolioInsightDialog(
                     )
                 }
             }
+        }
+    }
+}
+
+@Composable
+private fun InsightTextContent(
+    paragraphs: List<String>,
+    modifier: Modifier = Modifier
+) {
+    val colors = LocalAppColors.current
+
+    Column(
+        modifier = modifier,
+        verticalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+        paragraphs.forEach { paragraph ->
+            Text(
+                text = paragraph,
+                style = MaterialTheme.typography.bodyMedium,
+                color = colors.textPrimary,
+                fontSize = 14.sp,
+                lineHeight = 23.sp
+            )
         }
     }
 }

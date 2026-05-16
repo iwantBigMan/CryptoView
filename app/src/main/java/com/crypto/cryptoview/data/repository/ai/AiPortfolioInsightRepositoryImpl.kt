@@ -1,8 +1,8 @@
 package com.crypto.cryptoview.data.repository.ai
 
 import com.crypto.cryptoview.data.remote.api.AiPortfolioInsightApi
-import com.crypto.cryptoview.data.remote.mapper.toDomain
-import com.crypto.cryptoview.data.remote.mapper.toRequestDto
+import com.crypto.cryptoview.data.remote.mapper.ai.toDomain
+import com.crypto.cryptoview.data.remote.mapper.ai.toRequestDto
 import com.crypto.cryptoview.domain.model.ai.AiPortfolioInsight
 import com.crypto.cryptoview.domain.model.ai.AiPortfolioSnapshot
 import com.crypto.cryptoview.domain.repository.AiPortfolioInsightRepository

@@ -12,7 +12,6 @@ import com.crypto.cryptoview.domain.repository.AuthRepository
 import com.crypto.cryptoview.domain.repository.AiPortfolioInsightRepository
 import com.crypto.cryptoview.domain.repository.ExchangeCredentialRepository
 import com.crypto.cryptoview.domain.repository.GoogleAuthRepository
-import com.crypto.cryptoview.domain.repository.GateFuturesRepository
 import com.crypto.cryptoview.domain.repository.GateSpotRepository
 import com.crypto.cryptoview.domain.repository.UbbitMTickerRepository
 import com.crypto.cryptoview.domain.repository.UpbitAssetRepository

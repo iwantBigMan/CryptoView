@@ -31,7 +31,9 @@ import com.crypto.cryptoview.R
 import com.crypto.cryptoview.domain.model.asset.AggregatedHolding
 import com.crypto.cryptoview.domain.model.asset.ExchangeData
 import com.crypto.cryptoview.domain.model.settings.DisplayCurrency
-import com.crypto.cryptoview.presentation.component.assetsOverview.dialog.AiPortfolioInsightDialog
+import com.crypto.cryptoview.presentation.component.assetsOverview.ai.AiPortfolioInsightUiState
+import com.crypto.cryptoview.presentation.component.assetsOverview.ai.AiPortfolioInsightViewModel
+import com.crypto.cryptoview.presentation.component.assetsOverview.ai.dialog.AiPortfolioInsightDialog
 import com.crypto.cryptoview.presentation.component.assetsOverview.chart.ChartData
 import com.crypto.cryptoview.presentation.component.assetsOverview.chart.DonutChart
 import com.crypto.cryptoview.presentation.main.DisplayCurrencyViewModel

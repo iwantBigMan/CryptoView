@@ -20,15 +20,3 @@ data class GateSpotBalanceDto(
     @SerialName("refresh_time")
     val refreshTime: Long? = null,
 )
-
-@Serializable
-data class GateFuturesAccountDto(
-    @SerialName("total")
-    val total: String,
-
-    @SerialName("available")
-    val available: String,
-
-    @SerialName("unrealised_pnl")
-    val unrealisedPnl: String
-)

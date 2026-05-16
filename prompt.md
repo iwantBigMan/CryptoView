@@ -436,3 +436,144 @@
 
 ## 기타 프롬프트
 - 기존 `.idea` 변경 파일은 사용자 요청 범위가 아니므로 수정하지 않는다.
+
+## 기능 관련 프롬프트
+- 포트폴리오 문서에서 Android 관련 부분만 최신 구현 기준으로 정리한다.
+- README를 Android 앱 중심 문서로 재구성하고, React Native와 백엔드 전체 설명은 제외한다.
+- Google 로그인, Upbit/Gate.io 백엔드 credential 연동, Gate.io Spot 평균단가 조회, 자산 개요, 보유 목록, 코인 상세, AI 포트폴리오 요약, 설정 기능을 현재 Android 구현 기준으로 반영한다.
+- `EXCHANGE_BACKEND_BASE_URL`, `AI_BACKEND_BASE_URL`, `GATE_BASE_URL` 분리 정책과 Gate.io 평균단가 API 경로를 문서화한다.
+- Android 앱이 거래소 accessKey/secretKey를 평균단가 요청에 포함하지 않고 Firebase ID Token만 사용하는 구조를 명확히 기록한다.
+
+## 테스트 관련 프롬프트
+- README 문서 변경이므로 Gradle 빌드/테스트는 새로 실행하지 않는다.
+- `git diff --check`로 공백 오류를 확인한다.
+- README와 상세 화면 파일에 깨진 문자 패턴이 새로 들어가지 않았는지 검색한다.
+
+## 기타 프롬프트
+- 작업 전 현재 브랜치와 변경 파일을 확인했다.
+- 기존 `.idea` 변경 파일과 `docs` 추가 파일은 사용자 요청 범위가 아니므로 수정하지 않았다.
+
+## 기능 관련 프롬프트
+- AI 포트폴리오 분석 요청 계약을 `portfolioSummary`와 `holdings` 구조로 변경한다.
+- `portfolioSummary`에는 `baseCurrency`, `holdingsCount`, `totalValuationKrw`, `totalPnlKrw`, `totalPnlRate`를 담는다.
+- `holdings`에는 평단이 있는 보유 자산만 포함한다.
+- 보유 자산 항목에는 `symbol`, `market`, `quantity`, `averagePrice`, `currentPrice`, `valuationKrw`, `pnlKrw`, `pnlRate`를 담는다.
+- Upbit market은 `KRW-{SYMBOL}`, Gate.io market은 `{SYMBOL}_USDT` 형식으로 생성한다.
+
+## 테스트 관련 프롬프트
+- AI snapshot mapper 테스트를 새 계약에 맞게 수정한다.
+- `.\gradlew.bat testDebugUnitTest`를 실행해 요청 계약 변경 후 Kotlin 컴파일과 단위 테스트 통과 여부를 확인한다.
+
+## 기타 프롬프트
+- 백엔드가 새 계약에 맞춰 처리할 수 있도록 Android 요청 구조를 먼저 고정한다.
+- 기존 `.idea` 변경 파일과 `docs` 추가 파일은 사용자 요청 범위가 아니므로 수정하지 않았다.
+
+## 기능 관련 프롬프트
+- 설정에서 표시 통화를 USDT로 변경해도 AI 분석글이 KRW 기준으로 생성되는 문제를 수정한다.
+- AI 분석 요청 생성 시 현재 표시 통화 설정을 읽어 `portfolioSummary.baseCurrency`에 반영한다.
+- 표시 통화가 USDT이면 전체 평가금액, 총 손익, 평균단가, 현재가, 평가금액, 손익을 `usdtKrwRate`로 나눠 USDT 기준 값으로 보낸다.
+- 표시 통화가 KRW이면 기존 KRW 기준 값을 그대로 보낸다.
+- `baseCurrency`가 KRW/USDT로 달라질 수 있으므로 금액 필드명은 `totalValuation`, `totalPnl`, `valuation`, `pnl`처럼 통화 중립 이름으로 변경한다.
+
+## 테스트 관련 프롬프트
+- AI snapshot mapper 테스트에 USDT 표시 통화일 때 금액이 환율로 나뉘는 케이스를 추가한다.
+- `.\gradlew.bat testDebugUnitTest`를 실행해 표시 통화 반영 후 Kotlin/Hilt 컴파일과 단위 테스트 통과 여부를 확인한다.
+
+## 기타 프롬프트
+- 기존 `.idea` 변경 파일과 `docs` 추가 파일은 사용자 요청 범위가 아니므로 수정하지 않았다.
+
+## 기능 관련 프롬프트
+- AI 분석 요청에서 갑자기 400이 발생하는 원인을 점검한다.
+- 백엔드가 아직 기존 `holdings` 필드를 필수로 검증할 가능성이 있으므로, 새 `holdingsWithAveragePrice` 필드와 함께 호환용 `holdings` 필드도 동일한 평단 보유 목록으로 전송한다.
+- 요약 필드와 평단 보유 항목 중심 구조는 유지하면서 기존 백엔드 요청 검증과의 호환성을 확보한다.
+
+## 테스트 관련 프롬프트
+- `.\gradlew.bat testDebugUnitTest`를 실행해 AI 요청 DTO 변경 후 Kotlin 컴파일과 단위 테스트 통과 여부를 확인한다.
+
+## 기타 프롬프트
+- 기존 `.idea` 변경 파일과 `docs` 추가 파일은 사용자 요청 범위가 아니므로 수정하지 않았다.
+
+## 기능 관련 프롬프트
+- 파일 수가 많아져 찾기 어려운 문제를 줄이기 위해 AI 관련 파일을 하위 디렉터리로 분류한다.
+- `presentation/component/assetsOverview` 아래 AI 상태, ViewModel, 다이얼로그를 `ai` 하위 패키지로 이동한다.
+- AI 포트폴리오 생성 UseCase를 `domain/usecase/ai`로 이동한다.
+- AI snapshot mapper를 `domain/mapper/ai`로 이동한다.
+- AI remote mapper를 `data/remote/mapper/ai`로 이동한다.
+- 파일 이동 후 package 선언과 import를 새 구조에 맞게 갱신한다.
+
+## 테스트 관련 프롬프트
+- `.\gradlew.bat testDebugUnitTest`를 실행해 파일 이동과 package/import 변경 후 Kotlin/Compose 컴파일 및 단위 테스트 통과 여부를 확인한다.
+- `git diff --check`로 공백 오류를 확인한다.
+
+## 기타 프롬프트
+- 작업 전 현재 브랜치와 변경 파일을 확인했다.
+- 기존 `.idea` 변경 파일과 `docs` 추가 파일은 사용자 요청 범위가 아니므로 수정하지 않았다.
+- 비어 있는 기존 `assetsOverview/dialog` 디렉터리는 정리했다.
+
+## 기능 관련 프롬프트
+- 백엔드로 기능을 옮긴 뒤 Android에 남은 불필요한 DTO, API, credential 관련 코드를 전체적으로 점검한다.
+- Android 로컬에 Binance/Bybit API Key를 저장하던 이전 credential 구조를 제거한다.
+- `CredentialsProvider`, `ExchangeCredentials`, `SecureStorage`처럼 로컬 API Key 복호화/메모리 캐시에만 쓰이던 코드를 제거한다.
+- `CredentialsManager`는 Upbit/Gate.io 연동 여부 marker만 관리하도록 단순화한다.
+- Gate.io futures private API를 Android에서 직접 호출하던 DTO/API/Repository/UseCase/domain model을 제거한다.
+- 향후 Gate.io futures가 필요하면 백엔드 credential 구조 기반 API로 다시 붙이는 전제로 현재 직접 호출 코드를 정리한다.
+
+## 테스트 관련 프롬프트
+- DTO/API/credential 관련 참조 검색으로 제거한 타입의 남은 사용처가 없는지 확인한다.
+- DTO 클래스별 사용량을 다시 확인해 남은 DTO들이 API 또는 mapper에 연결되어 있는지 점검한다.
+- `.\gradlew.bat testDebugUnitTest`를 실행해 제거 후 Kotlin/Hilt 컴파일과 단위 테스트 통과 여부를 확인한다.
+
+## 기타 프롬프트
+- 작업 전 현재 브랜치와 변경 파일을 확인했다.
+- 기존 `.idea` 변경 파일과 `docs` 추가 파일은 사용자 요청 범위가 아니므로 수정하지 않았다.
+
+## 기능 관련 프롬프트
+- AI 분석 다이얼로그에서 수행하던 분석글 trim, replace, 필터, 문단 분리 로직을 ViewModel로 이동한다.
+- `AiPortfolioInsightUiState.Success`가 원본 insight와 함께 표시용 문단 리스트를 가지도록 변경한다.
+- 다이얼로그는 문자열 가공 없이 ViewModel이 만든 문단 리스트만 렌더링하도록 단순화한다.
+
+## 테스트 관련 프롬프트
+- `.\gradlew.bat testDebugUnitTest`를 실행해 ViewModel 상태 변경과 다이얼로그 렌더링 변경 후 Kotlin/Compose 컴파일과 단위 테스트 통과 여부를 확인한다.
+
+## 기타 프롬프트
+- 작업 전 현재 브랜치와 변경 파일을 확인했다.
+- 기존 `.idea` 변경 파일과 `docs` 추가 파일은 사용자 요청 범위가 아니므로 수정하지 않았다.
+
+## 기능 관련 프롬프트
+- AI 포트폴리오 분석 요청 snapshot을 전체 요약 지표 중심으로 구성한다.
+- `baseCurrency`, `holdingsCount`, `totalValuationKrw`, `totalPnlKrw`, `totalPnlRate`를 메인 요약 필드로 보낸다.
+- 코인별 상세 데이터는 평단이 있는 보유 자산만 `holdingsWithAveragePrice` 배열로 묶어서 보낸다.
+- 평단이 없는 보유 자산은 AI 상세 배열에서 제외하되, 전체 보유 개수와 총 평가금액/총 손익 계산에는 포함한다.
+
+## 테스트 관련 프롬프트
+- AI snapshot mapper 테스트를 추가해 전체 보유 개수는 유지되고 평단 있는 보유 항목만 상세 배열에 포함되는지 검증한다.
+- `.\gradlew.bat testDebugUnitTest`를 실행해 snapshot DTO 변경 후 Kotlin 컴파일과 단위 테스트 통과 여부를 확인한다.
+
+## 기타 프롬프트
+- 작업 전 현재 브랜치와 변경 파일을 확인했다.
+- 기존 `.idea` 변경 파일과 `docs` 추가 파일은 사용자 요청 범위가 아니므로 수정하지 않았다.
+
+## 기능 관련 프롬프트
+- AI 포트폴리오 분석 다이얼로그의 가독성이 떨어지므로 다이얼로그 세로 공간을 위아래 10dp씩 더 확보한다.
+- AI 분석 본문을 하나의 긴 텍스트로 표시하지 않고 문단 단위로 나눠 표시한다.
+- 본문 줄간격과 문단 간격을 키워 긴 분석글을 읽기 쉽게 만든다.
+
+## 테스트 관련 프롬프트
+- `.\gradlew.bat testDebugUnitTest`를 실행해 AI 분석 다이얼로그 UI 변경 후 Kotlin/Compose 컴파일과 단위 테스트 통과 여부를 확인한다.
+
+## 기타 프롬프트
+- 작업 전 현재 브랜치와 변경 파일을 확인했다.
+- 기존 `.idea` 변경 파일과 `docs` 추가 파일은 사용자 요청 범위가 아니므로 수정하지 않았다.
+- PowerShell 출력에서 일부 한글이 깨져 보일 수 있으나, `git diff`와 검색 기준으로 README 본문은 정상 한글로 확인했다.
+
+## 기능 관련 프롬프트
+- 설정 화면의 연동된 거래소 목록에서 `연동됨` 텍스트를 제거한다.
+- 거래소명 왼쪽 시작점에 초록색 상태 점을 표시해 연동 상태를 더 간결하게 보여준다.
+- 기존 거래소 해제 버튼 동작은 유지한다.
+
+## 테스트 관련 프롬프트
+- `.\gradlew.bat testDebugUnitTest`를 실행해 설정 화면 UI 변경 후 Kotlin/Compose 컴파일과 단위 테스트 통과 여부를 확인한다.
+
+## 기타 프롬프트
+- 작업 전 현재 브랜치와 변경 파일을 확인했다.
+- 기존 `.idea` 변경 파일과 `docs` 추가 파일은 사용자 요청 범위가 아니므로 수정하지 않았다.
